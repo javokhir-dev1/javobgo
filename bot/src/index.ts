@@ -5,7 +5,7 @@ import * as https from 'https';
 import * as http from 'http';
 import { randomUUID } from 'crypto';
 import { Telegraf, Context } from 'telegraf';
-import { upsertTelegramUser, isUserRegistered, createOtp, getActiveOtp } from './db';
+import { upsertTelegramUser, isUserRegistered, createAuthToken, getActiveAuthToken } from './db';
 
 const BOT_TOKEN        = process.env.TELEGRAM_BOT_TOKEN;
 const SITE_URL         = process.env.SITE_URL         || 'http://localhost:3000';
@@ -109,18 +109,17 @@ bot.on('contact', async (ctx: Context) => {
   try {
     const avatarUrl = await fetchAndSaveAvatar(from.id);
     await upsertTelegramUser(telegramId, firstName, username, phone, avatarUrl);
-    const otp = await createOtp(telegramId);
-    const loginUrl = `${SITE_URL}/login?otp=${otp}`;
+    const token = await createAuthToken(telegramId);
+    const loginUrl = `${SITE_URL}/login?token=${token}`;
 
     await ctx.replyWithMarkdown(
-      `✅ *Ro'yxatdan o'tdingiz!*\n\n` +
-      `Kirish kodingiz:\n\n` +
-      `\`${otp}\`\n\n` +
-      `Bu kod *1 daqiqa* davomida amal qiladi.\n` +
-      `Kodni saytdagi kirish sahifasiga kiriting.`,
+      `✅ *Ro'yxatdan o'tdingiz!*\n\nPlatformaga kirish uchun quyidagi tugmalardan birini tanlang:`,
       {
         reply_markup: {
-          inline_keyboard: [[{ text: '🚀 Saytga kirish', url: loginUrl }]],
+          inline_keyboard: [[
+            { text: '🌐 Brauzerda ochish', url: loginUrl },
+            { text: '📱 Web App orqali', web_app: { url: loginUrl } },
+          ]],
         },
       },
     );
@@ -147,97 +146,32 @@ bot.command('login', async (ctx: Context) => {
       return;
     }
 
-    const activeOtp = await getActiveOtp(telegramId);
-    if (activeOtp) {
-      await ctx.replyWithMarkdown(
-        `Eski kodingiz hali ham amal qiladi:\n\n\`${activeOtp}\`\n\nYoki 1 daqiqa kuting.`,
-        {
-          reply_markup: {
-            inline_keyboard: [[
-              { text: '🔄 Yangi kod', callback_data: 'renew_otp' },
-              { text: '🚀 Saytga kirish', url: `${SITE_URL}/login?otp=${activeOtp}` },
-            ]],
-          },
-        },
-      );
-      return;
+    const activeToken = await getActiveAuthToken(telegramId);
+    let token = activeToken;
+    if (!token) {
+      token = await createAuthToken(telegramId);
     }
 
-    const otp = await createOtp(telegramId);
-    const loginUrl = `${SITE_URL}/login?otp=${otp}`;
+    const loginUrl = `${SITE_URL}/login?token=${token}`;
 
-    const msg = await ctx.replyWithMarkdown(
-      `🔑 *Kirish kodingiz:*\n\n\`${otp}\`\n\nUshbu kod *1 daqiqa* davomida amal qiladi.`,
+    await ctx.replyWithMarkdown(
+      `🔑 *Tizimga kirish*\n\nPlatformaga kirish uchun quyidagi tugmalardan birini tanlang:`,
       {
         reply_markup: {
           inline_keyboard: [[
-            { text: '🚀 Saytga kirish', url: loginUrl },
+            { text: '🌐 Brauzerda ochish', url: loginUrl },
+            { text: '📱 Web App orqali', web_app: { url: loginUrl } },
           ]],
         },
       },
     );
-
-    // 1 daqiqadan so'ng "Yangi kod" tugmasini ko'rsatish
-    const chatId    = msg.chat.id;
-    const messageId = msg.message_id;
-    setTimeout(async () => {
-      try {
-        await bot.telegram.editMessageReplyMarkup(chatId, messageId, undefined, {
-          inline_keyboard: [[{ text: '🔄 Yangi kod olish', callback_data: 'renew_otp' }]],
-        });
-      } catch {}
-    }, 61_000);
-
   } catch (err: any) {
     console.error('/login xatosi:', err.message);
     await ctx.reply("Xatolik yuz berdi. Iltimos qayta urinib ko'ring.");
   }
 });
 
-// ─── "Yangi kod" tugmasi ──────────────────────────────────────────────────────
 
-bot.action('renew_otp', async (ctx) => {
-  const from = ctx.from;
-  if (!from) { await ctx.answerCbQuery(); return; }
-
-  const telegramId = String(from.id);
-
-  try {
-    const registered = await isUserRegistered(telegramId);
-    if (!registered) {
-      await ctx.answerCbQuery("Avval /start yuboring");
-      return;
-    }
-
-    const otp      = await createOtp(telegramId);
-    const loginUrl = `${SITE_URL}/login?otp=${otp}`;
-
-    await ctx.editMessageText(
-      `🔑 *Yangi kirish kodingiz:*\n\n\`${otp}\`\n\nUshbu kod *1 daqiqa* davomida amal qiladi.`,
-      {
-        parse_mode: 'Markdown',
-        reply_markup: {
-          inline_keyboard: [[{ text: '🚀 Saytga kirish', url: loginUrl }]],
-        },
-      },
-    );
-    await ctx.answerCbQuery('Yangi kod tayyor!');
-
-    const chatId    = ctx.callbackQuery.message!.chat.id;
-    const messageId = ctx.callbackQuery.message!.message_id;
-    setTimeout(async () => {
-      try {
-        await bot.telegram.editMessageReplyMarkup(chatId, messageId, undefined, {
-          inline_keyboard: [[{ text: '🔄 Yangi kod olish', callback_data: 'renew_otp' }]],
-        });
-      } catch {}
-    }, 61_000);
-
-  } catch (err: any) {
-    console.error('renew_otp xatosi:', err.message);
-    await ctx.answerCbQuery('Xatolik yuz berdi');
-  }
-});
 
 // ─── /help ────────────────────────────────────────────────────────────────────
 
@@ -245,7 +179,7 @@ bot.command('help', async (ctx: Context) => {
   await ctx.replyWithMarkdown(
     `*Avto Komment Bot — yordam*\n\n` +
     `🔹 /start — Ro'yxatdan o'tish yoki xush kelibsiz xabari\n` +
-    `🔹 /login — Saytga kirish uchun kod olish\n` +
+    `🔹 /login — Saytga kirish uchun maxsus havola olish\n` +
     `🔹 /help  — Ushbu yordam xabari`,
   );
 });

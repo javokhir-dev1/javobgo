@@ -1,58 +1,16 @@
 'use client';
 
-import { useRef, useState, useEffect, KeyboardEvent, ClipboardEvent } from 'react';
-import { useRouter } from 'next/navigation';
-import { Bot, Zap, Shield, Clock, AlertTriangle, Loader2 } from 'lucide-react';
-import { verifyOtpAction } from '../actions/auth';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Bot, Zap, Shield, AlertTriangle, Loader2, Send } from 'lucide-react';
+import { verifyAuthTokenAction } from '../actions/auth';
 import { getSettings } from '@/lib/api';
 
-const OTP_LENGTH = 6;
-
-export default function LoginPage() {
-  const [digits, setDigits] = useState<string[]>(Array(OTP_LENGTH).fill(''));
+function LoginContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [countdown, setCountdown] = useState<number | null>(null);
-  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const router = useRouter();
-
-  const focusNext = (index: number) => {
-    if (index < OTP_LENGTH - 1) inputRefs.current[index + 1]?.focus();
-  };
-  const focusPrev = (index: number) => {
-    if (index > 0) inputRefs.current[index - 1]?.focus();
-  };
-
-  const submit = async (otp: string) => {
-    setIsLoading(true);
-    setError('');
-    try {
-      const result = await verifyOtpAction(otp);
-
-      if (!result.ok) {
-        if (result.error === 'invalid_or_expired_otp') {
-          setError("Kod noto'g'ri yoki muddati o'tgan. Yangi kod oling.");
-        } else if (result.error === 'too_many_requests') {
-          setError("Juda ko'p urinish. Biroz kuting.");
-        } else if (result.error === 'backend_unreachable') {
-          setError("Server bilan bog'lanib bo'lmadi. Iltimos qayta urinib ko'ring.");
-        } else {
-          setError("Noto'g'ri kod formati.");
-        }
-        setDigits(Array(OTP_LENGTH).fill(''));
-        setTimeout(() => inputRefs.current[0]?.focus(), 0);
-        return;
-      }
-
-      router.push('/');
-    } catch {
-      setError("Xatolik yuz berdi. Iltimos qayta urinib ko'ring.");
-      setDigits(Array(OTP_LENGTH).fill(''));
-      setTimeout(() => inputRefs.current[0]?.focus(), 0);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     // Akkaunt mavjud bo'lsa (valid token), bosh sahifaga qaytarish
@@ -60,69 +18,40 @@ export default function LoginPage() {
       .then(() => router.replace('/'))
       .catch(() => {}); // Token yo'q yoki yaroqsiz bo'lsa, shu yerda qoladi
 
-    const params = new URLSearchParams(window.location.search);
-    const urlOtp = params.get('otp');
-    if (urlOtp && /^\d{6}$/.test(urlOtp)) {
-      setDigits(urlOtp.split(''));
-      submit(urlOtp);
+    const token = searchParams.get('token');
+    if (token) {
+      submitToken(token);
     }
-  }, [router]);
+  }, [router, searchParams]);
 
-  useEffect(() => {
-    const hasDigit = digits.some(d => d !== '');
-    if (!hasDigit || countdown !== null) return;
-    setCountdown(60);
-  }, [digits]);
-
-  useEffect(() => {
-    if (countdown === null || countdown <= 0) return;
-    const t = setTimeout(() => setCountdown(prev => (prev !== null ? prev - 1 : null)), 1000);
-    return () => clearTimeout(t);
-  }, [countdown]);
-
-  useEffect(() => {
-    const otp = digits.join('');
-    if (otp.length === OTP_LENGTH && !isLoading) {
-      submit(otp);
-    }
-  }, [digits]);
-
-  const handleChange = (index: number, value: string) => {
-    const digit = value.replace(/\D/g, '').slice(-1);
-    const next = [...digits];
-    next[index] = digit;
-    setDigits(next);
+  const submitToken = async (token: string) => {
+    setIsLoading(true);
     setError('');
-    if (digit) focusNext(index);
-  };
+    try {
+      const result = await verifyAuthTokenAction(token);
 
-  const handleKeyDown = (index: number, e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Backspace') {
-      if (digits[index]) {
-        const next = [...digits];
-        next[index] = '';
-        setDigits(next);
-      } else {
-        focusPrev(index);
+      if (!result.ok) {
+        if (result.error === 'invalid_or_expired_token') {
+          setError("Havola noto'g'ri yoki muddati o'tgan. Telegram bot orqali qayta urinib ko'ring.");
+        } else if (result.error === 'too_many_requests') {
+          setError("Juda ko'p urinish. Biroz kuting.");
+        } else if (result.error === 'backend_unreachable') {
+          setError("Server bilan bog'lanib bo'lmadi. Iltimos qayta urinib ko'ring.");
+        } else {
+          setError("Noto'g'ri havola formati.");
+        }
+        return;
       }
-    } else if (e.key === 'ArrowLeft') {
-      focusPrev(index);
-    } else if (e.key === 'ArrowRight') {
-      focusNext(index);
+
+      router.push('/');
+    } catch {
+      setError("Xatolik yuz berdi. Iltimos qayta urinib ko'ring.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handlePaste = (e: ClipboardEvent<HTMLInputElement>) => {
-    e.preventDefault();
-    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, OTP_LENGTH);
-    if (!pasted) return;
-    const next = Array(OTP_LENGTH).fill('');
-    for (let i = 0; i < pasted.length; i++) next[i] = pasted[i];
-    setDigits(next);
-    setError('');
-    const focusIndex = Math.min(pasted.length, OTP_LENGTH - 1);
-    inputRefs.current[focusIndex]?.focus();
-  };
+  const hasToken = !!searchParams.get('token');
 
   return (
     <main className="flex-grow flex min-h-screen bg-background">
@@ -170,11 +99,9 @@ export default function LoginPage() {
             ))}
           </div>
         </div>
-
-
       </div>
 
-      {/* Right Panel — OTP */}
+      {/* Right Panel — Auth Container */}
       <div className="flex-1 flex flex-col items-center justify-center p-6 md:p-12 relative">
         {/* Mobile Header */}
         <div className="lg:hidden absolute top-6 left-6 flex items-center gap-2">
@@ -187,81 +114,55 @@ export default function LoginPage() {
           </span>
         </div>
 
-        <div className="w-full max-w-[420px]">
-          <div className="text-center mb-10">
-            <h1 className="text-[32px] font-extrabold text-on-surface tracking-tight mb-3">Xush kelibsiz</h1>
-            <p className="text-[15px] text-on-surface-variant">
-              Platformaga kirish uchun Telegram bot yuborgan tasdiqlash kodini kiriting
-            </p>
-          </div>
+        <div className="w-full max-w-[420px] text-center">
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center space-y-4">
+              <Loader2 className="w-12 h-12 text-primary animate-spin" />
+              <h1 className="text-[24px] font-extrabold text-on-surface tracking-tight">Kirish bajarilmoqda...</h1>
+              <p className="text-[15px] text-on-surface-variant">Iltimos, kutib turing.</p>
+            </div>
+          ) : hasToken && !error ? (
+            <div className="flex flex-col items-center justify-center space-y-4">
+              <Loader2 className="w-12 h-12 text-primary animate-spin" />
+              <h1 className="text-[24px] font-extrabold text-on-surface tracking-tight">Tekshirilmoqda...</h1>
+            </div>
+          ) : (
+            <>
+              <div className="mb-10">
+                <h1 className="text-[32px] font-extrabold text-on-surface tracking-tight mb-3">Xush kelibsiz</h1>
+                <p className="text-[15px] text-on-surface-variant">
+                  Platformaga kirish uchun rasmiy Telegram botimizdan foydalaning.
+                </p>
+              </div>
 
-          <div className="flex items-start gap-4 w-full p-4 rounded-2xl mb-10 bg-primary/5 border border-primary/20">
-            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 text-primary">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0z" fill="currentColor"/>
-                <path d="M5.491 11.74l11.57-4.461c.537-.194 1.006.131.832.943l.001-.001-1.97 9.281c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953z" fill="var(--md-background)"/>
-              </svg>
-            </div>
-            <div className="flex-1 pt-1">
-              <p className="text-[14px] text-on-surface leading-snug">
-                Telegram botimizga o'ting va <code className="bg-surface-variant text-primary font-mono text-[13px] px-1.5 py-0.5 rounded-md font-semibold">/login</code> buyrug'ini yuboring. 1 daqiqa amal qiladigan parol olasiz.
-              </p>
-            </div>
-          </div>
+              {error && (
+                <div className="flex items-center gap-3 p-4 rounded-xl text-[14px] font-medium bg-error/10 border border-error/20 text-error mb-8 shadow-sm text-left">
+                  <AlertTriangle className="w-5 h-5 flex-shrink-0" />
+                  <p>{error}</p>
+                </div>
+              )}
 
-          <div className="flex gap-3 justify-between mb-8">
-            {digits.map((digit, i) => (
-              <input
-                key={i}
-                ref={(el) => { inputRefs.current[i] = el; }}
-                type="text"
-                inputMode="numeric"
-                maxLength={1}
-                value={digit}
-                disabled={isLoading}
-                onChange={(e) => handleChange(i, e.target.value)}
-                onKeyDown={(e) => handleKeyDown(i, e)}
-                onPaste={handlePaste}
-                onFocus={(e) => e.target.select()}
-                className={`
-                  w-[60px] h-[68px] text-center text-2xl font-bold rounded-2xl outline-none transition-all duration-200
-                  bg-surface text-on-surface border-[2px]
-                  ${error ? 'border-error bg-error/5 text-error' : digit ? 'border-primary shadow-[0_4px_20px_-4px_rgba(139,92,246,0.15)] bg-surface-container-lowest' : 'border-outline-variant/40 hover:border-outline-variant/60 focus:border-primary/50 bg-surface'}
-                `}
-                style={{ opacity: isLoading ? 0.6 : 1 }}
-                autoComplete="one-time-code"
-              />
-            ))}
-          </div>
-
-          {isLoading && (
-            <div className="flex items-center justify-center gap-2.5 py-3 mb-6 text-[14px] font-medium text-primary bg-primary/5 rounded-xl animate-pulse">
-              <Loader2 className="animate-spin w-4 h-4" />
-              Kodni tekshirmoqdamiz...
-            </div>
-          )}
-
-          {error && (
-            <div className="flex items-center gap-3 p-4 rounded-xl text-[14px] font-medium bg-error/10 border border-error/20 text-error mb-6 shadow-sm">
-              <AlertTriangle className="w-5 h-5 flex-shrink-0" />
-              <p>{error}</p>
-            </div>
-          )}
-
-          {countdown !== null && countdown > 0 && !isLoading && !error && (
-            <div className="flex items-center justify-center gap-2.5 text-[14px] font-medium text-on-surface-variant mt-6 bg-surface-container-low py-3 rounded-xl">
-              <Clock size={16} className="text-primary" />
-              <span>Kod <span className="text-primary">{countdown}</span> soniyada o'z kuchini yo'qotadi</span>
-            </div>
-          )}
-          {countdown === 0 && !isLoading && (
-            <div className="flex items-center gap-3 p-4 rounded-xl text-[14px] font-medium bg-[#f59e0b]/10 border border-[#f59e0b]/20 text-[#d97706] dark:text-[#fbbf24] mt-6 shadow-sm">
-              <AlertTriangle className="w-5 h-5 flex-shrink-0" />
-              <p>Kod muddati o'tdi. Telegram botda qaytadan <span className="font-bold">/login</span> yuboring.</p>
-            </div>
+              <a
+                href={process.env.NEXT_PUBLIC_BOT_URL || 'https://t.me/javobgobot'}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-2xl bg-primary text-on-primary font-bold text-[16px] transition-all hover:bg-primary/90 hover:scale-[1.02] shadow-[0_8px_30px_-4px_rgba(139,92,246,0.3)]"
+              >
+                <Send className="w-5 h-5" />
+                Telegram orqali kirish
+              </a>
+            </>
           )}
         </div>
       </div>
     </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center"><Loader2 className="w-10 h-10 animate-spin text-primary" /></div>}>
+      <LoginContent />
+    </Suspense>
   );
 }

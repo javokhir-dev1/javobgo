@@ -16,11 +16,11 @@ function isRateLimited(ip: string, max = 5, windowMs = 60_000): boolean {
   return false;
 }
 
-export type OtpResult =
+export type AuthTokenResult =
   | { ok: true; user: { first_name: string; telegram_id: string; username: string | null } }
-  | { ok: false; error: 'invalid_otp_format' | 'invalid_or_expired_otp' | 'too_many_requests' | 'backend_unreachable' };
+  | { ok: false; error: 'invalid_token_format' | 'invalid_or_expired_token' | 'too_many_requests' | 'backend_unreachable' };
 
-export async function verifyOtpAction(otp: string): Promise<OtpResult> {
+export async function verifyAuthTokenAction(token: string): Promise<AuthTokenResult> {
   const headerStore = await headers();
   const ip =
     headerStore.get('x-forwarded-for')?.split(',')[0].trim() ||
@@ -31,23 +31,23 @@ export async function verifyOtpAction(otp: string): Promise<OtpResult> {
     return { ok: false, error: 'too_many_requests' };
   }
 
-  if (!otp || otp.length !== 6 || !/^\d{6}$/.test(otp)) {
-    return { ok: false, error: 'invalid_otp_format' };
+  if (!token) {
+    return { ok: false, error: 'invalid_token_format' };
   }
 
   console.log('[Action] BACKEND_URL:', BACKEND_URL);
   console.log('[Action] INTERNAL_API_SECRET set:', !!INTERNAL_API_SECRET);
-  console.log('[Action] OTP yuborilmoqda:', otp);
+  console.log('[Action] Token yuborilmoqda:', token);
 
   let res: Response;
   try {
-    res = await fetch(`${BACKEND_URL}/auth/verify-otp`, {
+    res = await fetch(`${BACKEND_URL}/auth/verify-token`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'x-internal-secret': INTERNAL_API_SECRET,
       },
-      body: JSON.stringify({ otp }),
+      body: JSON.stringify({ token }),
       cache: 'no-store',
     });
   } catch (err: any) {
@@ -57,12 +57,15 @@ export async function verifyOtpAction(otp: string): Promise<OtpResult> {
 
   console.log('[Action] Backend javobi status:', res.status);
 
-  if (res.status === 429) return { ok: false, error: 'too_many_requests' };
+  if (!res.ok) {
+    if (res.status === 400) return { ok: false, error: 'invalid_token_format' };
+    if (res.status === 401) return { ok: false, error: 'invalid_or_expired_token' };
+    if (res.status === 429) return { ok: false, error: 'too_many_requests' };
+    return { ok: false, error: 'backend_unreachable' };
+  }
 
   const data = await res.json().catch(() => ({}));
   console.log('[Action] Backend javobi body:', data);
-
-  if (!res.ok) return { ok: false, error: 'invalid_or_expired_otp' };
 
   const setCookieHeader = res.headers.get('set-cookie');
   if (setCookieHeader) {

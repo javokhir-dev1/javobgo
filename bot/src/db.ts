@@ -1,4 +1,5 @@
 import { Pool } from 'pg';
+import { randomUUID } from 'crypto';
 
 export const pool = new Pool({
   host:     process.env.DB_HOST     || 'localhost',
@@ -42,8 +43,8 @@ export async function isUserRegistered(telegramId: string): Promise<boolean> {
   return (res.rowCount ?? 0) > 0;
 }
 
-/** Hali muddati o'tmagan OTP ni olish */
-export async function getActiveOtp(telegramId: string): Promise<string | null> {
+/** Hali muddati o'tmagan tokenni olish */
+export async function getActiveAuthToken(telegramId: string): Promise<string | null> {
   const res = await pool.query(
     `SELECT token FROM auth_tokens
      WHERE telegram_id = $1 AND is_used = false AND expires_at > NOW()
@@ -53,29 +54,29 @@ export async function getActiveOtp(telegramId: string): Promise<string | null> {
   return (res.rowCount ?? 0) > 0 ? res.rows[0].token : null;
 }
 
-/** Yangi OTP yaratish (eskisini o'chirib) */
-export async function createOtp(telegramId: string): Promise<string> {
+/** Yangi token yaratish (eskisini o'chirib) */
+export async function createAuthToken(telegramId: string): Promise<string> {
   await pool.query(
     `DELETE FROM auth_tokens WHERE telegram_id = $1 AND is_used = false`,
     [telegramId],
   );
 
-  let otp: string;
+  let token: string;
   let exists: boolean;
   do {
-    otp = String(Math.floor(100000 + Math.random() * 900000));
+    token = randomUUID();
     const res = await pool.query(
       `SELECT 1 FROM auth_tokens WHERE token = $1 AND is_used = false AND expires_at > NOW()`,
-      [otp],
+      [token],
     );
     exists = (res.rowCount ?? 0) > 0;
   } while (exists);
 
-  const expiresAt = new Date(Date.now() + 60 * 1000); // 1 daqiqa
+  const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 daqiqa
   await pool.query(
     `INSERT INTO auth_tokens (telegram_id, token, is_used, expires_at) VALUES ($1, $2, false, $3)`,
-    [telegramId, otp, expiresAt],
+    [telegramId, token, expiresAt],
   );
 
-  return otp;
+  return token;
 }

@@ -41,8 +41,8 @@ export class AuthService {
     return result;
   }
 
-  async verifyOtp(otp: string): Promise<{ jwt: string; user: TelegramUser } | null> {
-    return this.validateTelegramToken(otp);
+  async verifyAuthToken(token: string): Promise<{ jwt: string; user: TelegramUser } | null> {
+    return this.validateTelegramToken(token);
   }
 
   async validateTelegramToken(

@@ -66,9 +66,9 @@ export class AuthController {
 
   @UseGuards(InternalSecretGuard)
   @HttpCode(HttpStatus.OK)
-  @Post('verify-otp')
-  async verifyOtp(
-    @Body() body: { otp: string },
+  @Post('verify-token')
+  async verifyToken(
+    @Body() body: { token: string },
     @Req() req: Request,
     @Res() res: Response,
   ) {
@@ -77,14 +77,14 @@ export class AuthController {
       return res.status(429).json({ error: 'too_many_requests' });
     }
 
-    const otp = (body.otp || '').trim();
-    if (!otp || otp.length !== 6 || !/^\d{6}$/.test(otp)) {
-      return res.status(400).json({ error: 'invalid_otp_format' });
+    const token = (body.token || '').trim();
+    if (!token) {
+      return res.status(400).json({ error: 'invalid_token_format' });
     }
 
-    const result = await this.authService.verifyOtp(otp);
+    const result = await this.authService.verifyAuthToken(token);
     if (!result) {
-      return res.status(401).json({ error: 'invalid_or_expired_otp' });
+      return res.status(401).json({ error: 'invalid_or_expired_token' });
     }
 
     const isProduction = process.env.NODE_ENV === 'production';
