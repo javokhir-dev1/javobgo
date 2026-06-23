@@ -18,10 +18,6 @@ const navItems = [
   { href: '/logs',       icon: FileText,        label: 'Loglar' },
 ];
 
-const bottomItems = [
-  { href: '/settings', icon: Settings, label: 'Sozlamalar' },
-];
-
 const IgIcon = ({ size = 15 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
@@ -207,17 +203,14 @@ export default function Sidebar() {
         {navItems.map(item => <NavLink key={item.href} {...item} pathname={pathname} />)}
       </nav>
 
-      {/* Bottom nav */}
-      <div className="px-2 pb-2 border-t border-outline-variant/30 pt-2">
-        {bottomItems.map(item => <NavLink key={item.href} {...item} pathname={pathname} />)}
-      </div>
+
 
       {/* User profile */}
-      <div className="border-t border-outline-variant/30">
+      <div className="border-t border-outline-variant/30 mt-auto">
         <Link
-          href="/profile"
+          href="/settings"
           className={`px-4 py-4 flex items-center gap-3 transition-colors ${
-            pathname === '/profile' ? 'bg-primary-fixed' : 'hover:bg-surface-container-low'
+            pathname === '/settings' ? 'bg-primary-fixed' : 'hover:bg-surface-container-low'
           }`}
         >
           {avatarSrc ? (
@@ -228,20 +221,18 @@ export default function Sidebar() {
             </div>
           )}
           <div className="min-w-0 flex-1">
-            <p className={`text-[14px] font-semibold leading-tight truncate ${pathname === '/profile' ? 'text-primary' : 'text-on-surface'}`}>
+            <p className={`text-[14px] font-semibold leading-tight truncate ${pathname === '/settings' ? 'text-primary' : 'text-on-surface'}`}>
               {user?.first_name ?? '...'}
             </p>
             <p className="text-[12px] text-on-surface-variant truncate">
               {user?.username ? `@${user.username}` : 'Telegram foydalanuvchi'}
             </p>
           </div>
-          <button
-            onClick={e => { e.stopPropagation(); toggleTheme(); }}
-            className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface transition-colors flex-shrink-0"
-            title={theme === 'dark' ? "Yorug' rejim" : "Qorong'u rejim"}
+          <div
+            className="w-8 h-8 flex items-center justify-center rounded-lg text-on-surface-variant transition-colors flex-shrink-0"
           >
-            {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
-          </button>
+            <Settings size={18} />
+          </div>
         </Link>
       </div>
     </aside>
