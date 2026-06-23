@@ -4,10 +4,11 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   Instagram, Link2, Trash2, CheckCircle, AlertCircle, Loader2, ExternalLink, 
-  Check, User, LogOut, Hash, Pencil, X, Camera 
+  Check, User, LogOut, Hash, Pencil, X, Camera, Sun, Moon
 } from 'lucide-react';
 import { useInstagram, useInstagramRefresh } from '@/context/InstagramContext';
 import { disconnectInstagramAccount } from '@/lib/api';
+import { useTheme } from '@/components/ThemeProvider';
 
 interface UserInfo {
   telegram_id: string;
@@ -22,6 +23,7 @@ export default function SettingsPage() {
   
   const { accounts, selectedAccount, selectAccount } = useInstagram();
   const refreshInstagram = useInstagramRefresh();
+  const { theme, toggleTheme } = useTheme();
   
   const [connecting, setConnecting] = useState(false);
   const [error, setError] = useState('');
@@ -251,10 +253,10 @@ export default function SettingsPage() {
                         </button>
                       </div>
                     ) : (
-                      <div className="flex items-center gap-2 group">
+                      <div className="flex items-center gap-2">
                         <p className="text-[22px] font-bold text-on-surface truncate">{user?.first_name ?? '—'}</p>
                         <button onClick={startEditName}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-lg hover:bg-surface-container">
+                          className="p-1 rounded-lg hover:bg-surface-container transition-colors">
                           <Pencil size={14} className="text-on-surface-variant" />
                         </button>
                       </div>
@@ -265,41 +267,36 @@ export default function SettingsPage() {
                   </div>
                 </div>
 
-                {/* Telegram ma'lumotlari */}
+
+              </div>
+
+              {/* === TASHQI KO'RINISh === */}
+              <div className="space-y-4 pt-6 border-t border-outline-variant/30">
+                <h3 className="text-[18px] font-semibold text-on-surface">Tashqi ko'rinish</h3>
+                
                 <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl overflow-hidden">
-                  <div className="px-6 py-4 border-b border-outline-variant/20">
-                    <p className="text-[12px] font-semibold text-on-surface-variant uppercase tracking-wider">Telegram</p>
-                  </div>
-                  <div className="divide-y divide-outline-variant/20">
-                    <div className="px-6 py-4 flex items-center gap-4">
-                      <div className="w-9 h-9 rounded-lg bg-surface-container flex items-center justify-center flex-shrink-0">
-                        <User size={16} className="text-on-surface-variant" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[12px] text-on-surface-variant">Ism</p>
-                        <p className="text-[15px] font-medium text-on-surface">{user?.first_name ?? '—'}</p>
-                      </div>
-                    </div>
-                    {user?.username && (
-                      <div className="px-6 py-4 flex items-center gap-4">
-                        <div className="w-9 h-9 rounded-lg bg-surface-container flex items-center justify-center flex-shrink-0">
-                          <span className="text-[15px] font-bold text-on-surface-variant">@</span>
-                        </div>
-                        <div>
-                          <p className="text-[12px] text-on-surface-variant">Username</p>
-                          <p className="text-[15px] font-medium text-on-surface">@{user.username}</p>
-                        </div>
-                      </div>
-                    )}
-                    <div className="px-6 py-4 flex items-center gap-4">
-                      <div className="w-9 h-9 rounded-lg bg-surface-container flex items-center justify-center flex-shrink-0">
-                        <Hash size={16} className="text-on-surface-variant" />
+                  <div className="px-6 py-4 flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-xl bg-surface-container flex items-center justify-center flex-shrink-0">
+                        {theme === 'dark' ? <Moon size={20} className="text-primary" /> : <Sun size={20} className="text-[#f09433]" />}
                       </div>
                       <div>
-                        <p className="text-[12px] text-on-surface-variant">Telegram ID</p>
-                        <p className="text-[15px] font-medium text-on-surface font-mono">{user?.telegram_id ?? '—'}</p>
+                        <p className="text-[15px] font-medium text-on-surface">Kun / Tun rejimi</p>
+                        <p className="text-[13px] text-on-surface-variant">Ilovaning mavzusini o'zgartirish</p>
                       </div>
                     </div>
+                    <button
+                      onClick={toggleTheme}
+                      className={`w-12 h-6 rounded-full relative transition-colors focus:outline-none ${
+                        theme === 'dark' ? 'bg-primary' : 'bg-surface-variant'
+                      }`}
+                    >
+                      <div
+                        className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${
+                          theme === 'dark' ? 'translate-x-6' : 'translate-x-0'
+                        }`}
+                      />
+                    </button>
                   </div>
                 </div>
               </div>

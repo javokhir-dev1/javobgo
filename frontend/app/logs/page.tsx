@@ -1,7 +1,7 @@
 'use client';
 import InstagramRequired from '@/components/InstagramRequired';
 import { useEffect, useRef, useState } from 'react';
-import { RefreshCw, Inbox, MessageSquare, Send, AlertCircle, CheckCircle2, Info } from 'lucide-react';
+import { RefreshCw, Inbox, MessageSquare, Send, AlertCircle, CheckCircle2, Info, Layers, ShieldAlert, CheckCircle, Activity } from 'lucide-react';
 import { getLogs, getTodayStats } from '@/lib/api';
 import { useInstagramStatus } from '@/context/InstagramContext';
 
@@ -25,7 +25,7 @@ const TYPE_STYLES = {
     text: 'text-emerald-600 dark:text-emerald-400',
     bg: 'bg-emerald-50 dark:bg-emerald-950/30',
     border: 'border-emerald-200/60 dark:border-emerald-800/30',
-    icon: CheckCircle2,
+    icon: CheckCircle,
   },
   error: {
     dot: 'bg-red-500',
@@ -33,7 +33,7 @@ const TYPE_STYLES = {
     text: 'text-red-500',
     bg: 'bg-red-50 dark:bg-red-950/30',
     border: 'border-red-200/60 dark:border-red-800/30',
-    icon: AlertCircle,
+    icon: ShieldAlert,
   },
   info: {
     dot: 'bg-blue-500',
@@ -41,15 +41,15 @@ const TYPE_STYLES = {
     text: 'text-blue-500',
     bg: 'bg-blue-50 dark:bg-blue-950/30',
     border: 'border-blue-200/60 dark:border-blue-800/30',
-    icon: Info,
+    icon: Activity,
   },
 };
 
-const FILTERS: { key: Filter; label: string }[] = [
-  { key: 'all',     label: 'Hammasi' },
-  { key: 'success', label: 'Muvaffaqiyat' },
-  { key: 'error',   label: 'Xatolar' },
-  { key: 'info',    label: 'Info' },
+const FILTERS: { key: Filter; label: string; icon: any }[] = [
+  { key: 'all',     label: 'Hammasi', icon: Layers },
+  { key: 'success', label: 'Muvaffaqiyat', icon: CheckCircle },
+  { key: 'error',   label: 'Xatolar', icon: ShieldAlert },
+  { key: 'info',    label: 'Info', icon: Activity },
 ];
 
 function StatCard({
@@ -146,8 +146,9 @@ export default function LogsPage() {
               <p className="text-[15px] text-on-surface-variant mt-1">Bot faoliyatining to'liq tarixi</p>
             </div>
             <button onClick={load}
-              className="flex items-center gap-2 px-4 py-2.5 text-[14px] font-medium border border-outline-variant/50 rounded-xl bg-surface-container-lowest hover:bg-surface-container-low transition-colors text-on-surface-variant">
-              <RefreshCw size={15} className={loading ? 'animate-spin' : ''} />
+              className="group relative flex items-center gap-2 px-5 py-2.5 text-[14px] font-semibold rounded-xl bg-surface-container hover:bg-surface-container-high transition-all active:scale-95 text-on-surface overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              <RefreshCw size={16} className={`text-primary transition-transform ${loading ? 'animate-spin' : 'group-hover:rotate-180 duration-500'}`} />
               Yangilash
             </button>
           </header>
@@ -169,25 +170,30 @@ export default function LogsPage() {
           )}
 
           {/* Filter tabs */}
-          <div className="flex items-center gap-2 mb-4">
+          <div className="flex items-center gap-1.5 mb-5 bg-surface-container-low/50 border border-outline-variant/30 p-1.5 rounded-2xl w-fit backdrop-blur-sm">
             {FILTERS.map(f => {
               const count = f.key === 'all' ? logs.length
                 : logs.filter(l => l.type === f.key).length;
+              const Icon = f.icon;
               return (
                 <button
                   key={f.key}
                   onClick={() => setFilter(f.key)}
-                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-[13px] font-medium transition-all ${
+                  className={`relative flex items-center gap-2 px-4 py-2 rounded-xl text-[13px] font-semibold transition-all duration-300 ${
                     filter === f.key
-                      ? 'bg-primary text-white shadow-sm'
-                      : 'bg-surface-container-lowest border border-outline-variant/40 text-on-surface-variant hover:bg-surface-container-low'
+                      ? 'text-on-surface shadow-sm'
+                      : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low'
                   }`}
                 >
+                  {filter === f.key && (
+                    <div className="absolute inset-0 bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/20 -z-10" />
+                  )}
+                  <Icon size={14} className={filter === f.key ? 'text-primary' : 'text-on-surface-variant/70'} />
                   {f.label}
-                  <span className={`text-[11px] px-1.5 py-0.5 rounded-full font-semibold ${
+                  <span className={`text-[11px] px-1.5 py-0.5 rounded-full font-bold transition-colors ${
                     filter === f.key
-                      ? 'bg-white/20 text-white'
-                      : 'bg-surface-container text-on-surface-variant'
+                      ? 'bg-primary/10 text-primary'
+                      : 'bg-surface-container text-on-surface-variant/70'
                   }`}>{count}</span>
                 </button>
               );
@@ -233,8 +239,8 @@ export default function LogsPage() {
                     <div key={log.id}
                       className="flex items-start px-6 py-3.5 border-b border-outline-variant/20 last:border-b-0 hover:bg-surface-container-low/60 transition-colors group">
                       {/* Icon */}
-                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${style.bg} border ${style.border}`}>
-                        <Icon size={14} className={style.text} />
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${style.bg} border ${style.border} shadow-sm transition-transform group-hover:scale-110 duration-300`}>
+                        <Icon size={18} className={style.text} />
                       </div>
 
                       {/* Content */}
