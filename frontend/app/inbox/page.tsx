@@ -1,10 +1,10 @@
 'use client';
 import InstagramRequired from '@/components/InstagramRequired';
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { MessageCircle, Send, Search, X, Instagram, Settings, Bot, FileText, Plus, Trash2, ChevronRight } from 'lucide-react';
+import { MessageCircle, Send, Search, X, Instagram, Settings, Bot, FileText, Plus, Trash2, ChevronRight, RefreshCw } from 'lucide-react';
 import {
   getConversations, getInboxMessages, sendInboxMessage, getInboxEventsUrl, getInboxUserInfo,
-  getSettings, updateSettings, getDmMessages, updateDmMessages, getAgents,
+  getSettings, updateSettings, getDmMessages, updateDmMessages, getAgents, syncInbox,
 } from '@/lib/api';
 import { useInstagramStatus } from '@/context/InstagramContext';
 
@@ -56,13 +56,14 @@ function avatarColor(username: string): string {
   return colors[Math.abs(hash) % colors.length];
 }
 
-function Avatar({ username, profilePic, size = 40 }: { username: string; profilePic?: string | null; size?: number }) {
+function Avatar({ username, profilePic, igsid, size = 40 }: { username: string; profilePic?: string | null; igsid?: string; size?: number }) {
   if (profilePic) {
     return (
       <img
         src={profilePic}
         alt={username}
         style={{ width: size, height: size, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
+        referrerPolicy="no-referrer"
       />
     );
   }
@@ -341,7 +342,7 @@ function ProfileModal({ igsid, conv, onClose }: { igsid: string; conv: Conversat
             {pic ? (
               <>
                 <button onClick={() => setImgZoom(true)} className="mb-3 rounded-full hover:opacity-90 transition-opacity focus:outline-none">
-                  <img src={pic} alt={username} className="w-20 h-20 rounded-full object-cover border-2 border-outline-variant/30" />
+                  <img src={pic} alt={username} className="w-20 h-20 rounded-full object-cover border-2 border-outline-variant/30" referrerPolicy="no-referrer" />
                 </button>
                 {imgZoom && (
                   <div
@@ -353,6 +354,7 @@ function ProfileModal({ igsid, conv, onClose }: { igsid: string; conv: Conversat
                       alt={username}
                       className="max-w-[90vw] max-h-[90vh] rounded-2xl shadow-2xl object-contain"
                       onClick={e => e.stopPropagation()}
+                      referrerPolicy="no-referrer"
                     />
                     <button
                       onClick={() => setImgZoom(false)}
@@ -401,6 +403,7 @@ export default function InboxPage() {
   const [search, setSearch]               = useState('');
   const [sending, setSending]             = useState(false);
   const [loadingMsgs, setLoadingMsgs]     = useState(false);
+  const [syncing, setSyncing]             = useState(false);
   const [profileModal, setProfileModal]   = useState<Conversation | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef  = useRef<HTMLTextAreaElement>(null);
@@ -469,6 +472,19 @@ export default function InboxPage() {
     setLoadingMsgs(false);
   };
 
+  const handleSync = async () => {
+    if (syncing) return;
+    setSyncing(true);
+    try {
+      await syncInbox();
+      await loadConversations();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
@@ -533,14 +549,24 @@ export default function InboxPage() {
       <div className="w-80 flex-shrink-0 flex flex-col border-r border-outline-variant/30 bg-surface-container-lowest">
 
         {/* Header */}
-        <div className="px-4 pt-5 pb-3 flex items-center gap-2">
-          <MessageCircle size={20} className="text-primary" />
-          <h2 className="text-[17px] font-semibold text-on-surface">Xabarlar</h2>
-          {totalUnread > 0 && (
-            <span className="px-1.5 py-0.5 rounded-full bg-primary text-white text-[11px] font-bold leading-none">
-              {totalUnread}
-            </span>
-          )}
+        <div className="px-4 pt-5 pb-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <MessageCircle size={20} className="text-primary" />
+            <h2 className="text-[17px] font-semibold text-on-surface">Xabarlar</h2>
+            {totalUnread > 0 && (
+              <span className="px-1.5 py-0.5 rounded-full bg-primary text-white text-[11px] font-bold leading-none">
+                {totalUnread}
+              </span>
+            )}
+          </div>
+          <button
+            onClick={handleSync}
+            disabled={syncing}
+            className={`w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-container transition-colors ${syncing ? 'opacity-50' : ''}`}
+            title="Sinxronizatsiya"
+          >
+            <RefreshCw size={16} className={`text-on-surface-variant ${syncing ? 'animate-spin' : ''}`} />
+          </button>
         </div>
 
         {/* Qidiruv */}
@@ -580,7 +606,7 @@ export default function InboxPage() {
                   }`}
                 >
                   <div className="relative flex-shrink-0" onClick={e => { e.stopPropagation(); setProfileModal(conv); }}>
-                    <Avatar username={conv.participantUsername || conv.participantIgsid} profilePic={conv.participantProfilePic} />
+                    <Avatar username={conv.participantUsername || conv.participantIgsid} profilePic={conv.participantProfilePic} igsid={conv.participantIgsid} />
                     {(conv.unreadCount || 0) > 0 && (
                       <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-primary text-white text-[10px] font-bold flex items-center justify-center">
                         {conv.unreadCount > 9 ? '9+' : conv.unreadCount}
@@ -615,7 +641,7 @@ export default function InboxPage() {
             {/* Chat header */}
             <div className="shrink-0 flex items-center gap-3 px-5 py-3.5 border-b border-outline-variant/30 bg-surface-container">
               <button onClick={() => setProfileModal(selected)} className="rounded-full hover:opacity-80 transition-opacity">
-                <Avatar username={selected.participantUsername || selected.participantIgsid} profilePic={selected.participantProfilePic} size={36} />
+                <Avatar username={selected.participantUsername || selected.participantIgsid} profilePic={selected.participantProfilePic} igsid={selected.participantIgsid} size={36} />
               </button>
               <div>
                 <p className="text-[15px] font-semibold text-on-surface leading-tight">

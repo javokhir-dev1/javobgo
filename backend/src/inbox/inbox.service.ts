@@ -107,9 +107,13 @@ export class InboxService {
 
     if (!conv) {
       let participantUsername = participantIgsid;
+      let participantName: string | null = null;
+      let participantProfilePic: string | null = null;
       try {
         const info = await this.instagram.getUserInfo(creds, participantIgsid);
         participantUsername = info.username || info.name || participantIgsid;
+        participantName = info.name || null;
+        participantProfilePic = info.profile_pic || null;
       } catch (e) {
         this.logger.warn(`getUserInfo xatosi (${participantIgsid}): ${e.message}`);
       }
@@ -118,6 +122,8 @@ export class InboxService {
         instagram_account_id: ig_account_id,
         participantIgsid,
         participantUsername,
+        participantName,
+        participantProfilePic,
         lastMessage:   messageText,
         lastMessageAt: now,
         unreadCount:   direction === 'in' ? 1 : 0,
@@ -211,12 +217,20 @@ export class InboxService {
 
         let participantIgsid    = '';
         let participantUsername = '';
+        let participantName: string | null = null;
+        let participantProfilePic: string | null = null;
         try {
           const participants = await this.instagram.getConversationParticipants(creds, convId);
           const other = participants.find((p: any) => p.id !== ig_account_id);
           if (other) {
             participantIgsid    = other.id       || '';
             participantUsername = other.username || other.id || '';
+            try {
+              const info = await this.instagram.getUserInfo(creds, participantIgsid);
+              participantUsername = info.username || info.name || participantUsername;
+              participantName = info.name || null;
+              participantProfilePic = info.profile_pic || null;
+            } catch(e) {}
           }
         } catch (e) {
           this.logger.warn(`Participants xatosi (${convId}): ${e.message}`);
@@ -233,6 +247,8 @@ export class InboxService {
             instagram_account_id: ig_account_id,
             participantIgsid,
             participantUsername,
+            participantName,
+            participantProfilePic,
             igConversationId: convId,
             lastMessageAt: igConv.updated_time ? new Date(igConv.updated_time) : new Date(),
           });
@@ -241,6 +257,8 @@ export class InboxService {
         } else {
           conv.igConversationId   = convId;
           conv.participantUsername = participantUsername || conv.participantUsername;
+          if (participantName) conv.participantName = participantName;
+          if (participantProfilePic) conv.participantProfilePic = participantProfilePic;
           await this.convRepo.save(conv);
         }
 
