@@ -4,11 +4,13 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   Instagram, Link2, Trash2, CheckCircle, AlertCircle, Loader2, ExternalLink, 
-  Check, User, LogOut, Hash, Pencil, X, Camera, Sun, Moon
+  Check, User, LogOut, Hash, Pencil, X, Camera, Sun, Moon, Globe
 } from 'lucide-react';
 import { useInstagram, useInstagramRefresh } from '@/context/InstagramContext';
 import { disconnectInstagramAccount } from '@/lib/api';
 import { useTheme } from '@/components/ThemeProvider';
+import { useLanguage } from '@/context/LanguageContext';
+import { Language } from '@/locales/translations';
 
 interface UserInfo {
   telegram_id: string;
@@ -24,6 +26,7 @@ export default function SettingsPage() {
   const { accounts, selectedAccount, selectAccount } = useInstagram();
   const refreshInstagram = useInstagramRefresh();
   const { theme, toggleTheme } = useTheme();
+  const { t, language, setLanguage } = useLanguage();
   
   const [connecting, setConnecting] = useState(false);
   const [error, setError] = useState('');
@@ -188,8 +191,8 @@ export default function SettingsPage() {
         <div className="max-w-2xl mx-auto space-y-8">
 
           <header>
-            <h2 className="text-[28px] font-semibold text-on-surface tracking-tight">Sozlamalar</h2>
-            <p className="text-[15px] text-on-surface-variant mt-1">Profil va Instagram hisoblaringizni boshqaring</p>
+            <h2 className="text-[28px] font-semibold text-on-surface tracking-tight">{t('settings.title')}</h2>
+            <p className="text-[15px] text-on-surface-variant mt-1">{t('settings.subtitle')}</p>
           </header>
 
           {loading ? (
@@ -206,7 +209,7 @@ export default function SettingsPage() {
 
               {/* === PROFIL QISMI === */}
               <div className="space-y-4">
-                <h3 className="text-[18px] font-semibold text-on-surface">Shaxsiy ma'lumotlar</h3>
+                <h3 className="text-[18px] font-semibold text-on-surface">{t('settings.personalInfo')}</h3>
                 
                 {/* Avatar + ism */}
                 <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-6 flex items-center gap-5">
@@ -272,17 +275,17 @@ export default function SettingsPage() {
 
               {/* === TASHQI KO'RINISh === */}
               <div className="space-y-4 pt-6 border-t border-outline-variant/30">
-                <h3 className="text-[18px] font-semibold text-on-surface">Tashqi ko'rinish</h3>
+                <h3 className="text-[18px] font-semibold text-on-surface">{t('settings.appearance')}</h3>
                 
-                <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl overflow-hidden">
+                <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl overflow-hidden divide-y divide-outline-variant/20">
                   <div className="px-6 py-4 flex items-center justify-between">
                     <div className="flex items-center gap-4">
                       <div className="w-10 h-10 rounded-xl bg-surface-container flex items-center justify-center flex-shrink-0">
                         {theme === 'dark' ? <Moon size={20} className="text-primary" /> : <Sun size={20} className="text-[#f09433]" />}
                       </div>
                       <div>
-                        <p className="text-[15px] font-medium text-on-surface">Kun / Tun rejimi</p>
-                        <p className="text-[13px] text-on-surface-variant">Ilovaning mavzusini o'zgartirish</p>
+                        <p className="text-[15px] font-medium text-on-surface">{t('settings.themeToggle')}</p>
+                        <p className="text-[13px] text-on-surface-variant">{t('settings.themeDesc')}</p>
                       </div>
                     </div>
                     <button
@@ -298,12 +301,33 @@ export default function SettingsPage() {
                       />
                     </button>
                   </div>
+
+                  <div className="px-6 py-4 flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-xl bg-surface-container flex items-center justify-center flex-shrink-0">
+                        <Globe size={20} className="text-blue-500" />
+                      </div>
+                      <div>
+                        <p className="text-[15px] font-medium text-on-surface">{t('settings.language')}</p>
+                        <p className="text-[13px] text-on-surface-variant">{t('settings.languageDesc')}</p>
+                      </div>
+                    </div>
+                    <select
+                      value={language}
+                      onChange={(e) => setLanguage(e.target.value as Language)}
+                      className="bg-surface-container border border-outline-variant/40 text-on-surface text-sm rounded-lg focus:ring-primary focus:border-primary block p-2.5 outline-none font-medium"
+                    >
+                      <option value="uz">O'zbekcha</option>
+                      <option value="en">English</option>
+                      <option value="ru">Русский</option>
+                    </select>
+                  </div>
                 </div>
               </div>
 
               {/* === INSTAGRAM QISMI === */}
               <div className="space-y-4 pt-6 border-t border-outline-variant/30">
-                <h3 className="text-[18px] font-semibold text-on-surface">Instagram hisoblar</h3>
+                <h3 className="text-[18px] font-semibold text-on-surface">{t('settings.igAccounts')}</h3>
 
                 {error && (
                   <div className="flex items-start gap-2.5 px-4 py-3 rounded-xl bg-red-500/8 border border-red-500/20 text-red-500 text-sm">
@@ -337,7 +361,7 @@ export default function SettingsPage() {
                             <p className="font-semibold text-on-surface">@{acc.instagram_username}</p>
                             {acc.is_selected && (
                               <span className="flex items-center gap-1 text-green-500 text-[11px] font-medium bg-green-500/10 px-2 py-0.5 rounded-full">
-                                <Check size={10} /> Aktiv
+                                <Check size={10} /> {t('settings.active')}
                               </span>
                             )}
                           </div>
@@ -350,7 +374,7 @@ export default function SettingsPage() {
                               onClick={() => handleSelect(acc.instagram_account_id)}
                               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-outline-variant/50 text-on-surface-variant text-[12px] font-medium hover:bg-surface-container hover:text-on-surface transition-colors"
                             >
-                              <Check size={13} /> Tanlash
+                              <Check size={13} /> {t('settings.select')}
                             </button>
                           )}
                           <button
@@ -377,8 +401,8 @@ export default function SettingsPage() {
                     style={{ background: 'linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)' }}
                   >
                     {connecting
-                      ? <><Loader2 size={16} className="animate-spin" /> Kutilmoqda...</>
-                      : <><ExternalLink size={16} /> {accounts.length > 0 ? 'Yangi akkaunt ulash' : 'Instagram orqali ulash'}</>
+                      ? <><Loader2 size={16} className="animate-spin" /> {t('settings.waiting')}</>
+                      : <><ExternalLink size={16} /> {accounts.length > 0 ? t('settings.connectNew') : t('settings.connectIg')}</>
                     }
                   </button>
                 </div>
@@ -394,7 +418,7 @@ export default function SettingsPage() {
                     <div className="w-9 h-9 rounded-lg bg-red-50 dark:bg-red-950/30 flex items-center justify-center flex-shrink-0">
                       <LogOut size={16} className="text-red-500" />
                     </div>
-                    <span className="text-[15px] font-medium">Hisobdan chiqish</span>
+                    <span className="text-[15px] font-medium">{t('settings.logout')}</span>
                   </button>
                 </div>
               </div>

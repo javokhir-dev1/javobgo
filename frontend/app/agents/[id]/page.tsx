@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Send, Bot, Trash2, Copy, Check } from 'lucide-react';
 import { getAgent, streamChatWithAgent, getAgentMessages, saveAgentMessage, clearAgentMessages } from '@/lib/api';
+import { useLanguage } from '@/context/LanguageContext';
 
 function avatarUrl(seed: string) {
   return `https://api.dicebear.com/9.x/bottts/svg?seed=${seed}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`;
@@ -16,6 +17,7 @@ function AgentAvatar({ value, className = 'w-8 h-8' }: { value: string; classNam
 }
 
 function CopyButton({ text }: { text: string }) {
+  const { t } = useLanguage();
   const [copied, setCopied] = useState(false);
   const copy = () => {
     navigator.clipboard.writeText(text).then(() => {
@@ -29,7 +31,7 @@ function CopyButton({ text }: { text: string }) {
       className="flex items-center gap-1 text-[11px] text-on-surface-variant hover:text-on-surface transition-colors px-2 py-1 rounded-md hover:bg-surface-container-high"
     >
       {copied ? <Check size={12} className="text-primary" /> : <Copy size={12} />}
-      {copied ? 'Nusxalandi' : 'Nusxa'}
+      {copied ? t('agents.chat.copied') : t('agents.chat.copy')}
     </button>
   );
 }
@@ -117,6 +119,7 @@ interface Message { role: 'user' | 'model'; text: string; }
 interface Agent   { id: number; name: string; description: string; systemPrompt: string; emoji: string; }
 
 export default function AgentChatPage() {
+  const { t } = useLanguage();
   const { id }                  = useParams<{ id: string }>();
   const router                  = useRouter();
   const [agent, setAgent]       = useState<Agent | null>(null);
@@ -166,7 +169,7 @@ export default function AgentChatPage() {
     } catch {
       setMessages(prev => {
         const updated = [...prev];
-        updated[updated.length - 1] = { role: 'model', text: "Xato yuz berdi. Qayta urinib ko'ring." };
+        updated[updated.length - 1] = { role: 'model', text: t('agents.chat.error') };
         return updated;
       });
     } finally {
@@ -209,11 +212,11 @@ export default function AgentChatPage() {
         </div>
         <button
           onClick={async () => {
-            if (!confirm('Chat tarixini tozalashni xohlaysizmi?')) return;
+            if (!confirm(t('agents.chat.clearConfirm'))) return;
             await clearAgentMessages(+id);
             setMessages([]);
           }}
-          title="Tarixni tozalash"
+          title={t('agents.chat.clearHistory')}
           className="w-9 h-9 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-error/10 hover:text-error transition-colors"
         >
           <Trash2 size={18} />
@@ -231,7 +234,7 @@ export default function AgentChatPage() {
                 <AgentAvatar value={agent.emoji} className="w-16 h-16" />
               </div>
               <h2 className="text-[22px] font-semibold text-on-surface">{agent.name}</h2>
-              <p className="text-[15px] text-on-surface-variant">Suhbatni boshlang</p>
+              <p className="text-[15px] text-on-surface-variant">{t('agents.chat.startChat')}</p>
             </div>
           ) : (
             <div className="max-w-3xl mx-auto space-y-3">
@@ -290,7 +293,7 @@ export default function AgentChatPage() {
                   e.target.style.height = Math.min(e.target.scrollHeight, 160) + 'px';
                 }}
                 onKeyDown={handleKey}
-                placeholder="Xabar yozing..."
+                placeholder={t('agents.chat.placeholder')}
                 disabled={loading}
                 autoFocus
                 className="flex-1 bg-transparent text-[15px] text-on-surface placeholder:text-on-surface-variant/50 outline-none disabled:opacity-50 ml-2 resize-none overflow-y-auto leading-6 py-2"
@@ -305,7 +308,7 @@ export default function AgentChatPage() {
               </button>
             </div>
             <p className="text-center mt-2.5 text-[11px] text-on-surface-variant/40 tracking-wide">
-              Enter — yuborish
+              {t('agents.chat.sendHint')}
             </p>
           </div>
         </div>

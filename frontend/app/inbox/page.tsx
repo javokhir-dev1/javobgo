@@ -7,6 +7,7 @@ import {
   getSettings, updateSettings, getDmMessages, updateDmMessages, getAgents, syncInbox,
 } from '@/lib/api';
 import { useInstagramStatus } from '@/context/InstagramContext';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface Conversation {
   id: number;
@@ -31,18 +32,18 @@ interface InboxMessage {
   createdAt: string;
 }
 
-function formatTime(dateStr: string | null): string {
+function formatTime(dateStr: string | null, t: any): string {
   if (!dateStr) return '';
   const d = new Date(dateStr);
   const now = new Date();
   const diff = now.getTime() - d.getTime();
   const mins = Math.floor(diff / 60000);
-  if (mins < 1) return 'Hozir';
-  if (mins < 60) return `${mins}d`;
+  if (mins < 1) return t('inbox.time.now');
+  if (mins < 60) return `${mins}${t('inbox.time.m')}`;
   const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}s`;
+  if (hrs < 24) return `${hrs}${t('inbox.time.h')}`;
   const days = Math.floor(hrs / 24);
-  if (days < 7) return `${days}k`;
+  if (days < 7) return `${days}${t('inbox.time.d')}`;
   return d.toLocaleDateString('uz-UZ', { day: '2-digit', month: '2-digit' });
 }
 
@@ -101,6 +102,7 @@ function AgentAvatar({ value, size = 28 }: { value: string; size?: number }) {
 // ─── DM Sozlamalari paneli ───────────────────────────────────────────────────
 
 function DmSettingsPanel({ onClose: _ }: { onClose: () => void }) {
+  const { t } = useLanguage();
   const [loading, setLoading]       = useState(true);
   const [saving, setSaving]         = useState(false);
   const [saved, setSaved]           = useState(false);
@@ -136,7 +138,7 @@ function DmSettingsPanel({ onClose: _ }: { onClose: () => void }) {
 
   const validTemplates = templates.filter(t => t.trim());
   const templateError = mode === 'template' && enabled && validTemplates.length < 3
-    ? `Kamida 3 ta shablon kerak (hozir ${validTemplates.length} ta)`
+    ? `${t('inbox.settings.errTemplates')} (${validTemplates.length})`
     : null;
 
   const save = async () => {
@@ -159,7 +161,7 @@ function DmSettingsPanel({ onClose: _ }: { onClose: () => void }) {
       {/* Header */}
       <div className="px-4 pt-5 pb-3 flex items-center gap-2">
         <Settings size={16} className="text-primary" />
-        <span className="text-[15px] font-semibold text-on-surface">DM Sozlamalari</span>
+        <span className="text-[15px] font-semibold text-on-surface">{t('inbox.settings.title')}</span>
       </div>
 
       {loading ? (
@@ -172,8 +174,8 @@ function DmSettingsPanel({ onClose: _ }: { onClose: () => void }) {
           {/* Avto-javob toggle */}
           <div className="flex items-center justify-between py-3 border-b border-outline-variant/20">
             <div>
-              <p className="text-[14px] font-medium text-on-surface">Avto-javob</p>
-              <p className="text-[12px] text-on-surface-variant">DM larga avtomatik javob</p>
+              <p className="text-[14px] font-medium text-on-surface">{t('inbox.settings.autoReply')}</p>
+              <p className="text-[12px] text-on-surface-variant">{t('inbox.settings.autoReplyDesc')}</p>
             </div>
             <button
               onClick={() => setEnabled(v => !v)}
@@ -187,7 +189,7 @@ function DmSettingsPanel({ onClose: _ }: { onClose: () => void }) {
             <>
               {/* Rejim tanlash */}
               <div className="space-y-2">
-                <p className="text-[12px] font-medium text-on-surface-variant uppercase tracking-wide">Javob turi</p>
+                <p className="text-[12px] font-medium text-on-surface-variant uppercase tracking-wide">{t('inbox.settings.replyType')}</p>
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     onClick={() => setMode('template')}
@@ -196,7 +198,7 @@ function DmSettingsPanel({ onClose: _ }: { onClose: () => void }) {
                     }`}
                   >
                     <FileText size={18} />
-                    <span className="text-[12px] font-medium">Shablonlar</span>
+                    <span className="text-[12px] font-medium">{t('inbox.settings.templates')}</span>
                   </button>
                   <button
                     onClick={() => setMode('ai')}
@@ -205,7 +207,7 @@ function DmSettingsPanel({ onClose: _ }: { onClose: () => void }) {
                     }`}
                   >
                     <Bot size={18} />
-                    <span className="text-[12px] font-medium">AI Agent</span>
+                    <span className="text-[12px] font-medium">{t('inbox.settings.aiAgent')}</span>
                   </button>
                 </div>
               </div>
@@ -213,7 +215,7 @@ function DmSettingsPanel({ onClose: _ }: { onClose: () => void }) {
               {/* Shablonlar */}
               {mode === 'template' && (
                 <div className="space-y-2">
-                  <p className="text-[12px] font-medium text-on-surface-variant uppercase tracking-wide">Shablonlar</p>
+                  <p className="text-[12px] font-medium text-on-surface-variant uppercase tracking-wide">{t('inbox.settings.templates')}</p>
                   {templates.map((t, i) => (
                     <div key={i} className="flex gap-2 items-start">
                       <textarea
@@ -224,7 +226,7 @@ function DmSettingsPanel({ onClose: _ }: { onClose: () => void }) {
                           next[i] = e.target.value;
                           setTemplates(next);
                         }}
-                        placeholder={`Shablon ${i + 1}`}
+                        placeholder={`${t('inbox.settings.templatePlaceholder')} ${i + 1}`}
                         className="flex-1 text-[13px] px-3 py-2 rounded-xl border border-outline-variant/40 bg-surface-container text-on-surface placeholder:text-on-surface-variant/40 outline-none focus:border-primary/40 resize-none"
                       />
                       {templates.length > 1 && (
@@ -241,7 +243,7 @@ function DmSettingsPanel({ onClose: _ }: { onClose: () => void }) {
                     onClick={() => setTemplates([...templates, ''])}
                     className="flex items-center gap-1.5 text-[13px] text-primary hover:underline"
                   >
-                    <Plus size={14} /> Shablon qo'shish
+                    <Plus size={14} /> {t('inbox.settings.addTemplate')}
                   </button>
                   {templateError && (
                     <p className="text-[12px] text-error mt-1">{templateError}</p>
@@ -254,7 +256,7 @@ function DmSettingsPanel({ onClose: _ }: { onClose: () => void }) {
                 <div className="space-y-2">
                   <p className="text-[12px] font-medium text-on-surface-variant uppercase tracking-wide">Agent</p>
                   {agents.length === 0 ? (
-                    <p className="text-[13px] text-on-surface-variant">Agent topilmadi</p>
+                    <p className="text-[13px] text-on-surface-variant">{t('inbox.settings.agentNotFound')}</p>
                   ) : (
                     <div className="space-y-1.5">
                       {agents.map((a: any) => (
@@ -296,7 +298,7 @@ function DmSettingsPanel({ onClose: _ }: { onClose: () => void }) {
                 : 'bg-surface-container text-on-surface-variant cursor-not-allowed'
           }`}
         >
-          {saving ? 'Saqlanmoqda...' : saved ? '✓ Saqlandi' : 'Saqlash'}
+          {saving ? t('inbox.settings.saving') : saved ? t('inbox.settings.saved') : t('general.save')}
         </button>
       </div>
     </div>
@@ -307,6 +309,7 @@ function ProfileModal({ igsid, conv, onClose }: { igsid: string; conv: Conversat
   const [info, setInfo] = useState<UserInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [imgZoom, setImgZoom] = useState(false);
+  const { t } = useLanguage();
 
   useEffect(() => {
     getInboxUserInfo(igsid)
@@ -385,7 +388,7 @@ function ProfileModal({ igsid, conv, onClose }: { igsid: string; conv: Conversat
               className="mt-4 flex items-center gap-1.5 text-[13px] text-primary hover:underline"
             >
               <Instagram size={14} />
-              Instagram da ko'rish
+              {t('inbox.profile.viewOnInstagram')}
             </a>
           </div>
         )}
@@ -396,6 +399,7 @@ function ProfileModal({ igsid, conv, onClose }: { igsid: string; conv: Conversat
 
 export default function InboxPage() {
   const connected = useInstagramStatus();
+  const { t } = useLanguage();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selected, setSelected]           = useState<Conversation | null>(null);
   const [messages, setMessages]           = useState<InboxMessage[]>([]);
@@ -552,7 +556,7 @@ export default function InboxPage() {
         <div className="px-4 pt-5 pb-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <MessageCircle size={20} className="text-primary" />
-            <h2 className="text-[17px] font-semibold text-on-surface">Xabarlar</h2>
+            <h2 className="text-[17px] font-semibold text-on-surface">{t('inbox.chat.title')}</h2>
             {totalUnread > 0 && (
               <span className="px-1.5 py-0.5 rounded-full bg-primary text-white text-[11px] font-bold leading-none">
                 {totalUnread}
@@ -563,7 +567,7 @@ export default function InboxPage() {
             onClick={handleSync}
             disabled={syncing}
             className={`w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-container transition-colors ${syncing ? 'opacity-50' : ''}`}
-            title="Sinxronizatsiya"
+            title={t('inbox.chat.sync')}
           >
             <RefreshCw size={16} className={`text-on-surface-variant ${syncing ? 'animate-spin' : ''}`} />
           </button>
@@ -576,7 +580,7 @@ export default function InboxPage() {
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder="Qidirish..."
+              placeholder={t('inbox.chat.search')}
               className="flex-1 bg-transparent text-[13px] text-on-surface placeholder:text-on-surface-variant/50 outline-none"
             />
           </div>
@@ -587,9 +591,9 @@ export default function InboxPage() {
           {filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
               <MessageCircle size={36} className="text-on-surface-variant/30 mb-3" />
-              <p className="text-[14px] text-on-surface-variant">Hali xabar yo'q</p>
+              <p className="text-[14px] text-on-surface-variant">{t('inbox.chat.noMessages')}</p>
               <p className="text-[12px] text-on-surface-variant/60 mt-1">
-                Yangi DM kelganda bu yerda ko'rinadi
+                {t('inbox.chat.noMessagesDesc')}
               </p>
             </div>
           ) : (
@@ -619,11 +623,11 @@ export default function InboxPage() {
                         @{conv.participantUsername || conv.participantIgsid}
                       </span>
                       <span className="text-[11px] text-on-surface-variant flex-shrink-0">
-                        {formatTime(conv.lastMessageAt || conv.updatedAt)}
+                        {formatTime(conv.lastMessageAt || conv.updatedAt, t)}
                       </span>
                     </div>
                     <p className={`text-[12px] truncate mt-0.5 ${conv.unreadCount ? 'text-on-surface' : 'text-on-surface-variant'}`}>
-                      {conv.lastMessage || 'Xabar yo\'q'}
+                      {conv.lastMessage || t('inbox.chat.noMessageText')}
                     </p>
                   </div>
                 </button>
@@ -647,7 +651,7 @@ export default function InboxPage() {
                 <p className="text-[15px] font-semibold text-on-surface leading-tight">
                   @{selected.participantUsername || selected.participantIgsid}
                 </p>
-                <p className="text-[12px] text-on-surface-variant">Instagram DM</p>
+                <p className="text-[12px] text-on-surface-variant">{t('inbox.chat.instagramDm')}</p>
               </div>
             </div>
 
@@ -660,7 +664,7 @@ export default function InboxPage() {
               ) : messages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-on-surface-variant">
                   <MessageCircle size={40} className="opacity-20 mb-2" />
-                  <p className="text-[14px]">Xabarlar yo'q</p>
+                  <p className="text-[14px]">{t('inbox.chat.empty')}</p>
                 </div>
               ) : (
                 <div className="max-w-2xl mx-auto space-y-1.5">
@@ -713,7 +717,7 @@ export default function InboxPage() {
                       e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
                     }}
                     onKeyDown={handleKey}
-                    placeholder="Xabar yozing..."
+                    placeholder={t('inbox.chat.placeholder')}
                     disabled={sending}
                     className="flex-1 bg-transparent text-[14px] text-on-surface placeholder:text-on-surface-variant/50 outline-none resize-none leading-6 py-1 disabled:opacity-50"
                     style={{ maxHeight: '120px' }}
@@ -727,14 +731,14 @@ export default function InboxPage() {
                   <Send size={16} />
                 </button>
               </div>
-              <p className="text-center mt-1.5 text-[11px] text-on-surface-variant/40">Enter — yuborish</p>
+              <p className="text-center mt-1.5 text-[11px] text-on-surface-variant/40">{t('inbox.chat.sendHint')}</p>
             </div>
           </>
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center text-on-surface-variant gap-2">
             <MessageCircle size={56} className="opacity-15" />
-            <p className="text-[16px] font-medium">Suhbatni tanlang</p>
-            <p className="text-[13px] opacity-60">Chap tomondagi ro'yxatdan birini bosing</p>
+            <p className="text-[16px] font-medium">{t('inbox.chat.selectPrompt')}</p>
+            <p className="text-[13px] opacity-60">{t('inbox.chat.selectDesc')}</p>
           </div>
         )}
       </div>

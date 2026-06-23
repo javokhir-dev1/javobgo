@@ -6,6 +6,7 @@ import { getInstagramStatus, getTodayStats, getLogs, getCommentRules } from '@/l
 import { useTheme } from '@/components/ThemeProvider';
 import InstagramRequired from '@/components/InstagramRequired';
 import { useInstagramStatus } from '@/context/InstagramContext';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface Log {
   id: number;
@@ -31,6 +32,7 @@ const logActionColor: Record<string, string> = {
 
 export default function DashboardPage() {
   const { theme } = useTheme();
+  const { t } = useLanguage();
   const connected = useInstagramStatus();
   const [account,      setAccount]      = useState<any>(null);
   const [stats,        setStats]        = useState<{ commentReplies: number; dmUsers: number } | null>(null);
@@ -55,19 +57,19 @@ export default function DashboardPage() {
 
   const statCards = [
     {
-      label: 'Bugun javob berilgan izohlar',
+      label: t('dashboard.statComments'),
       value: stats?.commentReplies ?? null,
       icon: MessageSquare,
       iconBg: 'bg-[#ebebfc] text-[#7C3AED]',
     },
     {
-      label: 'Bugun DM yuborilgan foydalanuvchilar',
+      label: t('dashboard.statDMs'),
       value: stats?.dmUsers ?? null,
       icon: Mail,
       iconBg: 'bg-[#f3ebfc] text-[#8B5CF6]',
     },
     {
-      label: 'Faol izoh avto-javob',
+      label: t('dashboard.statActiveRules'),
       value: activeRules,
       icon: Zap,
       iconBg: 'bg-amber-50 text-amber-600 dark:bg-amber-950/20 dark:text-amber-400',
@@ -75,9 +77,9 @@ export default function DashboardPage() {
   ];
 
   const quickActions = [
-    { href: '/automation',          icon: Zap,            label: 'Avtomatizatsiya',    desc: 'Barcha avtomatizatsiyalar' },
-    { href: '/automation/comments', icon: MessageCircle,  label: 'Izoh avto-javob',    desc: 'Post izohlari uchun avto-javob' },
-    { href: '/logs',                icon: FileText,       label: 'Loglar',             desc: 'Bot faoliyati tarixi' },
+    { href: '/automation',          icon: Zap,            label: t('dashboard.actionAutomation'),    desc: '' },
+    { href: '/automation/comments', icon: MessageCircle,  label: t('dashboard.actionComments'),    desc: t('dashboard.actionCommentsDesc') },
+    { href: '/logs',                icon: FileText,       label: t('nav.logs'),             desc: t('dashboard.actionLogsDesc') },
   ];
 
   return (
@@ -101,12 +103,12 @@ export default function DashboardPage() {
             )}
             <div className="relative flex items-center justify-between gap-4">
               <div>
-                <p className="text-[14px] font-medium text-white/70 mb-1">Xush kelibsiz</p>
+                <p className="text-[14px] font-medium text-white/70 mb-1">{t('dashboard.welcome')}</p>
                 <h1 className="text-[24px] sm:text-[28px] font-bold tracking-tight leading-tight">
                   {account ? `@${account.username}` : 'JavobGo'}
                 </h1>
                 <p className="text-[14px] text-white/70 mt-1.5">
-                  {account ? 'Instagram hisobingiz muvaffaqiyatli ulangan.' : 'Instagram hisobingizni sozlamalardan ulang.'}
+                  {account ? t('dashboard.accountConnected') : t('dashboard.connectAccount')}
                 </p>
                 {account?.followers_count != null && (
                   <div className="mt-3 inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg px-3 py-1.5">
@@ -114,7 +116,7 @@ export default function DashboardPage() {
                     <span className="text-[14px] font-semibold text-white">
                       {account.followers_count.toLocaleString()}
                     </span>
-                    <span className="text-[13px] text-white/70">obunachilar</span>
+                    <span className="text-[13px] text-white/70">{t('dashboard.followers')}</span>
                   </div>
                 )}
               </div>
@@ -151,7 +153,7 @@ export default function DashboardPage() {
 
             {/* Tezkor harakatlar */}
             <section className="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-6 shadow-sm">
-              <h3 className="text-[16px] font-semibold text-on-surface mb-4">Tezkor harakatlar</h3>
+              <h3 className="text-[16px] font-semibold text-on-surface mb-4">{t('dashboard.quickActions')}</h3>
               <div className="space-y-2">
                 {quickActions.map(({ href, icon: Icon, label, desc }) => (
                   <Link key={href} href={href}
@@ -172,8 +174,8 @@ export default function DashboardPage() {
             {/* So'nggi faollik */}
             <section className="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl shadow-sm overflow-hidden flex flex-col">
               <div className="flex items-center justify-between px-6 py-4 border-b border-outline-variant/30">
-                <h3 className="text-[16px] font-semibold text-on-surface">So'nggi faollik</h3>
-                <Link href="/logs" className="text-[13px] text-primary hover:underline font-medium">Barchasini ko'rish</Link>
+                <h3 className="text-[16px] font-semibold text-on-surface">{t('dashboard.recentActivity')}</h3>
+                <Link href="/logs" className="text-[13px] text-primary hover:underline font-medium">{t('dashboard.viewAll')}</Link>
               </div>
               <div className="flex flex-col">
                 {loading ? (
@@ -186,7 +188,7 @@ export default function DashboardPage() {
                 ) : logs.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-10 text-on-surface-variant">
                     <Users size={28} className="mb-2 opacity-40" />
-                    <p className="text-[14px]">Hozircha faoliyat yo'q</p>
+                    <p className="text-[14px]">{t('dashboard.emptyActivity')}</p>
                   </div>
                 ) : logs.map(log => (
                   <div key={log.id} className="flex items-start px-6 py-4 border-b border-outline-variant/30 last:border-b-0 hover:bg-surface-container-low transition-colors">

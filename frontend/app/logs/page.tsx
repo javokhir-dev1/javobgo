@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { RefreshCw, Inbox, MessageSquare, Send, AlertCircle, CheckCircle2, Info, Layers, ShieldAlert, CheckCircle, Activity } from 'lucide-react';
 import { getLogs, getTodayStats } from '@/lib/api';
 import { useInstagramStatus } from '@/context/InstagramContext';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface Log {
   id: number;
@@ -45,24 +46,25 @@ const TYPE_STYLES = {
   },
 };
 
-const FILTERS: { key: Filter; label: string; icon: any }[] = [
-  { key: 'all',     label: 'Hammasi', icon: Layers },
-  { key: 'success', label: 'Muvaffaqiyat', icon: CheckCircle },
-  { key: 'error',   label: 'Xatolar', icon: ShieldAlert },
-  { key: 'info',    label: 'Info', icon: Activity },
+const FILTERS: { key: Filter; labelKey: string; icon: any }[] = [
+  { key: 'all',     labelKey: 'logs.filterAll', icon: Layers },
+  { key: 'success', labelKey: 'logs.filterSuccess', icon: CheckCircle },
+  { key: 'error',   labelKey: 'logs.filterError', icon: ShieldAlert },
+  { key: 'info',    labelKey: 'logs.filterInfo', icon: Activity },
 ];
 
 function StatCard({
-  value, label, icon: Icon, color,
-}: { value: number | string; label: string; icon: any; color: string }) {
+  value, label, icon: Icon, bgClass, textClass,
+}: { value: number | string; label: string; icon: any; bgClass: string; textClass: string }) {
   return (
-    <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl px-5 py-4 flex items-center gap-4">
-      <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${color}`}>
-        <Icon size={18} className="text-white" />
+    <div className="relative bg-surface-container-lowest border border-outline-variant/30 rounded-2xl px-5 py-4 flex items-center gap-4 overflow-hidden group hover:shadow-md hover:border-outline-variant/50 hover:-translate-y-0.5 transition-all duration-300">
+      <div className={`absolute top-0 right-0 w-24 h-24 rounded-full blur-2xl -mr-10 -mt-10 opacity-30 transition-opacity group-hover:opacity-50 ${bgClass.split(' ')[0].replace('/10', '/30')}`} />
+      <div className={`relative z-10 w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${bgClass} border border-outline-variant/10 shadow-sm group-hover:scale-110 transition-transform duration-300`}>
+        <Icon size={22} className={textClass} />
       </div>
-      <div>
-        <p className="text-[22px] font-bold text-on-surface leading-none">{value}</p>
-        <p className="text-[12px] text-on-surface-variant mt-1">{label}</p>
+      <div className="relative z-10">
+        <p className="text-[26px] font-bold text-on-surface leading-none tracking-tight">{value}</p>
+        <p className="text-[13px] font-medium text-on-surface-variant mt-1.5">{label}</p>
       </div>
     </div>
   );
@@ -70,6 +72,7 @@ function StatCard({
 
 export default function LogsPage() {
   const connected = useInstagramStatus();
+  const { t } = useLanguage();
   const [logs, setLogs]       = useState<Log[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter]   = useState<Filter>('all');
@@ -113,8 +116,8 @@ export default function LogsPage() {
     const d = new Date(log.createdAt ?? log.timestamp);
     const today = new Date();
     const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
-    if (d.toDateString() === today.toDateString()) return 'Bugun';
-    if (d.toDateString() === yesterday.toDateString()) return 'Kecha';
+    if (d.toDateString() === today.toDateString()) return t('logs.today');
+    if (d.toDateString() === yesterday.toDateString()) return t('logs.yesterday');
     return d.toLocaleDateString('uz-UZ', { day: 'numeric', month: 'long' });
   };
 
@@ -142,14 +145,14 @@ export default function LogsPage() {
           {/* Header */}
           <header className="mb-6 flex items-end justify-between">
             <div>
-              <h2 className="text-[28px] font-semibold text-on-surface tracking-tight">Loglar</h2>
-              <p className="text-[15px] text-on-surface-variant mt-1">Bot faoliyatining to'liq tarixi</p>
+              <h2 className="text-[28px] font-semibold text-on-surface tracking-tight">{t('logs.title')}</h2>
+              <p className="text-[15px] text-on-surface-variant mt-1">{t('logs.subtitle')}</p>
             </div>
             <button onClick={load}
               className="group relative flex items-center gap-2 px-5 py-2.5 text-[14px] font-semibold rounded-xl bg-surface-container hover:bg-surface-container-high transition-all active:scale-95 text-on-surface overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
               <RefreshCw size={16} className={`text-primary transition-transform ${loading ? 'animate-spin' : 'group-hover:rotate-180 duration-500'}`} />
-              Yangilash
+              {t('logs.refresh')}
             </button>
           </header>
 
@@ -162,10 +165,10 @@ export default function LogsPage() {
             </div>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-              <StatCard value={stats.total}          label="Jami loglar"        icon={Info}          color="bg-[#8B5CF6]" />
-              <StatCard value={stats.success}        label="Muvaffaqiyatli"     icon={CheckCircle2}  color="bg-emerald-500" />
-              <StatCard value={stats.error}          label="Xatolar"            icon={AlertCircle}   color="bg-red-500" />
-              <StatCard value={stats.commentReplies} label="Bugungi izoh javob" icon={MessageSquare} color="bg-blue-500" />
+              <StatCard value={stats.total}          label={t('logs.statTotal')}        icon={Info}          bgClass="bg-purple-500/10 dark:bg-purple-500/20" textClass="text-purple-600 dark:text-purple-400" />
+              <StatCard value={stats.success}        label={t('logs.statSuccess')}      icon={CheckCircle2}  bgClass="bg-emerald-500/10 dark:bg-emerald-500/20" textClass="text-emerald-600 dark:text-emerald-400" />
+              <StatCard value={stats.error}          label={t('logs.statErrors')}       icon={AlertCircle}   bgClass="bg-red-500/10 dark:bg-red-500/20" textClass="text-red-600 dark:text-red-400" />
+              <StatCard value={stats.commentReplies} label={t('logs.statComments')}     icon={MessageSquare} bgClass="bg-blue-500/10 dark:bg-blue-500/20" textClass="text-blue-600 dark:text-blue-400" />
             </div>
           )}
 
@@ -189,7 +192,7 @@ export default function LogsPage() {
                     <div className="absolute inset-0 bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/20 -z-10" />
                   )}
                   <Icon size={14} className={filter === f.key ? 'text-primary' : 'text-on-surface-variant/70'} />
-                  {f.label}
+                  {t(f.labelKey)}
                   <span className={`text-[11px] px-1.5 py-0.5 rounded-full font-bold transition-colors ${
                     filter === f.key
                       ? 'bg-primary/10 text-primary'
@@ -219,7 +222,7 @@ export default function LogsPage() {
               <div className="flex flex-col items-center justify-center py-20 text-on-surface-variant">
                 <Inbox size={40} className="mb-3 opacity-40" />
                 <p className="text-[15px]">
-                  {filter === 'all' ? "Hozircha faoliyat yo'q" : `${FILTERS.find(f=>f.key===filter)?.label} loglari yo'q`}
+                  {filter === 'all' ? t('logs.emptyAll') : `${t(FILTERS.find(f=>f.key===filter)?.labelKey ?? '')} ${t('logs.emptyFilter')}`}
                 </p>
               </div>
             ) : (

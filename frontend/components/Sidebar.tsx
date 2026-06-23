@@ -9,13 +9,14 @@ import {
 } from 'lucide-react';
 import { useInstagram, useInstagramRefresh } from '@/context/InstagramContext';
 import { useTheme } from '@/components/ThemeProvider';
+import { useLanguage } from '@/context/LanguageContext';
 
-const navItems = [
-  { href: '/',           icon: LayoutDashboard, label: 'Bosh sahifa' },
-  { href: '/automation', icon: Zap,             label: 'Avtomatizatsiya' },
-  { href: '/inbox',      icon: MessageCircle,   label: 'Xabarlar' },
-  { href: '/agents',     icon: Bot,             label: 'AI Agentlar' },
-  { href: '/logs',       icon: FileText,        label: 'Loglar' },
+const navItemKeys = [
+  { href: '/',           icon: LayoutDashboard, labelKey: 'nav.dashboard' },
+  { href: '/automation', icon: Zap,             labelKey: 'nav.automation' },
+  { href: '/inbox',      icon: MessageCircle,   labelKey: 'nav.inbox' },
+  { href: '/agents',     icon: Bot,             labelKey: 'nav.agents' },
+  { href: '/logs',       icon: FileText,        labelKey: 'nav.logs' },
 ];
 
 const IgIcon = ({ size = 15 }: { size?: number }) => (
@@ -46,6 +47,7 @@ const NavLink = ({ href, icon: Icon, label, pathname }: { href: string; icon: an
 export default function Sidebar() {
   const pathname = usePathname();
   const { theme, toggleTheme } = useTheme();
+  const { t } = useLanguage();
   const { accounts, selectedAccount, selectAccount } = useInstagram();
   const refreshInstagram = useInstagramRefresh();
   const [user, setUser] = useState<{ first_name: string; username: string | null; avatar_url: string | null } | null>(null);
@@ -175,7 +177,7 @@ export default function Sidebar() {
                     : <Plus size={16} className="flex-shrink-0" />
                   }
                   <span className="text-[13px] font-medium">
-                    {connecting ? 'Ulanmoqda...' : 'Akkaunt qo\'shish'}
+                    {connecting ? t('sidebar.connecting') : t('sidebar.addAccount')}
                   </span>
                 </button>
               </div>
@@ -193,14 +195,14 @@ export default function Sidebar() {
             ) : (
               <IgIcon />
             )}
-            {connecting ? 'Ulanmoqda...' : 'Instagram ulash'}
+            {connecting ? t('sidebar.connecting') : t('sidebar.connectInstagram')}
           </button>
         )}
       </div>
 
       {/* Nav */}
       <nav className="flex-1 flex flex-col gap-0.5 px-2 overflow-y-auto">
-        {navItems.map(item => <NavLink key={item.href} {...item} pathname={pathname} />)}
+        {navItemKeys.map(item => <NavLink key={item.href} href={item.href} icon={item.icon} label={t(item.labelKey)} pathname={pathname} />)}
       </nav>
 
 
@@ -225,7 +227,7 @@ export default function Sidebar() {
               {user?.first_name ?? '...'}
             </p>
             <p className="text-[12px] text-on-surface-variant truncate">
-              {user?.username ? `@${user.username}` : 'Telegram foydalanuvchi'}
+              {user?.username ? `@${user.username}` : t('sidebar.telegramUser')}
             </p>
           </div>
           <div
