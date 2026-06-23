@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { MessageCircle, Send, Search, X, Instagram, Settings, Bot, FileText, Plus, Trash2, ChevronRight, RefreshCw } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { MessageCircle, Send, Search, X, Instagram, Settings, Bot, FileText, Plus, Trash2, ChevronRight, RefreshCw, Zap } from 'lucide-react';
 import {
   getConversations, getInboxMessages, sendInboxMessage, getInboxEventsUrl, getInboxUserInfo,
   getSettings, updateSettings, getDmMessages, updateDmMessages, getAgents, syncInbox,
@@ -101,7 +102,7 @@ function AgentAvatar({ value, size = 28 }: { value: string; size?: number }) {
 
 // ─── DM Sozlamalari paneli ───────────────────────────────────────────────────
 
-function DmSettingsPanel({ width }: { width: number }) {
+function DmSettingsPanel({ width, onClose }: { width: number | string; onClose?: () => void }) {
   const { t } = useLanguage();
   const [loading, setLoading]       = useState(true);
   const [saving, setSaving]         = useState(false);
@@ -160,11 +161,18 @@ function DmSettingsPanel({ width }: { width: number }) {
   };
 
   return (
-    <div style={{ width }} className="flex-shrink-0 flex flex-col bg-surface-container-lowest">
+    <div style={width === '100%' ? undefined : { width }} className={`flex-shrink-0 flex flex-col bg-surface-container-lowest ${width === '100%' ? 'fixed inset-0 z-50' : ''}`}>
       {/* Header */}
-      <div className="px-4 pt-5 pb-3 flex items-center gap-2">
-        <Settings size={16} className="text-primary" />
-        <span className="text-[15px] font-semibold text-on-surface">{t('inbox.settings.title')}</span>
+      <div className="px-4 pt-5 pb-3 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Settings size={16} className="text-primary" />
+          <span className="text-[15px] font-semibold text-on-surface">{t('inbox.settings.title')}</span>
+        </div>
+        {onClose && (
+          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-outline-variant/20 transition-colors">
+            <X size={18} />
+          </button>
+        )}
       </div>
 
       {loading ? (
@@ -401,8 +409,8 @@ function ProfileModal({ igsid, conv, onClose }: { igsid: string; conv: Conversat
 }
 
 export default function InboxPage() {
-  const connected = useInstagramStatus();
   const { t } = useLanguage();
+  const connected = useInstagramStatus();
   const [leftWidth, setLeftWidth]         = useState(320);
   const [rightWidth, setRightWidth]       = useState(288);
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -414,6 +422,7 @@ export default function InboxPage() {
   const [loadingMsgs, setLoadingMsgs]     = useState(false);
   const [syncing, setSyncing]             = useState(false);
   const [profileModal, setProfileModal]   = useState<Conversation | null>(null);
+  const [showMobileDmSettings, setShowMobileDmSettings] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef  = useRef<HTMLTextAreaElement>(null);
 
@@ -606,7 +615,10 @@ export default function InboxPage() {
       )}
 
       {/* ── Chap panel ── */}
-      <div style={{ width: leftWidth }} className="flex-shrink-0 flex flex-col bg-surface-container-lowest">
+      <div 
+        style={{ '--left-width': `${leftWidth}px` } as React.CSSProperties}
+        className={`flex-shrink-0 flex-col bg-surface-container-lowest w-full md:w-[var(--left-width)] ${selected ? 'hidden md:flex' : 'flex'}`}
+      >
 
         {/* Header */}
         <div className="px-4 pt-5 pb-3 flex items-center justify-between">
@@ -619,14 +631,15 @@ export default function InboxPage() {
               </span>
             )}
           </div>
-          <button
-            onClick={handleSync}
-            disabled={syncing}
-            className={`w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-container transition-colors ${syncing ? 'opacity-50' : ''}`}
-            title={t('inbox.chat.sync')}
-          >
-            <RefreshCw size={16} className={`text-on-surface-variant ${syncing ? 'animate-spin' : ''}`} />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowMobileDmSettings(true)}
+              className="md:hidden flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 hover:bg-primary/20 text-primary transition-colors shrink-0"
+            >
+              <Zap size={14} />
+              <span className="text-[12px] font-semibold tracking-wide">DM avto yoqish</span>
+            </button>
+          </div>
         </div>
 
         {/* Qidiruv */}
@@ -696,15 +709,18 @@ export default function InboxPage() {
       {/* Chap va O'rta o'rtasidagi Resizer */}
       <div
         onMouseDown={startLeftResize}
-        className="w-1 cursor-col-resize bg-outline-variant/20 hover:bg-primary active:bg-primary transition-colors shrink-0 z-10"
+        className="hidden md:block w-1 cursor-col-resize bg-outline-variant/20 hover:bg-primary active:bg-primary transition-colors shrink-0 z-10"
       />
 
       {/* ── O'rta panel ── */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className={`flex-1 flex-col overflow-hidden ${selected ? 'flex' : 'hidden md:flex'}`}>
         {selected ? (
           <>
             {/* Chat header */}
             <div className="shrink-0 flex items-center gap-3 px-5 py-3.5 border-b border-outline-variant/30 bg-surface-container">
+              <button onClick={() => setSelected(null)} className="md:hidden flex items-center justify-center w-8 h-8 rounded-full hover:bg-outline-variant/20 mr-1">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+              </button>
               <button onClick={() => setProfileModal(selected)} className="rounded-full hover:opacity-80 transition-opacity">
                 <Avatar username={selected.participantUsername || selected.participantIgsid} profilePic={selected.participantProfilePic} igsid={selected.participantIgsid} size={36} />
               </button>
@@ -807,12 +823,18 @@ export default function InboxPage() {
       {/* O'rta va O'ng o'rtasidagi Resizer */}
       <div
         onMouseDown={startRightResize}
-        className="w-1 cursor-col-resize bg-outline-variant/20 hover:bg-primary active:bg-primary transition-colors shrink-0 z-10"
+        className="hidden md:block w-1 cursor-col-resize bg-outline-variant/20 hover:bg-primary active:bg-primary transition-colors shrink-0 z-10"
       />
 
       {/* ── DM Sozlamalari paneli ── */}
-      <DmSettingsPanel width={rightWidth} />
+      <div className="hidden md:flex">
+        <DmSettingsPanel width={rightWidth} />
+      </div>
+
+      {/* Mobile DM Settings Overlay */}
+      {showMobileDmSettings && (
+        <DmSettingsPanel width="100%" onClose={() => setShowMobileDmSettings(false)} />
+      )}
     </div>
-    
   );
 }

@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import {
   LayoutDashboard, Zap,
   FileText, Settings, ChevronDown, Plus, Check,
-  Sun, Moon, Bot, MessageCircle,
+  Sun, Moon, Bot, MessageCircle, User
 } from 'lucide-react';
 import { useInstagram, useInstagramRefresh } from '@/context/InstagramContext';
 import { useTheme } from '@/components/ThemeProvider';
@@ -111,7 +111,7 @@ export default function Sidebar() {
     : null;
 
   return (
-    <aside className="fixed top-0 left-0 h-screen w-64 bg-surface-container-lowest border-r border-outline-variant/30 flex flex-col z-40">
+    <aside className="fixed top-0 left-0 h-screen w-64 bg-surface-container-lowest border-r border-outline-variant/30 hidden md:flex flex-col z-40">
 
       {/* Logo */}
       <div className="px-5 py-5 mb-1 flex items-center gap-2.5">
@@ -220,9 +220,9 @@ export default function Sidebar() {
       {/* User profile */}
       <div className="border-t border-outline-variant/30 mt-auto">
         <Link
-          href="/settings"
+          href="/profile"
           className={`px-4 py-4 flex items-center gap-3 transition-colors ${
-            pathname === '/settings' ? 'bg-primary-fixed' : 'hover:bg-surface-container-low'
+            pathname === '/profile' ? 'bg-primary-fixed' : 'hover:bg-surface-container-low'
           }`}
         >
           {avatarSrc ? (
@@ -233,7 +233,7 @@ export default function Sidebar() {
             </div>
           )}
           <div className="min-w-0 flex-1">
-            <p className={`text-[14px] font-semibold leading-tight truncate ${pathname === '/settings' ? 'text-primary' : 'text-on-surface'}`}>
+            <p className={`text-[14px] font-semibold leading-tight truncate ${pathname === '/profile' ? 'text-primary' : 'text-on-surface'}`}>
               {user?.first_name ?? '...'}
             </p>
             <p className="text-[12px] text-on-surface-variant truncate">
@@ -243,7 +243,7 @@ export default function Sidebar() {
           <div
             className="w-8 h-8 flex items-center justify-center rounded-lg text-on-surface-variant transition-colors flex-shrink-0"
           >
-            <Settings size={18} />
+            <User size={18} />
           </div>
         </Link>
       </div>

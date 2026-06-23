@@ -40,8 +40,8 @@ export default function KeywordsFullPage() {
         </div>
       </header>
 
-      <div className="flex-1 overflow-y-auto p-8">
-        <div className="max-w-5xl mx-auto space-y-5">
+      <div className="flex-1 overflow-y-auto p-4 md:p-8">
+        <div className="mx-auto max-w-2xl space-y-5">
           {alert && <Alert type={alert.type} message={alert.msg} />}
           <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4">
             <Toggle checked={enabled} onChange={setEnabled} label="Kalit so'zlar filtri" description="Yoqilganda bot faqat kalit so'z bor kommentlarga javob beradi" />

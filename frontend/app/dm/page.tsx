@@ -57,7 +57,7 @@ export default function DmPage() {
   return (
     <>
       <Topbar title="DM avto javob" subtitle="Kiruvchi xabarlarga avtomatik javob" />
-      <div className="p-7 max-w-2xl space-y-5">
+      <div className="p-4 md:p-7 max-w-2xl space-y-5">
         {alert && <Alert type={alert.type} message={alert.msg} />}
 
         {/* On/Off toggle */}

@@ -139,20 +139,20 @@ export default function LogsPage() {
   return (
     
     <div className="flex flex-col h-full overflow-hidden">
-      <div className="flex-1 overflow-y-auto p-8">
+      <div className="flex-1 overflow-y-auto p-4 md:p-8">
         <div className="max-w-5xl mx-auto">
 
           {/* Header */}
-          <header className="mb-6 flex items-end justify-between">
-            <div>
-              <h2 className="text-[28px] font-semibold text-on-surface tracking-tight">{t('logs.title')}</h2>
-              <p className="text-[15px] text-on-surface-variant mt-1">{t('logs.subtitle')}</p>
+          <header className="mb-6 flex items-center justify-between">
+            <div className="flex-1 min-w-0 pr-4">
+              <h2 className="text-[20px] sm:text-[28px] font-semibold text-on-surface tracking-tight truncate">{t('logs.title')}</h2>
+              <p className="text-[12px] sm:text-[15px] text-on-surface-variant mt-1 truncate">{t('logs.subtitle')}</p>
             </div>
             <button onClick={load}
-              className="group relative flex items-center gap-2 px-5 py-2.5 text-[14px] font-semibold rounded-xl bg-surface-container hover:bg-surface-container-high transition-all active:scale-95 text-on-surface overflow-hidden">
+              className="group shrink-0 relative flex items-center gap-1.5 sm:gap-2 px-3 py-2 sm:px-5 sm:py-2.5 text-[13px] sm:text-[14px] font-semibold rounded-xl bg-surface-container hover:bg-surface-container-high transition-all active:scale-95 text-on-surface overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-              <RefreshCw size={16} className={`text-primary transition-transform ${loading ? 'animate-spin' : 'group-hover:rotate-180 duration-500'}`} />
-              {t('logs.refresh')}
+              <RefreshCw size={16} className={`text-primary sm:w-4 sm:h-4 transition-transform ${loading ? 'animate-spin' : 'group-hover:rotate-180 duration-500'}`} />
+              <span className="hidden xs:inline">{t('logs.refresh')}</span>
             </button>
           </header>
 
@@ -173,7 +173,7 @@ export default function LogsPage() {
           )}
 
           {/* Filter tabs */}
-          <div className="flex items-center gap-1.5 mb-5 bg-surface-container-low/50 border border-outline-variant/30 p-1.5 rounded-2xl w-fit backdrop-blur-sm">
+          <div className="flex items-center gap-1.5 mb-5 bg-surface-container-low/50 border border-outline-variant/30 p-1.5 rounded-2xl w-full md:w-fit backdrop-blur-sm overflow-x-auto no-scrollbar">
             {FILTERS.map(f => {
               const count = f.key === 'all' ? logs.length
                 : logs.filter(l => l.type === f.key).length;

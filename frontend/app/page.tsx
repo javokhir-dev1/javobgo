@@ -85,7 +85,7 @@ export default function DashboardPage() {
   return (
     
     <div className="flex flex-col h-full overflow-hidden">
-      <div className="flex-1 overflow-y-auto p-8">
+      <div className="flex-1 overflow-y-auto p-4 md:p-8">
         <main className="max-w-5xl mx-auto space-y-7">
 
           {/* Welcome Banner */}

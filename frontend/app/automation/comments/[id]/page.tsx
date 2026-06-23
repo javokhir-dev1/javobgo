@@ -7,6 +7,7 @@ import {
   Trash2, Globe, Hash, CheckCircle, Save, Plus,
 } from 'lucide-react';
 import { getAutomation, updateAutomation, toggleAutomation, deleteAutomation, getInstagramPosts, getAgents } from '@/lib/api';
+import { useLanguage } from '@/context/LanguageContext';
 
 function avatarUrl(seed: string) {
   return `https://api.dicebear.com/9.x/bottts/svg?seed=${seed}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`;
@@ -37,6 +38,7 @@ interface Automation {
 }
 
 export default function AutomationDetailPage() {
+  const { t } = useLanguage();
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const [auto, setAuto] = useState<Automation | null>(null);
@@ -136,7 +138,7 @@ export default function AutomationDetailPage() {
           <div>
             <h1 className="font-semibold text-on-surface text-sm leading-tight">{form.name}</h1>
             <span className={`text-xs ${form.isActive ? 'text-emerald-500' : 'text-on-surface-variant'}`}>
-              {form.isActive ? 'Faol' : 'Nofaol'}
+              {form.isActive ? t('automation.active') : t('automation.inactive')}
             </span>
           </div>
         </div>
@@ -160,9 +162,6 @@ export default function AutomationDetailPage() {
           </button>
           {hasChanges && (
             <div className="flex items-center gap-2">
-              {saveError && (
-                <span className="text-[11px] text-red-500 max-w-[180px] text-right leading-tight">{saveError}</span>
-              )}
               <button
                 onClick={save}
                 disabled={saving}
@@ -181,9 +180,9 @@ export default function AutomationDetailPage() {
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
-      <div className="max-w-2xl mx-auto p-6 space-y-6">
+      <div className="max-w-2xl mx-auto p-4 md:p-6 space-y-6">
         {/* Name */}
-        <Section title="Nom">
+        <Section title={t('automation.form.nameLabel')}>
           <input
             type="text"
             value={form.name}
@@ -193,11 +192,11 @@ export default function AutomationDetailPage() {
         </Section>
 
         {/* Trigger */}
-        <Section title="Trigger">
+        <Section title={t('automation.form.triggerLabel')}>
           <div className="space-y-2 mb-3">
             {[
-              { val: 'any', label: 'Har qanday izohda', desc: 'Barcha izohlarga javob beradi' },
-              { val: 'keyword', label: "Kalit so'z bo'lganda", desc: "Faqat belgilangan so'zlarni o'z ichiga olgan izohlarda" },
+              { val: 'any', label: t('automation.form.triggerAny'), desc: t('automation.form.triggerAnyDesc') },
+              { val: 'keyword', label: t('automation.form.triggerKeyword'), desc: t('automation.form.triggerKeywordDesc') },
             ].map(opt => (
               <button
                 key={opt.val}
@@ -220,10 +219,10 @@ export default function AutomationDetailPage() {
                   value={kwInput}
                   onChange={e => setKwInput(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && addKw()}
-                  placeholder="Kalit so'z kiriting..."
+                  placeholder={t('automation.form.kwPlaceholder')}
                   className="flex-1 px-3 py-2 rounded-lg bg-surface-variant text-on-surface text-sm outline-none focus:ring-2 ring-primary/40"
                 />
-                <button onClick={addKw} className="px-3 py-2 rounded-lg bg-primary text-on-primary text-sm font-medium">Qo'sh</button>
+                <button onClick={addKw} className="px-3 py-2 rounded-lg bg-primary text-on-primary text-sm font-medium">{t('automation.form.kwAdd')}</button>
               </div>
               <div className="flex flex-wrap gap-1.5">
                 {form.keywords.map(kw => (
@@ -238,7 +237,7 @@ export default function AutomationDetailPage() {
         </Section>
 
         {/* Reply */}
-        <Section title="Izohga javob">
+        <Section title={t('automation.form.replyAction')}>
           <div className={`rounded-xl border transition-all ${form.replyEnabled ? 'border-primary/40' : 'border-outline-variant/30'}`}>
             <button
               onClick={() => update({ replyEnabled: !form.replyEnabled })}
@@ -246,7 +245,7 @@ export default function AutomationDetailPage() {
             >
               <div className="flex items-center gap-2">
                 <MessageSquare size={16} className={form.replyEnabled ? 'text-primary' : 'text-on-surface-variant'} />
-                <span className="font-medium text-sm text-on-surface">Izohga javob berish</span>
+                <span className="font-medium text-sm text-on-surface">{t('automation.form.replyAction')}</span>
               </div>
               <span style={{
                 width: '36px', height: '20px', borderRadius: '10px', padding: '2px',
@@ -270,13 +269,19 @@ export default function AutomationDetailPage() {
                     <span className="text-sm mt-0.5">🤖</span>
                     <p className="text-xs text-primary font-medium">
                       {form.triggerType === 'keyword'
-                        ? "Kalit so'zlarga mos kelgan izohlarga shablon javob beradi. Mos kelmaganlarga AI agent avtomatik javob beradi."
-                        : 'AI agent javob beradi — shablonlar ishlatilmaydi'}
+                        ? t('automation.form.replyWarningKw')
+                        : t('automation.form.replyWarningAi')}
                     </p>
                   </div>
                 )}
                 <div className={form.replyAgentId !== null && form.triggerType !== 'keyword' ? 'opacity-40 pointer-events-none select-none' : ''}>
-                  <p className="text-xs text-on-surface-variant mb-2">Shablonlar (tasodifiy tanlanadi). <code className="bg-surface-variant px-1 rounded">{'{name}'}</code> = ism, <code className="bg-surface-variant px-1 rounded">{'{comment}'}</code> = izoh</p>
+                  <p className="text-xs text-on-surface-variant mb-2">
+                    {t('automation.form.templateVars1')}
+                    <code className="bg-surface-variant px-1 rounded">{'{name}'}</code>
+                    {t('automation.form.templateVars2')}
+                    <code className="bg-surface-variant px-1 rounded">{'{comment}'}</code>
+                    {t('automation.form.templateVars3')}
+                  </p>
                   {form.replyTemplates.map((tmpl, i) => (
                     <div key={i} className="flex gap-2 mb-2">
                       <textarea
@@ -287,7 +292,7 @@ export default function AutomationDetailPage() {
                           update({ replyTemplates: arr });
                         }}
                         rows={2}
-                        placeholder={`Javob ${i + 1}...`}
+                        placeholder={`${t('automation.form.templateReplyPlaceholder')} ${i + 1}...`}
                         className="flex-1 px-3 py-2 rounded-lg bg-surface-variant text-on-surface text-xs outline-none focus:ring-2 ring-primary/40 resize-none"
                       />
                       {form.replyTemplates.length > 1 && (
@@ -298,7 +303,7 @@ export default function AutomationDetailPage() {
                     </div>
                   ))}
                   <button onClick={() => update({ replyTemplates: [...form.replyTemplates, ''] })} className="flex items-center gap-1 text-xs text-primary hover:underline">
-                    <Plus size={12} /> Shablon qo'shish
+                    <Plus size={12} /> {t('automation.form.addTemplate')}
                   </button>
                 </div>
 
@@ -309,7 +314,7 @@ export default function AutomationDetailPage() {
                     onClick={() => update({ replyAgentId: form.replyAgentId !== null ? null : (agents[0]?.id ?? null) })}
                     className="flex items-center justify-between w-full"
                   >
-                    <span className="text-xs font-medium text-on-surface">🤖 AI agent yoqish</span>
+                    <span className="text-xs font-medium text-on-surface">{t('automation.form.aiToggle')}</span>
                     <span style={{
                       width: '36px', height: '20px', borderRadius: '10px', padding: '2px',
                       border: 'none', display: 'inline-flex', alignItems: 'center', flexShrink: 0,
@@ -328,7 +333,7 @@ export default function AutomationDetailPage() {
                   {form.replyAgentId !== null && (
                     <div className="mt-2 space-y-1">
                       {agents.length === 0 ? (
-                        <p className="text-xs text-on-surface-variant italic">Hali agent yaratilmagan</p>
+                        <p className="text-xs text-on-surface-variant italic">{t('automation.form.noAgents')}</p>
                       ) : agents.map(agent => (
                         <button
                           key={agent.id}
@@ -355,7 +360,7 @@ export default function AutomationDetailPage() {
         </Section>
 
         {/* DM */}
-        <Section title="DM yuborish">
+        <Section title={t('automation.form.dmAction')}>
           <div className={`rounded-xl border transition-all ${form.dmEnabled ? 'border-primary/40' : 'border-outline-variant/30'}`}>
             <button
               onClick={() => update({ dmEnabled: !form.dmEnabled })}
@@ -363,7 +368,7 @@ export default function AutomationDetailPage() {
             >
               <div className="flex items-center gap-2">
                 <Send size={16} className={form.dmEnabled ? 'text-primary' : 'text-on-surface-variant'} />
-                <span className="font-medium text-sm text-on-surface">DM yuborish</span>
+                <span className="font-medium text-sm text-on-surface">{t('automation.form.dmAction')}</span>
               </div>
               <span style={{
                 width: '36px', height: '20px', borderRadius: '10px', padding: '2px',
@@ -387,13 +392,19 @@ export default function AutomationDetailPage() {
                     <span className="text-sm mt-0.5">🤖</span>
                     <p className="text-xs text-primary font-medium">
                       {form.triggerType === 'keyword'
-                        ? "Kalit so'zlarga mos kelgan izohlarga shablon DM yuboriladi. Mos kelmaganlarga AI agent DM yuboradi."
-                        : 'AI agent DM yuboradi — shablonlar ishlatilmaydi'}
+                        ? t('automation.form.dmWarningKw')
+                        : t('automation.form.dmWarningAi')}
                     </p>
                   </div>
                 )}
                 <div className={form.dmAgentId !== null && form.triggerType !== 'keyword' ? 'opacity-40 pointer-events-none select-none' : ''}>
-                  <p className="text-xs text-on-surface-variant mb-2">Shablonlar. <code className="bg-surface-variant px-1 rounded">{'{name}'}</code> = ism, <code className="bg-surface-variant px-1 rounded">{'{comment}'}</code> = izoh</p>
+                  <p className="text-xs text-on-surface-variant mb-2">
+                    {t('automation.form.templateVars1')}
+                    <code className="bg-surface-variant px-1 rounded">{'{name}'}</code>
+                    {t('automation.form.templateVars2')}
+                    <code className="bg-surface-variant px-1 rounded">{'{comment}'}</code>
+                    {t('automation.form.templateVars3')}
+                  </p>
                   {form.dmTemplates.map((tmpl, i) => (
                     <div key={i} className="flex gap-2 mb-2">
                       <textarea
@@ -404,7 +415,7 @@ export default function AutomationDetailPage() {
                           update({ dmTemplates: arr });
                         }}
                         rows={2}
-                        placeholder={`DM ${i + 1}...`}
+                        placeholder={`${t('automation.form.templateDmPlaceholder')} ${i + 1}...`}
                         className="flex-1 px-3 py-2 rounded-lg bg-surface-variant text-on-surface text-xs outline-none focus:ring-2 ring-primary/40 resize-none"
                       />
                       {form.dmTemplates.length > 1 && (
@@ -415,7 +426,7 @@ export default function AutomationDetailPage() {
                     </div>
                   ))}
                   <button onClick={() => update({ dmTemplates: [...form.dmTemplates, ''] })} className="flex items-center gap-1 text-xs text-primary hover:underline">
-                    <Plus size={12} /> Shablon qo'shish
+                    <Plus size={12} /> {t('automation.form.addTemplate')}
                   </button>
                 </div>
 
@@ -426,7 +437,7 @@ export default function AutomationDetailPage() {
                     onClick={() => update({ dmAgentId: form.dmAgentId !== null ? null : (agents[0]?.id ?? null) })}
                     className="flex items-center justify-between w-full"
                   >
-                    <span className="text-xs font-medium text-on-surface">🤖 AI agent yoqish</span>
+                    <span className="text-xs font-medium text-on-surface">{t('automation.form.aiToggle')}</span>
                     <span style={{
                       width: '36px', height: '20px', borderRadius: '10px', padding: '2px',
                       border: 'none', display: 'inline-flex', alignItems: 'center', flexShrink: 0,
@@ -445,7 +456,7 @@ export default function AutomationDetailPage() {
                   {form.dmAgentId !== null && (
                     <div className="mt-2 space-y-1">
                       {agents.length === 0 ? (
-                        <p className="text-xs text-on-surface-variant italic">Hali agent yaratilmagan</p>
+                        <p className="text-xs text-on-surface-variant italic">{t('automation.form.noAgents')}</p>
                       ) : agents.map(agent => (
                         <button
                           key={agent.id}
@@ -472,11 +483,11 @@ export default function AutomationDetailPage() {
         </Section>
 
         {/* Posts */}
-        <Section title="Postlar">
+        <Section title={t('automation.form.postsLabel')}>
           <div className="space-y-2 mb-3">
             {[
-              { val: 'all', label: 'Barcha postlar', icon: Globe },
-              { val: 'specific', label: 'Tanlangan postlar', icon: Hash },
+              { val: 'all', label: t('automation.allPosts'), icon: Globe },
+              { val: 'specific', label: t('automation.form.specificPostsLabel'), icon: Hash },
             ].map(opt => (
               <button
                 key={opt.val}
@@ -490,7 +501,7 @@ export default function AutomationDetailPage() {
                 <opt.icon size={16} className={form.postScope === opt.val ? 'text-primary' : 'text-on-surface-variant'} />
                 <span className="font-medium text-sm text-on-surface">{opt.label}</span>
                 {form.postScope === opt.val && opt.val === 'specific' && form.postIds.length > 0 && (
-                  <span className="ml-auto text-xs text-primary font-medium">{form.postIds.length} ta tanlangan</span>
+                  <span className="ml-auto text-xs text-primary font-medium">{form.postIds.length} {t('automation.specificPosts')}</span>
                 )}
               </button>
             ))}
@@ -498,7 +509,7 @@ export default function AutomationDetailPage() {
           {form.postScope === 'specific' && (
             <div>
               {posts.length === 0 ? (
-                <p className="text-xs text-on-surface-variant italic">Postlar topilmadi</p>
+                <p className="text-xs text-on-surface-variant italic">{t('automation.form.noPostsFound')}</p>
               ) : (
                 <div className="grid grid-cols-5 gap-2">
                   {posts.map((post: any) => {
@@ -546,7 +557,7 @@ export default function AutomationDetailPage() {
               className="flex items-center gap-2 px-6 py-3 rounded-2xl text-sm font-medium text-white shadow-lg hover:opacity-90 transition-all disabled:opacity-50"
               style={{ background: 'linear-gradient(135deg, #7C3AED, #8B5CF6)' }}
             >
-              {saved ? <><CheckCircle size={16} /> Saqlandi</> : saving ? 'Saqlanmoqda...' : <><Save size={16} /> O'zgarishlarni saqlash</>}
+              {saved ? <><CheckCircle size={16} /> {t('general.success')}</> : saving ? t('settings.waiting') || 'Saqlanmoqda...' : <><Save size={16} /> {t('general.save')}</>}
             </button>
           </div>
         )}

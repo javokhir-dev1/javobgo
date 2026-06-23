@@ -105,22 +105,22 @@ export default function AgentsPage() {
   return (
     
     <div className="flex flex-col h-full overflow-hidden">
-      <div className="flex-1 overflow-y-auto p-8">
-        <div className="max-w-5xl mx-auto">
+      <div className="flex-1 overflow-y-auto p-4 md:p-8">
+        <div className="max-w-5xl mx-auto space-y-6">
 
-          <header className="mb-8 flex items-end justify-between">
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                <Bot size={28} className="text-primary" />
-                <h2 className="text-[28px] font-semibold text-on-surface tracking-tight">{t('agents.title')}</h2>
+          <header className="mb-8 flex items-center justify-between">
+            <div className="flex-1 min-w-0 pr-4">
+              <div className="flex items-center gap-2 sm:gap-3 mb-1 sm:mb-2">
+                <Bot size={24} className="text-primary sm:w-7 sm:h-7" />
+                <h2 className="text-[20px] sm:text-[28px] font-semibold text-on-surface tracking-tight truncate">{t('agents.title')}</h2>
               </div>
-              <p className="text-[15px] text-on-surface-variant">
+              <p className="text-[12px] sm:text-[15px] text-on-surface-variant truncate">
                 {t('agents.subtitle')}
               </p>
             </div>
             <button onClick={openCreate}
-              className="flex items-center gap-2 px-5 py-2.5 bg-primary text-white text-[14px] font-semibold rounded-xl hover:bg-primary/90 transition-colors">
-              <Plus size={18} /> {t('agents.newBtn')}
+              className="shrink-0 flex items-center gap-1.5 sm:gap-2 px-3 py-2 sm:px-5 sm:py-2.5 bg-primary text-white text-[13px] sm:text-[14px] font-semibold rounded-xl hover:bg-primary/90 transition-colors">
+              <Plus size={16} className="sm:w-[18px] sm:h-[18px]" /> <span>{t('agents.newBtn')}</span>
             </button>
           </header>
 

@@ -12,6 +12,7 @@ import {
   toggleAutomation, deleteAutomation, getInstagramPosts, getAgents,
 } from '@/lib/api';
 import { useInstagramStatus } from '@/context/InstagramContext';
+import { useLanguage } from '@/context/LanguageContext';
 
 function avatarUrl(seed: string) {
   return `https://api.dicebear.com/9.x/bottts/svg?seed=${seed}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`;
@@ -71,6 +72,7 @@ const EMPTY_FORM: FormState = {
 };
 
 export default function AutomationCommentsPage() {
+  const { t } = useLanguage();
   const router = useRouter();
   const connected = useInstagramStatus();
   const [automations, setAutomations] = useState<Automation[]>([]);
@@ -193,12 +195,9 @@ export default function AutomationCommentsPage() {
             <button onClick={() => setView('list')} className="text-on-surface-variant hover:text-on-surface transition-colors p-1">
               <ArrowLeft size={20} />
             </button>
-            <span className="font-semibold text-on-surface">Yangi avtomatizatsiya</span>
+            <span className="font-semibold text-on-surface">{t('automation.new')}</span>
           </div>
           <div className="flex items-center gap-3">
-            {saveError && (
-              <span className="text-[12px] text-red-500 max-w-xs text-right leading-tight">{saveError}</span>
-            )}
             <button
               onClick={save}
               disabled={!canSave || saving}
@@ -212,25 +211,25 @@ export default function AutomationCommentsPage() {
         </div>
 
         <div className="flex-1 overflow-y-auto">
-        <div className="max-w-2xl mx-auto p-6 space-y-4">
+          <div className="max-w-2xl mx-auto p-4 md:p-6 space-y-4">
           {/* Nom */}
-          <Card title="Avtomatizatsiya nomi">
+          <Card title={t('automation.form.nameLabel')}>
             <input
               autoFocus
               type="text"
               value={form.name}
               onChange={e => up({ name: e.target.value })}
-              placeholder='Masalan: "Yangi post izohlari"'
+              placeholder={t('automation.form.namePlaceholder')}
               className="w-full px-4 py-3 rounded-xl bg-surface-variant text-on-surface placeholder:text-on-surface-variant/50 outline-none focus:ring-2 ring-primary/40 text-sm"
             />
           </Card>
 
           {/* Trigger */}
-          <Card title="Trigger turi" desc="Qachon ishga tushsin?">
+          <Card title={t('automation.form.triggerLabel')} desc={t('automation.form.triggerDesc')}>
             <div className="space-y-2">
               {[
-                { val: 'any', label: 'Har qanday izohda', desc: 'Barcha izohlarga javob beradi' },
-                { val: 'keyword', label: "Kalit so'z bo'lganda", desc: "Faqat belgilangan so'zlarni o'z ichiga olgan izohlarda" },
+                { val: 'any', label: t('automation.form.triggerAny'), desc: t('automation.form.triggerAnyDesc') },
+                { val: 'keyword', label: t('automation.form.triggerKeyword'), desc: t('automation.form.triggerKeywordDesc') },
               ].map(opt => (
                 <button
                   key={opt.val}
@@ -253,11 +252,11 @@ export default function AutomationCommentsPage() {
                     value={kwInput}
                     onChange={e => setKwInput(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && addKw()}
-                    placeholder="Kalit so'z kiriting, Enter bosing..."
+                    placeholder={t('automation.form.kwPlaceholder')}
                     className="flex-1 px-3 py-2 rounded-lg bg-surface-variant text-on-surface text-sm outline-none focus:ring-2 ring-primary/40"
                   />
                   <button onClick={addKw} className="px-3 py-2 rounded-lg bg-primary text-on-primary text-sm font-medium whitespace-nowrap">
-                    Qo'sh
+                    {t('automation.form.kwAdd')}
                   </button>
                 </div>
                 {form.keywords.length > 0 && (
@@ -275,7 +274,7 @@ export default function AutomationCommentsPage() {
           </Card>
 
           {/* Amallar */}
-          <Card title="Amallar" desc="Trigger ishga tushganda nima qilsin? Kamida bittasini tanlang.">
+          <Card title={t('automation.form.actionsLabel')} desc={t('automation.form.actionsDesc')}>
             <div className="space-y-3">
               {/* Izohga javob */}
               <div className={`rounded-xl border transition-all ${form.replyEnabled ? 'border-primary/50' : 'border-outline-variant/30'}`}>
@@ -285,7 +284,7 @@ export default function AutomationCommentsPage() {
                 >
                   <div className="flex items-center gap-2.5">
                     <MessageSquare size={16} className={form.replyEnabled ? 'text-primary' : 'text-on-surface-variant'} />
-                    <span className="font-medium text-sm text-on-surface">Izohga javob berish</span>
+                    <span className="font-medium text-sm text-on-surface">{t('automation.form.replyAction')}</span>
                   </div>
                   <span style={{
                     width: '36px', height: '20px', borderRadius: '10px', padding: '2px',
@@ -309,16 +308,18 @@ export default function AutomationCommentsPage() {
                         <span className="text-sm mt-0.5">🤖</span>
                         <p className="text-xs text-primary font-medium">
                           {form.triggerType === 'keyword'
-                            ? 'Kalit so\'zlarga mos kelgan izohlarga shablon javob beradi. Mos kelmaganlarга AI agent avtomatik javob beradi.'
-                            : 'AI agent javob beradi — shablonlar ishlatilmaydi'}
+                            ? t('automation.form.replyWarningKw')
+                            : t('automation.form.replyWarningAi')}
                         </p>
                       </div>
                     )}
                     <div className={form.replyAgentId !== null && form.replyAgentId !== -1 && form.triggerType !== 'keyword' ? 'opacity-40 pointer-events-none select-none' : ''}>
                       <p className="text-xs text-on-surface-variant mb-2">
-                        Shablonlar — tasodifiy biri tanlanadi.{' '}
-                        <code className="bg-surface-variant px-1 rounded">{'{name}'}</code> va{' '}
-                        <code className="bg-surface-variant px-1 rounded">{'{comment}'}</code> o'zgaruvchilarini ishlatishingiz mumkin.
+                        {t('automation.form.templateVars1')}
+                        <code className="bg-surface-variant px-1 rounded">{'{name}'}</code>
+                        {t('automation.form.templateVars2')}
+                        <code className="bg-surface-variant px-1 rounded">{'{comment}'}</code>
+                        {t('automation.form.templateVars3')}
                       </p>
                       {form.replyTemplates.map((tmpl, i) => (
                         <div key={i} className="flex gap-2 mb-2">
@@ -330,7 +331,7 @@ export default function AutomationCommentsPage() {
                               up({ replyTemplates: arr });
                             }}
                             rows={2}
-                            placeholder={`Javob ${i + 1}...`}
+                            placeholder={`${t('automation.form.templateReplyPlaceholder')} ${i + 1}...`}
                             className="flex-1 px-3 py-2 rounded-lg bg-surface-variant text-on-surface text-xs outline-none focus:ring-2 ring-primary/40 resize-none"
                           />
                           {form.replyTemplates.length > 1 && (
@@ -340,8 +341,8 @@ export default function AutomationCommentsPage() {
                           )}
                         </div>
                       ))}
-                      <button onClick={() => up({ replyTemplates: [...form.replyTemplates, ''] })} className="text-xs text-primary hover:underline">
-                        + Shablon qo'shish
+                      <button onClick={() => up({ replyTemplates: [...form.replyTemplates, ''] })} className="flex items-center gap-1 text-xs text-primary hover:underline">
+                        <Plus size={12} /> {t('automation.form.addTemplate')}
                       </button>
                     </div>
 
@@ -361,7 +362,7 @@ export default function AutomationCommentsPage() {
                         }}
                         className="flex items-center justify-between w-full"
                       >
-                        <span className="text-xs font-medium text-on-surface">🤖 AI agent yoqish</span>
+                        <span className="text-xs font-medium text-on-surface">{t('automation.form.aiToggle')}</span>
                         <span style={{
                           width: '36px', height: '20px', borderRadius: '10px', padding: '2px',
                           border: 'none', display: 'inline-flex', alignItems: 'center', flexShrink: 0,
@@ -381,9 +382,9 @@ export default function AutomationCommentsPage() {
                         <div className="mt-2 flex items-start gap-2 px-3 py-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/30">
                           <span className="text-sm mt-0.5">⚠️</span>
                           <p className="text-xs text-amber-700 dark:text-amber-400">
-                            Hali birorta AI agent yaratilmagan.{' '}
+                            {t('automation.form.createAgentPrompt')}
                             <a href="/agents" className="font-semibold underline hover:no-underline">
-                              Agent yaratish →
+                              {t('automation.form.createAgentBtn')}
                             </a>
                           </p>
                         </div>
@@ -422,7 +423,7 @@ export default function AutomationCommentsPage() {
                 >
                   <div className="flex items-center gap-2.5">
                     <Send size={16} className={form.dmEnabled ? 'text-primary' : 'text-on-surface-variant'} />
-                    <span className="font-medium text-sm text-on-surface">DM yuborish</span>
+                    <span className="font-medium text-sm text-on-surface">{t('automation.form.dmAction')}</span>
                   </div>
                   <span style={{
                     width: '36px', height: '20px', borderRadius: '10px', padding: '2px',
@@ -446,16 +447,18 @@ export default function AutomationCommentsPage() {
                         <span className="text-sm mt-0.5">🤖</span>
                         <p className="text-xs text-primary font-medium">
                           {form.triggerType === 'keyword'
-                            ? 'Kalit so\'zlarga mos kelgan izohlarga shablon DM yuboriladi. Mos kelmaganlarга AI agent DM yuboradi.'
-                            : 'AI agent DM yuboradi — shablonlar ishlatilmaydi'}
+                            ? t('automation.form.dmWarningKw')
+                            : t('automation.form.dmWarningAi')}
                         </p>
                       </div>
                     )}
                     <div className={form.dmAgentId !== null && form.dmAgentId !== -1 && form.triggerType !== 'keyword' ? 'opacity-40 pointer-events-none select-none' : ''}>
                       <p className="text-xs text-on-surface-variant mb-2">
-                        DM shablonlari — tasodifiy biri tanlanadi.{' '}
-                        <code className="bg-surface-variant px-1 rounded">{'{name}'}</code> va{' '}
-                        <code className="bg-surface-variant px-1 rounded">{'{comment}'}</code> ishlatishingiz mumkin.
+                        {t('automation.form.templateVars1')}
+                        <code className="bg-surface-variant px-1 rounded">{'{name}'}</code>
+                        {t('automation.form.templateVars2')}
+                        <code className="bg-surface-variant px-1 rounded">{'{comment}'}</code>
+                        {t('automation.form.templateVars3')}
                       </p>
                       {form.dmTemplates.map((tmpl, i) => (
                         <div key={i} className="flex gap-2 mb-2">
@@ -467,7 +470,7 @@ export default function AutomationCommentsPage() {
                               up({ dmTemplates: arr });
                             }}
                             rows={2}
-                            placeholder={`DM ${i + 1}...`}
+                            placeholder={`${t('automation.form.templateDmPlaceholder')} ${i + 1}...`}
                             className="flex-1 px-3 py-2 rounded-lg bg-surface-variant text-on-surface text-xs outline-none focus:ring-2 ring-primary/40 resize-none"
                           />
                           {form.dmTemplates.length > 1 && (
@@ -477,8 +480,8 @@ export default function AutomationCommentsPage() {
                           )}
                         </div>
                       ))}
-                      <button onClick={() => up({ dmTemplates: [...form.dmTemplates, ''] })} className="text-xs text-primary hover:underline">
-                        + Shablon qo'shish
+                      <button onClick={() => up({ dmTemplates: [...form.dmTemplates, ''] })} className="flex items-center gap-1 text-xs text-primary hover:underline">
+                        <Plus size={12} /> {t('automation.form.addTemplate')}
                       </button>
                     </div>
 
@@ -497,7 +500,7 @@ export default function AutomationCommentsPage() {
                         }}
                         className="flex items-center justify-between w-full"
                       >
-                        <span className="text-xs font-medium text-on-surface">🤖 AI agent yoqish</span>
+                        <span className="text-xs font-medium text-on-surface">{t('automation.form.aiToggle')}</span>
                         <span style={{
                           width: '36px', height: '20px', borderRadius: '10px', padding: '2px',
                           border: 'none', display: 'inline-flex', alignItems: 'center', flexShrink: 0,
@@ -517,9 +520,9 @@ export default function AutomationCommentsPage() {
                         <div className="mt-2 flex items-start gap-2 px-3 py-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/30">
                           <span className="text-sm mt-0.5">⚠️</span>
                           <p className="text-xs text-amber-700 dark:text-amber-400">
-                            Hali birorta AI agent yaratilmagan.{' '}
+                            {t('automation.form.createAgentPrompt')}
                             <a href="/agents" className="font-semibold underline hover:no-underline">
-                              Agent yaratish →
+                              {t('automation.form.createAgentBtn')}
                             </a>
                           </p>
                         </div>
@@ -553,11 +556,11 @@ export default function AutomationCommentsPage() {
           </Card>
 
           {/* Postlar */}
-          <Card title="Postlar" desc="Bu avtomatizatsiya qaysi postlarda ishlaydi?">
+          <Card title={t('automation.form.postsLabel')} desc={t('automation.form.postsDesc')}>
             <div className="space-y-2 mb-3">
               {[
-                { val: 'all', label: 'Barcha postlar', desc: 'Hozirgi va kelajakdagi barcha postlar', Icon: Globe },
-                { val: 'specific', label: 'Tanlangan postlar', desc: "Faqat o'zingiz belgilagan postlar", Icon: Hash },
+                { val: 'all', label: t('automation.allPosts'), desc: t('automation.form.allPostsDesc'), Icon: Globe },
+                { val: 'specific', label: t('automation.form.specificPostsLabel'), desc: t('automation.form.specificPostsDesc'), Icon: Hash },
               ].map(opt => (
                 <button
                   key={opt.val}
@@ -593,7 +596,7 @@ export default function AutomationCommentsPage() {
                 ) : posts.length === 0 ? (
                   <div className="text-center py-6 text-on-surface-variant text-sm">
                     <MessageSquare size={24} className="mx-auto mb-2 opacity-40" />
-                    Postlar topilmadi
+                    {t('automation.form.noPostsFound')}
                   </div>
                 ) : (
                   <>
@@ -643,7 +646,7 @@ export default function AutomationCommentsPage() {
               style={{ background: 'linear-gradient(135deg, #7C3AED, #8B5CF6)' }}
             >
               <Save size={16} />
-              {saving ? 'Saqlanmoqda...' : 'Avtomatizatsiyani saqlash'}
+              {saving ? t('settings.waiting') || 'Saqlanmoqda...' : t('general.save')}
             </button>
             {!form.name.trim() && (
               <p className="text-xs text-on-surface-variant text-center mt-2">Nom kiriting</p>
@@ -660,13 +663,13 @@ export default function AutomationCommentsPage() {
 
   return (
     
-      <div className="h-full overflow-y-auto bg-background text-on-surface p-6">
-        <div className="container mx-auto max-w-5xl">
+      <div className="h-full overflow-y-auto bg-background text-on-surface p-4 md:p-6">
+        <div className="mx-auto max-w-5xl">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-on-surface">Izoh avtomatizatsiyalari</h1>
+            <h1 className="text-2xl font-bold text-on-surface">{t('automation.title')}</h1>
             <p className="text-on-surface-variant text-sm mt-1">
-              Postlaringizga kelgan izohlarga avtomatik javob bering
+              {t('automation.subtitle')}
             </p>
           </div>
           <button
@@ -675,7 +678,7 @@ export default function AutomationCommentsPage() {
             style={{ background: 'linear-gradient(135deg, #7C3AED, #8B5CF6)' }}
           >
             <Plus size={16} />
-            Yangi avtomatizatsiya
+            {t('automation.new')}
           </button>
         </div>
 
@@ -690,16 +693,16 @@ export default function AutomationCommentsPage() {
             <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
               <Zap size={28} className="text-primary" />
             </div>
-            <h3 className="text-lg font-semibold text-on-surface mb-2">Hali avtomatizatsiya yo'q</h3>
+            <h3 className="text-lg font-semibold text-on-surface mb-2">{t('automation.emptyTitle')}</h3>
             <p className="text-on-surface-variant text-sm mb-6 max-w-xs">
-              Birinchi avtomatizatsiyangizni yarating va izohlarga avtomatik javob bering
+              {t('automation.emptyDesc')}
             </p>
             <button
               onClick={openCreate}
               className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium text-white hover:opacity-90 transition-all"
               style={{ background: 'linear-gradient(135deg, #7C3AED, #8B5CF6)' }}
             >
-              <Plus size={16} /> Avtomatizatsiya yaratish
+              <Plus size={16} /> {t('automation.createBtn')}
             </button>
           </div>
         ) : (
@@ -725,7 +728,7 @@ export default function AutomationCommentsPage() {
                         ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
                         : 'bg-surface-variant text-on-surface-variant'
                     }`}>
-                      {auto.isActive ? 'Faol' : 'Nofaol'}
+                      {auto.isActive ? t('automation.active') : t('automation.inactive')}
                     </span>
                   </div>
                   <div className="flex items-center gap-3 flex-wrap">
@@ -741,7 +744,7 @@ export default function AutomationCommentsPage() {
                     )}
                     <span className="flex items-center gap-1 text-xs text-on-surface-variant">
                       {auto.postScope === 'all' ? <Globe size={11} /> : <Hash size={11} />}
-                      {auto.postScope === 'all' ? 'Barcha postlar' : `${auto.postIds.length} ta post`}
+                      {auto.postScope === 'all' ? t('automation.allPosts') : `${auto.postIds.length} ${t('automation.specificPosts')}`}
                     </span>
                     {auto.triggerType === 'keyword' && auto.keywords.length > 0 && (
                       <span className="text-xs text-on-surface-variant">

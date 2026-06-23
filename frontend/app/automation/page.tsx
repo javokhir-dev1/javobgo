@@ -190,9 +190,6 @@ export default function AutomationCommentsPage() {
             <span className="font-semibold text-on-surface">{t('automation.new')}</span>
           </div>
           <div className="flex items-center gap-3">
-            {saveError && (
-              <span className="text-[12px] text-red-500 max-w-xs text-right leading-tight">{saveError}</span>
-            )}
             <button
               onClick={save}
               disabled={!canSave || saving}
@@ -206,7 +203,7 @@ export default function AutomationCommentsPage() {
         </div>
 
         <div className="flex-1 overflow-y-auto">
-        <div className="max-w-2xl mx-auto p-8 space-y-4">
+        <div className="max-w-2xl mx-auto p-4 md:p-8 space-y-4">
           {/* Nom */}
           <Card title={t('automation.form.nameLabel')}>
             <input
@@ -598,15 +595,6 @@ export default function AutomationCommentsPage() {
               <Save size={16} />
               {saving ? t('automation.form.saving') : t('automation.form.saveBtn')}
             </button>
-            {saveError && (
-              <p className="text-[12px] text-red-500 text-center mt-2">{saveError}</p>
-            )}
-            {!saveError && !form.name.trim() && (
-              <p className="text-xs text-on-surface-variant text-center mt-2">{t('automation.form.errName')}</p>
-            )}
-            {form.name.trim() && !form.replyEnabled && !form.dmEnabled && (
-              <p className="text-xs text-on-surface-variant text-center mt-2">{t('automation.form.errAction')}</p>
-            )}
           </div>
         </div>
         </div>{/* /overflow-y-auto */}
@@ -618,22 +606,22 @@ export default function AutomationCommentsPage() {
   return (
     
     <div className="flex flex-col h-full overflow-hidden">
-      <div className="flex-1 overflow-y-auto p-8">
-        <div className="container mx-auto max-w-5xl">
+      <div className="flex-1 overflow-y-auto p-4 md:p-8">
+        <div className="mx-auto max-w-5xl">
           <div className="flex items-center justify-between mb-8">
-            <div>
-              <h1 className="text-2xl font-bold text-on-surface">{t('automation.title')}</h1>
-              <p className="text-on-surface-variant text-sm mt-1">
+            <div className="flex-1 min-w-0 pr-4">
+              <h1 className="text-[20px] sm:text-[28px] font-bold text-on-surface tracking-tight truncate">{t('automation.title')}</h1>
+              <p className="text-[12px] sm:text-[15px] text-on-surface-variant mt-1 truncate">
                 {t('automation.subtitle')}
               </p>
             </div>
             <button
               onClick={openCreate}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm text-white hover:opacity-90 transition-all"
+              className="shrink-0 flex items-center gap-1.5 sm:gap-2 px-3 py-2 sm:px-5 sm:py-2.5 rounded-xl font-medium text-[13px] sm:text-[14px] text-white hover:opacity-90 transition-all"
               style={{ background: 'linear-gradient(135deg, #7C3AED, #8B5CF6)' }}
             >
-              <Plus size={16} />
-              {t('automation.new')}
+              <Plus size={16} className="sm:w-[18px] sm:h-[18px]" />
+              <span>{t('automation.new')}</span>
             </button>
           </div>
 

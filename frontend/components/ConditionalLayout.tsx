@@ -2,6 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
+import BottomNav from '@/components/BottomNav';
 import { InstagramProvider, useInstagram } from '@/context/InstagramContext';
 import InstagramRequired from '@/components/InstagramRequired';
 
@@ -12,9 +13,10 @@ function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <>
       <Sidebar />
+      <BottomNav />
       <main
         key={selectedAccount?.instagram_account_id ?? 'no-account'}
-        className="ml-64 flex-1 flex flex-col h-full overflow-hidden w-[calc(100%-256px)]"
+        className="ml-0 md:ml-64 flex-1 flex flex-col h-full overflow-hidden w-full md:w-[calc(100%-256px)] pb-[68px] md:pb-0"
       >
         {children}
       </main>
