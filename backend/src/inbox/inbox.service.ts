@@ -72,7 +72,8 @@ export class InboxService {
   async handleIncomingDM(creds: IgCredentials, event: any): Promise<void> {
     const messageText: string = event.message?.text || '';
     const messageId: string   = event.message?.mid  || '';
-    const timestamp: number   = event.timestamp;
+    // Instagram timestamp ishlatilmaydi — server vaqti ishlatiladi
+    const now = new Date();
 
     const ig_account_id       = creds.accountId;
 
@@ -118,12 +119,12 @@ export class InboxService {
         participantIgsid,
         participantUsername,
         lastMessage:   messageText,
-        lastMessageAt: timestamp ? new Date(timestamp > 1e12 ? timestamp : timestamp * 1000) : new Date(),
+        lastMessageAt: now,
         unreadCount:   direction === 'in' ? 1 : 0,
       });
     } else {
       conv.lastMessage   = messageText;
-      conv.lastMessageAt = timestamp ? new Date(timestamp > 1e12 ? timestamp : timestamp * 1000) : new Date();
+      conv.lastMessageAt = now;
       if (direction === 'in') conv.unreadCount = (conv.unreadCount || 0) + 1;
     }
 
@@ -142,7 +143,7 @@ export class InboxService {
       igMessageId:  messageId || null,
       direction,
       messageText,
-      igCreatedAt:  timestamp ? new Date(timestamp > 1e12 ? timestamp : timestamp * 1000) : new Date(),
+      igCreatedAt:  now,
     });
     await this.msgRepo.save(msg);
 

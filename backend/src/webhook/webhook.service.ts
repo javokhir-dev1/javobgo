@@ -87,21 +87,24 @@ export class WebhookService {
     event: any,
   ) {
     const senderId = event.sender?.id;
-    const isEcho = event.message?.is_echo;
-    this.logger.log(`📩 DM event: sender=${senderId} echo=${!!isEcho} text=${!!event.message?.text}`);
+    const isEcho = !!event.message?.is_echo;
+    this.logger.log(`📩 DM event: sender=${senderId} echo=${isEcho} text=${!!event.message?.text}`);
 
     if (!event.message?.text) return;
     if (!senderId) return;
 
-    // Inboxga saqlash (direction inboxService ichida aniqlanadi)
+    // Echo = botning o'z xabari. Inboxga saqlamaymiz (autoreply o'zi saqlaydi).
+    if (isEcho) return;
+
+    // Faqat kiruvchi xabarlarni inboxga saqlaymiz
     try {
       await this.inboxService.handleIncomingDM(creds, event);
-      this.logger.log(`✅ Inbox saqlandi: sender=${senderId} bot=${botAccountId}`);
+      this.logger.log(`✅ Inbox saqlandi: sender=${senderId}`);
     } catch (err) {
       this.logger.warn(`Inbox saqlash xatosi: ${err.message}`);
     }
 
-    // Avtoreply faqat kiruvchi xabarda (senderId !== botAccountId)
+    // Bot o'z xabarlariga javob bermasligi kerak
     if (senderId === botAccountId) return;
 
     const s = await this.settings.get();
@@ -125,7 +128,8 @@ export class WebhookService {
 
       if (!reply) return;
 
-      await this.instagram.sendDM(creds, senderId, reply);
+      // Autoreply yuboramiz va inboxga 'out' sifatida saqlaymiz
+      await this.inboxService.sendMessage(creds, senderId, reply);
       await this.logs.create({
         telegram_id, instagram_account_id: botAccountId,
         type: 'success', action: 'DM Avtoreply',

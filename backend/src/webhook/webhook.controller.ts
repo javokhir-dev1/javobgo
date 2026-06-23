@@ -1,10 +1,12 @@
-import { Controller, Get, Post, Query, Body, Res, HttpCode } from '@nestjs/common';
+import { Controller, Get, Post, Query, Body, Res, HttpCode, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Response } from 'express';
 import { WebhookService } from './webhook.service';
 
 @Controller('webhook')
 export class WebhookController {
+  private readonly logger = new Logger(WebhookController.name);
+
   constructor(
     private readonly webhookService: WebhookService,
     private readonly config: ConfigService,
@@ -26,15 +28,20 @@ export class WebhookController {
     return res.sendStatus(403);
   }
 
-  // Instagram events
+  // Instagram events — darhol 200 qaytaradi, keyin async ishlaydi
   @Post()
   @HttpCode(200)
-  async receive(@Body() body: any) {
+  receive(@Body() body: any) {
     if (body.object !== 'instagram') return { status: 'ignored' };
 
-    for (const entry of body.entry ?? []) {
-      await this.webhookService.handleEntry(entry);
-    }
+    // Fire-and-forget: Meta 200 kutmaydi, retry bo'lmaydi
+    setImmediate(() => {
+      for (const entry of body.entry ?? []) {
+        this.webhookService.handleEntry(entry).catch(err =>
+          this.logger.error(`Entry xatosi: ${err.message}`),
+        );
+      }
+    });
 
     return { status: 'ok' };
   }
