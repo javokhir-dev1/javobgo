@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 
 const BACKEND = process.env.BACKEND_URL || 'http://localhost:4000';
 
-async function cookieHeader() {
+async function cookieHeader(): Promise<HeadersInit> {
   const store = await cookies();
   const token = store.get('tg_access_token')?.value;
   return token ? { Cookie: `tg_access_token=${token}` } : {};

@@ -207,6 +207,16 @@ export default function Sidebar() {
 
 
 
+      <div className="px-2 mb-2">
+        <button
+          onClick={toggleTheme}
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-[15px] font-medium text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-all duration-200"
+        >
+          {theme === 'dark' ? <Sun size={18} className="flex-shrink-0" /> : <Moon size={18} className="flex-shrink-0" />}
+          {t('sidebar.theme')}
+        </button>
+      </div>
+
       {/* User profile */}
       <div className="border-t border-outline-variant/30 mt-auto">
         <Link

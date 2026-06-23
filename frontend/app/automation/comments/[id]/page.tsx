@@ -277,10 +277,10 @@ export default function AutomationDetailPage() {
                 )}
                 <div className={form.replyAgentId !== null && form.triggerType !== 'keyword' ? 'opacity-40 pointer-events-none select-none' : ''}>
                   <p className="text-xs text-on-surface-variant mb-2">Shablonlar (tasodifiy tanlanadi). <code className="bg-surface-variant px-1 rounded">{'{name}'}</code> = ism, <code className="bg-surface-variant px-1 rounded">{'{comment}'}</code> = izoh</p>
-                  {form.replyTemplates.map((t, i) => (
+                  {form.replyTemplates.map((tmpl, i) => (
                     <div key={i} className="flex gap-2 mb-2">
                       <textarea
-                        value={t}
+                        value={tmpl}
                         onChange={e => {
                           const arr = [...form.replyTemplates];
                           arr[i] = e.target.value;
@@ -394,10 +394,10 @@ export default function AutomationDetailPage() {
                 )}
                 <div className={form.dmAgentId !== null && form.triggerType !== 'keyword' ? 'opacity-40 pointer-events-none select-none' : ''}>
                   <p className="text-xs text-on-surface-variant mb-2">Shablonlar. <code className="bg-surface-variant px-1 rounded">{'{name}'}</code> = ism, <code className="bg-surface-variant px-1 rounded">{'{comment}'}</code> = izoh</p>
-                  {form.dmTemplates.map((t, i) => (
+                  {form.dmTemplates.map((tmpl, i) => (
                     <div key={i} className="flex gap-2 mb-2">
                       <textarea
-                        value={t}
+                        value={tmpl}
                         onChange={e => {
                           const arr = [...form.dmTemplates];
                           arr[i] = e.target.value;

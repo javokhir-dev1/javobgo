@@ -13,6 +13,7 @@ const uz: TranslationDictionary = {
   'sidebar.connecting': 'Ulanmoqda...',
   'sidebar.connectInstagram': 'Instagram ulash',
   'sidebar.telegramUser': 'Telegram foydalanuvchi',
+  'sidebar.theme': 'Kun/Tun rejimi',
 
   // Settings
   'settings.title': 'Sozlamalar',
@@ -196,6 +197,7 @@ const en: TranslationDictionary = {
   'sidebar.connecting': 'Connecting...',
   'sidebar.connectInstagram': 'Connect Instagram',
   'sidebar.telegramUser': 'Telegram User',
+  'sidebar.theme': 'Dark Mode',
 
   // Settings
   'settings.title': 'Settings',
@@ -379,6 +381,7 @@ const ru: TranslationDictionary = {
   'sidebar.connecting': 'Подключение...',
   'sidebar.connectInstagram': 'Подключить Instagram',
   'sidebar.telegramUser': 'Пользователь Telegram',
+  'sidebar.theme': 'Тема',
 
   // Settings
   'settings.title': 'Настройки',

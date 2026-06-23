@@ -320,10 +320,10 @@ export default function AutomationCommentsPage() {
                         <code className="bg-surface-variant px-1 rounded">{'{name}'}</code> va{' '}
                         <code className="bg-surface-variant px-1 rounded">{'{comment}'}</code> o'zgaruvchilarini ishlatishingiz mumkin.
                       </p>
-                      {form.replyTemplates.map((t, i) => (
+                      {form.replyTemplates.map((tmpl, i) => (
                         <div key={i} className="flex gap-2 mb-2">
                           <textarea
-                            value={t}
+                            value={tmpl}
                             onChange={e => {
                               const arr = [...form.replyTemplates];
                               arr[i] = e.target.value;
@@ -457,10 +457,10 @@ export default function AutomationCommentsPage() {
                         <code className="bg-surface-variant px-1 rounded">{'{name}'}</code> va{' '}
                         <code className="bg-surface-variant px-1 rounded">{'{comment}'}</code> ishlatishingiz mumkin.
                       </p>
-                      {form.dmTemplates.map((t, i) => (
+                      {form.dmTemplates.map((tmpl, i) => (
                         <div key={i} className="flex gap-2 mb-2">
                           <textarea
-                            value={t}
+                            value={tmpl}
                             onChange={e => {
                               const arr = [...form.dmTemplates];
                               arr[i] = e.target.value;
@@ -658,11 +658,10 @@ export default function AutomationCommentsPage() {
     );
   }
 
-  // ─── LIST VIEW ────────────────────────────────────────────────────────────
   return (
     <InstagramRequired>
-    <div className="h-full overflow-y-auto bg-background text-on-surface p-6">
-      <div className="container mx-auto max-w-5xl">
+      <div className="h-full overflow-y-auto bg-background text-on-surface p-6">
+        <div className="container mx-auto max-w-5xl">
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-2xl font-bold text-on-surface">Izoh avtomatizatsiyalari</h1>
@@ -769,4 +768,29 @@ export default function AutomationCommentsPage() {
                     <span style={{
                       display: 'block', width: '16px', height: '16px', borderRadius: '50%',
                       backgroundColor: '#fff', boxShadow: '0 1px 4px rgba(0,0,0,0.2)',
-                      transform: auto.isActive ? 'translateX(16px
+                      transform: auto.isActive ? 'translateX(16px)' : 'translateX(0)',
+                      transition: 'transform 0.25s ease'
+                    }} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+    </InstagramRequired>
+  );
+}
+
+function Card({ title, desc, children }: { title: string; desc?: string; children: React.ReactNode }) {
+  return (
+    <div className="bg-surface border border-outline-variant/30 rounded-2xl overflow-hidden">
+      <div className="px-4 py-3 border-b border-outline-variant/20">
+        <h2 className="text-sm font-semibold text-on-surface">{title}</h2>
+        {desc && <p className="text-xs text-on-surface-variant mt-0.5">{desc}</p>}
+      </div>
+      <div className="p-4">{children}</div>
+    </div>
+  );
+}

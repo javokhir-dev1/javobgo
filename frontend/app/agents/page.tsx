@@ -27,7 +27,7 @@ function avatarUrl(seed: string) {
   return `https://api.dicebear.com/9.x/bottts/svg?seed=${seed}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`;
 }
 
-export function AgentAvatar({ value, className = 'w-10 h-10' }: { value: string; className?: string }) {
+function AgentAvatar({ value, className = 'w-10 h-10' }: { value: string; className?: string }) {
   if (value?.startsWith('dicebear:')) {
     const seed = value.split(':')[2] || 'Felix';
     return <img src={avatarUrl(seed)} className={className} alt="avatar" />;
@@ -155,7 +155,7 @@ export default function AgentsPage() {
                     </div>
                     <div className="flex items-center gap-1">
                       <button onClick={e => openEdit(agent, e)}
-                        className="p-1.5 rounded-lg text-outline-variant hover:text-primary hover:bg-primary/10 transition-colors">
+                        className="p-2 rounded-xl bg-surface hover:bg-surface-variant border border-outline-variant/30 text-on-surface-variant hover:text-primary transition-all shadow-sm">
                         <Pencil size={15} />
                       </button>
                       <button onClick={e => handleDelete(agent.id, e)}

@@ -3,6 +3,7 @@
 import { useRef, useState, useEffect, KeyboardEvent, ClipboardEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { verifyOtpAction } from '../actions/auth';
+import { getSettings } from '@/lib/api';
 
 const OTP_LENGTH = 6;
 
@@ -53,13 +54,18 @@ export default function LoginPage() {
   };
 
   useEffect(() => {
+    // Akkaunt mavjud bo'lsa (valid token), bosh sahifaga qaytarish
+    getSettings()
+      .then(() => router.replace('/'))
+      .catch(() => {}); // Token yo'q yoki yaroqsiz bo'lsa, shu yerda qoladi
+
     const params = new URLSearchParams(window.location.search);
     const urlOtp = params.get('otp');
     if (urlOtp && /^\d{6}$/.test(urlOtp)) {
       setDigits(urlOtp.split(''));
       submit(urlOtp);
     }
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     const hasDigit = digits.some(d => d !== '');

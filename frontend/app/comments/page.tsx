@@ -102,14 +102,14 @@ function TemplateList({
         </div>
       )}
 
-      {templates.map((t, i) => (
+      {templates.map((tmpl, i) => (
         <div key={i} className="flex gap-2 items-start">
           <div className="flex-shrink-0 w-5 h-5 mt-2.5 rounded-full bg-accent-light flex items-center justify-center text-xs font-semibold text-accent-dark">
             {i + 1}
           </div>
           <textarea
             rows={2}
-            value={t}
+            value={tmpl}
             onChange={e => update(i, e.target.value)}
             className="flex-1 px-3 py-2 border-[1.5px] border-gray-200 rounded-xl text-sm text-gray-800 focus:outline-none focus:border-accent bg-gray-50 focus:bg-white resize-none transition-colors"
           />

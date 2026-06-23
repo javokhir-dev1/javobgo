@@ -101,7 +101,7 @@ function AgentAvatar({ value, size = 28 }: { value: string; size?: number }) {
 
 // ─── DM Sozlamalari paneli ───────────────────────────────────────────────────
 
-function DmSettingsPanel({ onClose: _ }: { onClose: () => void }) {
+function DmSettingsPanel({ width }: { width: number }) {
   const { t } = useLanguage();
   const [loading, setLoading]       = useState(true);
   const [saving, setSaving]         = useState(false);
@@ -140,6 +140,9 @@ function DmSettingsPanel({ onClose: _ }: { onClose: () => void }) {
   const templateError = mode === 'template' && enabled && validTemplates.length < 3
     ? `${t('inbox.settings.errTemplates')} (${validTemplates.length})`
     : null;
+  const agentError = mode === 'ai' && enabled && (!agentId || !agents.some(a => a.id === agentId))
+    ? true
+    : null;
 
   const save = async () => {
     setSaving(true);
@@ -157,7 +160,7 @@ function DmSettingsPanel({ onClose: _ }: { onClose: () => void }) {
   };
 
   return (
-    <div className="w-72 flex-shrink-0 flex flex-col border-l border-outline-variant/30 bg-surface-container-lowest">
+    <div style={{ width }} className="flex-shrink-0 flex flex-col bg-surface-container-lowest">
       {/* Header */}
       <div className="px-4 pt-5 pb-3 flex items-center gap-2">
         <Settings size={16} className="text-primary" />
@@ -216,10 +219,10 @@ function DmSettingsPanel({ onClose: _ }: { onClose: () => void }) {
               {mode === 'template' && (
                 <div className="space-y-2">
                   <p className="text-[12px] font-medium text-on-surface-variant uppercase tracking-wide">{t('inbox.settings.templates')}</p>
-                  {templates.map((t, i) => (
+                  {templates.map((tmpl, i) => (
                     <div key={i} className="flex gap-2 items-start">
                       <textarea
-                        value={t}
+                        value={tmpl}
                         rows={2}
                         onChange={e => {
                           const next = [...templates];
@@ -289,11 +292,11 @@ function DmSettingsPanel({ onClose: _ }: { onClose: () => void }) {
       <div className="px-4 py-3 border-t border-outline-variant/20">
         <button
           onClick={save}
-          disabled={saving || !hasChanges || !!templateError}
+          disabled={saving || !hasChanges || !!templateError || !!agentError}
           className={`w-full py-2.5 rounded-xl text-[14px] font-medium transition-colors ${
             saved
               ? 'bg-green-500 text-white'
-              : hasChanges && !templateError
+              : hasChanges && !templateError && !agentError
                 ? 'bg-primary text-white hover:bg-primary/90'
                 : 'bg-surface-container text-on-surface-variant cursor-not-allowed'
           }`}
@@ -400,6 +403,8 @@ function ProfileModal({ igsid, conv, onClose }: { igsid: string; conv: Conversat
 export default function InboxPage() {
   const connected = useInstagramStatus();
   const { t } = useLanguage();
+  const [leftWidth, setLeftWidth]         = useState(320);
+  const [rightWidth, setRightWidth]       = useState(288);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selected, setSelected]           = useState<Conversation | null>(null);
   const [messages, setMessages]           = useState<InboxMessage[]>([]);
@@ -421,6 +426,57 @@ export default function InboxPage() {
   }, []);
 
   useEffect(() => { if (connected !== false) loadConversations(); }, [connected, loadConversations]);
+
+  useEffect(() => {
+    const savedLeft = localStorage.getItem('inbox_left_width');
+    const savedRight = localStorage.getItem('inbox_right_width');
+    if (savedLeft) setLeftWidth(Number(savedLeft));
+    if (savedRight) setRightWidth(Number(savedRight));
+  }, []);
+
+  const startLeftResize = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const startX = e.clientX;
+    const startWidth = leftWidth;
+    const onMouseMove = (ev: MouseEvent) => {
+      let w = startWidth + (ev.clientX - startX);
+      if (w < 250) w = 250;
+      if (w > 600) w = 600;
+      setLeftWidth(w);
+    };
+    const onMouseUp = (ev: MouseEvent) => {
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+      let w = startWidth + (ev.clientX - startX);
+      if (w < 250) w = 250;
+      if (w > 600) w = 600;
+      localStorage.setItem('inbox_left_width', w.toString());
+    };
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  };
+
+  const startRightResize = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const startX = e.clientX;
+    const startWidth = rightWidth;
+    const onMouseMove = (ev: MouseEvent) => {
+      let w = startWidth - (ev.clientX - startX);
+      if (w < 250) w = 250;
+      if (w > 600) w = 600;
+      setRightWidth(w);
+    };
+    const onMouseUp = (ev: MouseEvent) => {
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+      let w = startWidth - (ev.clientX - startX);
+      if (w < 250) w = 250;
+      if (w > 600) w = 600;
+      localStorage.setItem('inbox_right_width', w.toString());
+    };
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  };
 
   // ─── SSE — real-time yangilanishlar ───
   useEffect(() => {
@@ -550,7 +606,7 @@ export default function InboxPage() {
       )}
 
       {/* ── Chap panel ── */}
-      <div className="w-80 flex-shrink-0 flex flex-col border-r border-outline-variant/30 bg-surface-container-lowest">
+      <div style={{ width: leftWidth }} className="flex-shrink-0 flex flex-col bg-surface-container-lowest">
 
         {/* Header */}
         <div className="px-4 pt-5 pb-3 flex items-center justify-between">
@@ -637,8 +693,13 @@ export default function InboxPage() {
         </div>
       </div>
 
-      {/* ── O'ng panel ── */}
-      <div className="flex-1 flex overflow-hidden">
+      {/* Chap va O'rta o'rtasidagi Resizer */}
+      <div
+        onMouseDown={startLeftResize}
+        className="w-1 cursor-col-resize bg-outline-variant/20 hover:bg-primary active:bg-primary transition-colors shrink-0 z-10"
+      />
+
+      {/* ── O'rta panel ── */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {selected ? (
           <>
@@ -743,9 +804,14 @@ export default function InboxPage() {
         )}
       </div>
 
+      {/* O'rta va O'ng o'rtasidagi Resizer */}
+      <div
+        onMouseDown={startRightResize}
+        className="w-1 cursor-col-resize bg-outline-variant/20 hover:bg-primary active:bg-primary transition-colors shrink-0 z-10"
+      />
+
       {/* ── DM Sozlamalari paneli ── */}
-      <DmSettingsPanel onClose={() => {}} />
-      </div>
+      <DmSettingsPanel width={rightWidth} />
     </div>
     </InstagramRequired>
   );

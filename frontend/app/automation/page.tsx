@@ -311,10 +311,10 @@ export default function AutomationCommentsPage() {
                         <code className="bg-surface-variant px-1 rounded">{'{name}'}</code> va{' '}
                         <code className="bg-surface-variant px-1 rounded">{'{comment}'}</code> o'zgaruvchilarini ishlatishingiz mumkin.
                       </p>
-                      {form.replyTemplates.map((t, i) => (
+                      {form.replyTemplates.map((tmpl, i) => (
                         <div key={i} className="flex gap-2 mb-2">
                           <textarea
-                            value={t}
+                            value={tmpl}
                             onChange={e => {
                               const arr = [...form.replyTemplates];
                               arr[i] = e.target.value;
@@ -427,10 +427,10 @@ export default function AutomationCommentsPage() {
                         <code className="bg-surface-variant px-1 rounded">{'{name}'}</code> va{' '}
                         <code className="bg-surface-variant px-1 rounded">{'{comment}'}</code> ishlatishingiz mumkin.
                       </p>
-                      {form.dmTemplates.map((t, i) => (
+                      {form.dmTemplates.map((tmpl, i) => (
                         <div key={i} className="flex gap-2 mb-2">
                           <textarea
-                            value={t}
+                            value={tmpl}
                             onChange={e => {
                               const arr = [...form.dmTemplates];
                               arr[i] = e.target.value;
