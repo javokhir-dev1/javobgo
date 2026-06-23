@@ -1,0 +1,277 @@
+'use client';
+import InstagramRequired from '@/components/InstagramRequired';
+import { useEffect, useRef, useState } from 'react';
+import { RefreshCw, Inbox, MessageSquare, Send, AlertCircle, CheckCircle2, Info } from 'lucide-react';
+import { getLogs, getTodayStats } from '@/lib/api';
+import { useInstagramStatus } from '@/context/InstagramContext';
+
+interface Log {
+  id: number;
+  type: 'success' | 'error' | 'info';
+  action: string;
+  message: string;
+  user: string;
+  userMessage?: string;
+  timestamp: string;
+  createdAt?: string;
+}
+
+type Filter = 'all' | 'success' | 'error' | 'info';
+
+const TYPE_STYLES = {
+  success: {
+    dot: 'bg-emerald-500',
+    glow: 'shadow-[0_0_6px_rgba(16,185,129,0.5)]',
+    text: 'text-emerald-600 dark:text-emerald-400',
+    bg: 'bg-emerald-50 dark:bg-emerald-950/30',
+    border: 'border-emerald-200/60 dark:border-emerald-800/30',
+    icon: CheckCircle2,
+  },
+  error: {
+    dot: 'bg-red-500',
+    glow: 'shadow-[0_0_6px_rgba(239,68,68,0.5)]',
+    text: 'text-red-500',
+    bg: 'bg-red-50 dark:bg-red-950/30',
+    border: 'border-red-200/60 dark:border-red-800/30',
+    icon: AlertCircle,
+  },
+  info: {
+    dot: 'bg-blue-500',
+    glow: 'shadow-[0_0_6px_rgba(59,130,246,0.5)]',
+    text: 'text-blue-500',
+    bg: 'bg-blue-50 dark:bg-blue-950/30',
+    border: 'border-blue-200/60 dark:border-blue-800/30',
+    icon: Info,
+  },
+};
+
+const FILTERS: { key: Filter; label: string }[] = [
+  { key: 'all',     label: 'Hammasi' },
+  { key: 'success', label: 'Muvaffaqiyat' },
+  { key: 'error',   label: 'Xatolar' },
+  { key: 'info',    label: 'Info' },
+];
+
+function StatCard({
+  value, label, icon: Icon, color,
+}: { value: number | string; label: string; icon: any; color: string }) {
+  return (
+    <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl px-5 py-4 flex items-center gap-4">
+      <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${color}`}>
+        <Icon size={18} className="text-white" />
+      </div>
+      <div>
+        <p className="text-[22px] font-bold text-on-surface leading-none">{value}</p>
+        <p className="text-[12px] text-on-surface-variant mt-1">{label}</p>
+      </div>
+    </div>
+  );
+}
+
+export default function LogsPage() {
+  const connected = useInstagramStatus();
+  const [logs, setLogs]       = useState<Log[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter]   = useState<Filter>('all');
+  const [stats, setStats]     = useState({ success: 0, error: 0, info: 0, total: 0, commentReplies: 0, dmUsers: 0 });
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  const load = () => {
+    setLoading(true);
+    Promise.allSettled([
+      getLogs(200).then(d => {
+        const list: Log[] = d.logs || [];
+        setLogs(list);
+        setStats(prev => ({
+          ...prev,
+          success: list.filter(l => l.type === 'success').length,
+          error:   list.filter(l => l.type === 'error').length,
+          info:    list.filter(l => l.type === 'info').length,
+          total:   list.length,
+        }));
+      }),
+      getTodayStats().then(d => {
+        setStats(prev => ({
+          ...prev,
+          commentReplies: d.commentReplies ?? 0,
+          dmUsers:        d.dmUsers ?? 0,
+        }));
+      }),
+    ]).finally(() => setLoading(false));
+  };
+
+  useEffect(() => { if (connected !== false) load(); }, [connected]);
+
+  const filtered = filter === 'all' ? logs : logs.filter(l => l.type === filter);
+
+  const ts = (log: Log) => {
+    const d = new Date(log.createdAt ?? log.timestamp);
+    return d.toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const dateLabel = (log: Log) => {
+    const d = new Date(log.createdAt ?? log.timestamp);
+    const today = new Date();
+    const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+    if (d.toDateString() === today.toDateString()) return 'Bugun';
+    if (d.toDateString() === yesterday.toDateString()) return 'Kecha';
+    return d.toLocaleDateString('uz-UZ', { day: 'numeric', month: 'long' });
+  };
+
+  // date separators
+  const withSeparators = (() => {
+    const out: ({ type: 'separator'; label: string } | { type: 'log'; log: Log })[] = [];
+    let lastDate = '';
+    for (const log of filtered) {
+      const label = dateLabel(log);
+      if (label !== lastDate) {
+        out.push({ type: 'separator', label });
+        lastDate = label;
+      }
+      out.push({ type: 'log', log });
+    }
+    return out;
+  })();
+
+  return (
+    <InstagramRequired>
+    <div className="flex flex-col h-full overflow-hidden">
+      <div className="flex-1 overflow-y-auto p-8">
+        <div className="max-w-5xl mx-auto">
+
+          {/* Header */}
+          <header className="mb-6 flex items-end justify-between">
+            <div>
+              <h2 className="text-[28px] font-semibold text-on-surface tracking-tight">Loglar</h2>
+              <p className="text-[15px] text-on-surface-variant mt-1">Bot faoliyatining to'liq tarixi</p>
+            </div>
+            <button onClick={load}
+              className="flex items-center gap-2 px-4 py-2.5 text-[14px] font-medium border border-outline-variant/50 rounded-xl bg-surface-container-lowest hover:bg-surface-container-low transition-colors text-on-surface-variant">
+              <RefreshCw size={15} className={loading ? 'animate-spin' : ''} />
+              Yangilash
+            </button>
+          </header>
+
+          {/* Stat cards */}
+          {loading ? (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+              {[1,2,3,4].map(i => (
+                <div key={i} className="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl px-5 py-4 h-[72px] animate-pulse" />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+              <StatCard value={stats.total}          label="Jami loglar"        icon={Info}          color="bg-[#8B5CF6]" />
+              <StatCard value={stats.success}        label="Muvaffaqiyatli"     icon={CheckCircle2}  color="bg-emerald-500" />
+              <StatCard value={stats.error}          label="Xatolar"            icon={AlertCircle}   color="bg-red-500" />
+              <StatCard value={stats.commentReplies} label="Bugungi izoh javob" icon={MessageSquare} color="bg-blue-500" />
+            </div>
+          )}
+
+          {/* Filter tabs */}
+          <div className="flex items-center gap-2 mb-4">
+            {FILTERS.map(f => {
+              const count = f.key === 'all' ? logs.length
+                : logs.filter(l => l.type === f.key).length;
+              return (
+                <button
+                  key={f.key}
+                  onClick={() => setFilter(f.key)}
+                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-[13px] font-medium transition-all ${
+                    filter === f.key
+                      ? 'bg-primary text-white shadow-sm'
+                      : 'bg-surface-container-lowest border border-outline-variant/40 text-on-surface-variant hover:bg-surface-container-low'
+                  }`}
+                >
+                  {f.label}
+                  <span className={`text-[11px] px-1.5 py-0.5 rounded-full font-semibold ${
+                    filter === f.key
+                      ? 'bg-white/20 text-white'
+                      : 'bg-surface-container text-on-surface-variant'
+                  }`}>{count}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Log list */}
+          <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl shadow-sm overflow-hidden">
+            {loading ? (
+              <div className="flex flex-col">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <div key={i} className="flex items-start px-6 py-4 border-b border-outline-variant/20 last:border-b-0">
+                    <div className="mt-1.5 w-8 h-8 rounded-xl bg-surface-container shrink-0 animate-pulse" />
+                    <div className="ml-4 flex-1 space-y-2">
+                      <div className="h-4 w-40 bg-surface-container rounded animate-pulse" />
+                      <div className="h-3 w-56 bg-surface-container rounded animate-pulse" />
+                    </div>
+                    <div className="h-3 w-10 bg-surface-container rounded animate-pulse ml-4 mt-1" />
+                  </div>
+                ))}
+              </div>
+            ) : filtered.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 text-on-surface-variant">
+                <Inbox size={40} className="mb-3 opacity-40" />
+                <p className="text-[15px]">
+                  {filter === 'all' ? "Hozircha faoliyat yo'q" : `${FILTERS.find(f=>f.key===filter)?.label} loglari yo'q`}
+                </p>
+              </div>
+            ) : (
+              <div className="flex flex-col">
+                {withSeparators.map((item, idx) => {
+                  if (item.type === 'separator') {
+                    return (
+                      <div key={`sep-${idx}`} className="flex items-center gap-3 px-6 py-2 bg-surface-container-low/50 border-b border-outline-variant/20">
+                        <span className="text-[11px] font-semibold text-on-surface-variant uppercase tracking-wider">{item.label}</span>
+                      </div>
+                    );
+                  }
+                  const log = item.log;
+                  const style = TYPE_STYLES[log.type] ?? TYPE_STYLES.info;
+                  const Icon = style.icon;
+                  return (
+                    <div key={log.id}
+                      className="flex items-start px-6 py-3.5 border-b border-outline-variant/20 last:border-b-0 hover:bg-surface-container-low/60 transition-colors group">
+                      {/* Icon */}
+                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${style.bg} border ${style.border}`}>
+                        <Icon size={14} className={style.text} />
+                      </div>
+
+                      {/* Content */}
+                      <div className="ml-3 flex-1 min-w-0">
+                        <div className="flex flex-wrap items-baseline gap-x-2">
+                          <span className={`text-[14px] font-semibold ${style.text}`}>{log.action}</span>
+                          {log.user && (
+                            <span className="text-[12px] font-medium text-on-surface-variant bg-surface-container px-1.5 py-0.5 rounded-md">
+                              @{log.user}
+                            </span>
+                          )}
+                        </div>
+                        {log.userMessage && (
+                          <p className="text-[12px] text-on-surface-variant/60 mt-0.5 truncate max-w-lg">
+                            <span className="mr-1 opacity-50">↳</span>{log.userMessage}
+                          </p>
+                        )}
+                        {log.message && (
+                          <p className="text-[13px] text-on-surface-variant mt-0.5 truncate max-w-lg">{log.message}</p>
+                        )}
+                      </div>
+
+                      {/* Time */}
+                      <span className="text-[12px] text-on-surface-variant/50 ml-4 shrink-0 mt-1 whitespace-nowrap">
+                        {ts(log)}
+                      </span>
+                    </div>
+                  );
+                })}
+                <div ref={bottomRef} />
+              </div>
+            )}
+          </div>
+
+        </div>
+      </div>
+    </div>
+    </InstagramRequired>
+  );
+}
