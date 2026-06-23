@@ -1,5 +1,5 @@
 'use client';
-import InstagramRequired from '@/components/InstagramRequired';
+
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { MessageCircle, Send, Search, X, Instagram, Settings, Bot, FileText, Plus, Trash2, ChevronRight, RefreshCw } from 'lucide-react';
 import {
@@ -595,7 +595,7 @@ export default function InboxPage() {
   const totalUnread = conversations.reduce((s, c) => s + (c.unreadCount || 0), 0);
 
   return (
-    <InstagramRequired>
+    
     <div className="h-full flex overflow-hidden bg-surface-container-low">
       {profileModal && (
         <ProfileModal
@@ -813,6 +813,6 @@ export default function InboxPage() {
       {/* ── DM Sozlamalari paneli ── */}
       <DmSettingsPanel width={rightWidth} />
     </div>
-    </InstagramRequired>
+    
   );
 }

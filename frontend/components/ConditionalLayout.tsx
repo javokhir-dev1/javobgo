@@ -3,6 +3,7 @@
 import { usePathname } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
 import { InstagramProvider, useInstagram } from '@/context/InstagramContext';
+import InstagramRequired from '@/components/InstagramRequired';
 
 const AUTH_ROUTES = ['/login', '/auth'];
 
@@ -31,7 +32,9 @@ export default function ConditionalLayout({ children }: { children: React.ReactN
 
   return (
     <InstagramProvider>
-      <AppShell>{children}</AppShell>
+      <InstagramRequired>
+        <AppShell>{children}</AppShell>
+      </InstagramRequired>
     </InstagramProvider>
   );
 }

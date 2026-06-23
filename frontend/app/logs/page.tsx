@@ -1,5 +1,5 @@
 'use client';
-import InstagramRequired from '@/components/InstagramRequired';
+
 import { useEffect, useRef, useState } from 'react';
 import { RefreshCw, Inbox, MessageSquare, Send, AlertCircle, CheckCircle2, Info, Layers, ShieldAlert, CheckCircle, Activity } from 'lucide-react';
 import { getLogs, getTodayStats } from '@/lib/api';
@@ -137,7 +137,7 @@ export default function LogsPage() {
   })();
 
   return (
-    <InstagramRequired>
+    
     <div className="flex flex-col h-full overflow-hidden">
       <div className="flex-1 overflow-y-auto p-8">
         <div className="max-w-5xl mx-auto">
@@ -281,6 +281,6 @@ export default function LogsPage() {
         </div>
       </div>
     </div>
-    </InstagramRequired>
+    
   );
 }

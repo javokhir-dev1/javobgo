@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Zap, Mail, MessageSquare, Users, MessageCircle, ArrowRight, FileText } from 'lucide-react';
 import { getInstagramStatus, getTodayStats, getLogs, getCommentRules } from '@/lib/api';
 import { useTheme } from '@/components/ThemeProvider';
-import InstagramRequired from '@/components/InstagramRequired';
+
 import { useInstagramStatus } from '@/context/InstagramContext';
 import { useLanguage } from '@/context/LanguageContext';
 
@@ -83,7 +83,7 @@ export default function DashboardPage() {
   ];
 
   return (
-    <InstagramRequired>
+    
     <div className="flex flex-col h-full overflow-hidden">
       <div className="flex-1 overflow-y-auto p-8">
         <main className="max-w-5xl mx-auto space-y-7">
@@ -217,6 +217,6 @@ export default function DashboardPage() {
         </main>
       </div>
     </div>
-    </InstagramRequired>
+    
   );
 }

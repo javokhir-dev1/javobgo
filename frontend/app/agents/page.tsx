@@ -1,5 +1,5 @@
 'use client';
-import InstagramRequired from '@/components/InstagramRequired';
+
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Bot, Plus, ArrowRight, Trash2, X, Pencil } from 'lucide-react';
@@ -103,7 +103,7 @@ export default function AgentsPage() {
   };
 
   return (
-    <InstagramRequired>
+    
     <div className="flex flex-col h-full overflow-hidden">
       <div className="flex-1 overflow-y-auto p-8">
         <div className="max-w-5xl mx-auto">
@@ -266,6 +266,6 @@ export default function AgentsPage() {
         </div>
       )}
     </div>
-    </InstagramRequired>
+    
   );
 }

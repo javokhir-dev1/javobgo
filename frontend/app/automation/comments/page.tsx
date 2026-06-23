@@ -1,5 +1,5 @@
 'use client';
-import InstagramRequired from '@/components/InstagramRequired';
+
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -659,7 +659,7 @@ export default function AutomationCommentsPage() {
   }
 
   return (
-    <InstagramRequired>
+    
       <div className="h-full overflow-y-auto bg-background text-on-surface p-6">
         <div className="container mx-auto max-w-5xl">
         <div className="flex items-center justify-between mb-8">
@@ -779,7 +779,7 @@ export default function AutomationCommentsPage() {
         )}
       </div>
     </div>
-    </InstagramRequired>
+    
   );
 }
 
