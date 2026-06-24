@@ -10,10 +10,13 @@ import { AgentsModule } from '../agents/agents.module';
 import { InboxModule } from '../inbox/inbox.module';
 import { InstagramAccountsModule } from '../instagram-accounts/instagram-accounts.module';
 
+import { AdminModule } from '../admin/admin.module';
+
 @Module({
   imports: [
     SettingsModule, DmMessagesModule, LogsModule, RateLimitModule,
     AutomationsModule, AgentsModule, InboxModule, InstagramAccountsModule,
+    AdminModule,
   ],
   controllers: [WebhookController],
   providers: [WebhookService],

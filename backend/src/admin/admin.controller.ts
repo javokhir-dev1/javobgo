@@ -48,7 +48,7 @@ export class AdminController {
 
   // PATCH /api/admin/rate-limit/config
   @Patch('rate-limit/config')
-  updateConfig(@Body() body: { maxRequestsPerHour?: number; warningThresholdPct?: number }) {
+  updateConfig(@Body() body: { maxRequestsPerHour?: number; warningThresholdPct?: number; dmLimit?: number; commentLimit?: number }) {
     return this.adminService.updateConfig(body);
   }
 

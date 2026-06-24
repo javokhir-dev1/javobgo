@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, IsNull } from 'typeorm';
 import { RateLimit, RateLimitType } from './entities/rate-limit.entity';
 
 @Injectable()
@@ -17,9 +17,19 @@ export class RateLimitService {
     type: RateLimitType,
     cooldownHours = 24,
     perUserLimit = 10,
+    mediaId?: string,
   ): Promise<{ allowed: boolean; reason?: string }> {
     const now = new Date();
-    const record = await this.repo.findOne({ where: { userId, type } });
+    
+    const whereClause: any = { userId, type };
+    if (mediaId) {
+      whereClause.mediaId = mediaId;
+    } else if (type === 'comment') {
+      // If no mediaId provided for comment but we need it, we can fallback to IsNull or just query global
+      whereClause.mediaId = IsNull();
+    }
+
+    const record = await this.repo.findOne({ where: whereClause });
 
     if (record) {
       const userResetAt = record.userResetAt ? new Date(record.userResetAt) : null;
@@ -38,15 +48,22 @@ export class RateLimitService {
     return { allowed: true };
   }
 
-  async recordReply(userId: string, type: RateLimitType, cooldownHours = 24): Promise<void> {
+  async recordReply(userId: string, type: RateLimitType, cooldownHours = 24, mediaId?: string): Promise<void> {
     const now = new Date();
     const userResetAt = new Date(now.getTime() + cooldownHours * 3_600_000);
 
-    let record = await this.repo.findOne({ where: { userId, type } });
+    const whereClause: any = { userId, type };
+    if (mediaId) {
+      whereClause.mediaId = mediaId;
+    } else if (type === 'comment') {
+      whereClause.mediaId = IsNull();
+    }
+
+    let record = await this.repo.findOne({ where: whereClause });
 
     if (!record) {
       record = this.repo.create({
-        userId, type,
+        userId, type, mediaId,
         lastSentAt: now,
         userReplyCount: 1,
         userResetAt,

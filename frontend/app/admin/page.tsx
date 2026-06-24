@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { notFound } from 'next/navigation';
 import {
   Users, Activity, Shield, AlertTriangle, CheckCircle2,
   RefreshCw, Settings, Ban, Unlock, ChevronLeft, ChevronRight,
@@ -102,6 +103,7 @@ export default function AdminPage() {
   const [tab, setTab]             = useState<Tab>('overview');
   const [loading, setLoading]     = useState(true);
   const [error, setError]         = useState<string | null>(null);
+  const [isNotFound, setIsNotFound] = useState(false);
 
   const [stats, setStats]         = useState<any>(null);
   const [hourly, setHourly]       = useState<any[]>([]);
@@ -116,6 +118,8 @@ export default function AdminPage() {
 
   const [editMax, setEditMax]     = useState('');
   const [editWarn, setEditWarn]   = useState('');
+  const [editDmLimit, setEditDmLimit] = useState('');
+  const [editCommentLimit, setEditCommentLimit] = useState('');
   const [saving, setSaving]       = useState(false);
   const [maintenance, setMaintenance] = useState(false);
   const [maintenanceLoading, setMaintenanceLoading] = useState(false);
@@ -142,6 +146,8 @@ export default function AdminPage() {
         setConfig(cfg);
         setEditMax(String(cfg.maxRequestsPerHour));
         setEditWarn(String(cfg.warningThresholdPct));
+        setEditDmLimit(String(cfg.dmLimit ?? 10));
+        setEditCommentLimit(String(cfg.commentLimit ?? 10));
       } else if (tab === 'requests') {
         const r = await adminGetRequests(reqPage, 50);
         setRequests(r);
@@ -153,9 +159,13 @@ export default function AdminPage() {
         setIgTokens(t);
       }
     } catch (e: any) {
-      if (e?.response?.status === 403) setError('Admin huquqi yo\'q');
-      else if (e?.response?.status === 401) setError('Tizimga kiring');
-      else setError('Ma\'lumot yuklanmadi');
+      if (e?.response?.status === 403) {
+        setIsNotFound(true);
+      } else if (e?.response?.status === 401) {
+        setError('Tizimga kiring');
+      } else {
+        setError('Ma\'lumot yuklanmadi');
+      }
     } finally {
       setLoading(false);
     }
@@ -166,7 +176,12 @@ export default function AdminPage() {
   const saveConfig = async () => {
     setSaving(true);
     try {
-      await adminUpdateConfig({ maxRequestsPerHour: +editMax, warningThresholdPct: +editWarn });
+      await adminUpdateConfig({ 
+        maxRequestsPerHour: +editMax, 
+        warningThresholdPct: +editWarn,
+        dmLimit: +editDmLimit,
+        commentLimit: +editCommentLimit
+      });
       await load();
     } finally { setSaving(false); }
   };
@@ -198,6 +213,10 @@ export default function AdminPage() {
     { key: 'endpoints', label: 'Endpointlar', icon: Zap       },
     { key: 'igtokens',  label: 'IG Tokenlar', icon: Key       },
   ];
+
+  if (isNotFound) {
+    notFound();
+  }
 
   if (error) {
     return (
@@ -376,6 +395,16 @@ export default function AdminPage() {
                     <label className="text-xs text-white/40 block mb-1">Ogohlantirish chegarasi (%)</label>
                     <input type="number" value={editWarn} onChange={e => setEditWarn(e.target.value)}
                       className="bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white w-28 focus:outline-none focus:border-purple-400" />
+                  </div>
+                  <div>
+                    <label className="text-xs text-white/40 block mb-1">Maks. DM Limit</label>
+                    <input type="number" value={editDmLimit} onChange={e => setEditDmLimit(e.target.value)}
+                      className="bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white w-24 focus:outline-none focus:border-purple-400" />
+                  </div>
+                  <div>
+                    <label className="text-xs text-white/40 block mb-1">Maks. Izoh Limit</label>
+                    <input type="number" value={editCommentLimit} onChange={e => setEditCommentLimit(e.target.value)}
+                      className="bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white w-24 focus:outline-none focus:border-purple-400" />
                   </div>
                   <button onClick={saveConfig} disabled={saving}
                     className="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg text-sm font-medium transition disabled:opacity-50">

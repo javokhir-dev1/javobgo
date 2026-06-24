@@ -14,6 +14,12 @@ export class ApiQuotaConfig {
   @Column({ type: 'text', default: '[]' })
   blockedAccounts: string;
 
+  @Column({ default: 10 })
+  dmLimit: number;
+
+  @Column({ default: 10 })
+  commentLimit: number;
+
   /** Texnik ish rejimi — yoqilganda barcha API so'rovlari bloklandi */
   @Column({ default: false })
   maintenanceMode: boolean;

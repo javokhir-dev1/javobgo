@@ -39,11 +39,15 @@ export class AdminService {
     maxRequestsPerHour?: number;
     warningThresholdPct?: number;
     maintenanceMode?: boolean;
+    dmLimit?: number;
+    commentLimit?: number;
   }): Promise<ApiQuotaConfig> {
     const cfg = await this.getConfig();
     if (data.maxRequestsPerHour !== undefined) cfg.maxRequestsPerHour = data.maxRequestsPerHour;
     if (data.warningThresholdPct !== undefined) cfg.warningThresholdPct = data.warningThresholdPct;
     if (data.maintenanceMode !== undefined) cfg.maintenanceMode = data.maintenanceMode;
+    if (data.dmLimit !== undefined) cfg.dmLimit = data.dmLimit;
+    if (data.commentLimit !== undefined) cfg.commentLimit = data.commentLimit;
     return this.configRepo.save(cfg);
   }
 

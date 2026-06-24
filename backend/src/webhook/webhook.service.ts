@@ -8,6 +8,7 @@ import { RateLimitService } from '../rate-limit/rate-limit.service';
 import { AutomationsService } from '../automations/automations.service';
 import { AgentsService } from '../agents/agents.service';
 import { InboxService } from '../inbox/inbox.service';
+import { AdminService } from '../admin/admin.service';
 
 const MIN_DELAY_MS = 5_000;
 const MAX_DELAY_MS = 10_000;
@@ -26,6 +27,7 @@ export class WebhookService {
     private automations: AutomationsService,
     private agents: AgentsService,
     private inboxService: InboxService,
+    private adminService: AdminService,
   ) {}
 
   private pickRandom(templates: string[]): string | null {
@@ -117,6 +119,16 @@ export class WebhookService {
     const s = await this.settings.get();
     if (!s.dmAutoReplyEnabled) return;
 
+    const adminCfg = await this.adminService.getConfig();
+    const dmLimit = adminCfg.dmLimit ?? 10;
+
+    // Limit check: agar foydalanuvchi dmLimit tadan ko'p xabar yuborgan bo'lsa, javob bermaymiz
+    const incomingCount = await this.inboxService.getIncomingMessageCount(botAccountId, senderId);
+    if (incomingCount > dmLimit) {
+      this.logger.log(`Limit: ${senderId} ${dmLimit} tadan ko'p xabar yubordi (${incomingCount}), javob berish to'xtatildi.`);
+      return;
+    }
+
     await this.rateLimit.randomDelay(MIN_DELAY_MS, MAX_DELAY_MS);
 
     const userMessage = event.message.text;
@@ -172,6 +184,9 @@ export class WebhookService {
     const activeAutomations = await this.automations.findActive(telegram_id, botAccountId);
     if (!activeAutomations.length) return;
 
+    const adminCfg = await this.adminService.getConfig();
+    const commentLimit = adminCfg.commentLimit ?? 10;
+
     for (const auto of activeAutomations) {
       if (auto.postScope === 'specific') {
         if (!mediaId || !auto.postIds.includes(mediaId)) continue;
@@ -190,9 +205,19 @@ export class WebhookService {
       // Kalit so'z mos kelmadi VA agent ham yo'q → o'tkazib yubor
       if (!keywordMatched && !auto.replyAgentId && !auto.dmAgentId) continue;
 
+      if (mediaId && commenterId) {
+        const limitCheck = await this.rateLimit.canReply(commenterId, 'comment', 24, commentLimit, mediaId);
+        if (!limitCheck.allowed) {
+          this.logger.log(`Limit: @${commenterName} media (${mediaId}) uchun ${commentLimit} ta koment yozdi. Javob to'xtatildi.`);
+          continue;
+        }
+      }
+
       await this.rateLimit.delay(
         Math.floor(Math.random() * (MAX_DELAY_MS - MIN_DELAY_MS + 1)) + MIN_DELAY_MS
       );
+
+      let repliedOrDmed = false;
 
       // Izohga javob
       if (auto.replyEnabled) {
@@ -212,6 +237,7 @@ export class WebhookService {
         if (reply) {
           try {
             await this.instagram.replyToComment(creds, commentId, reply);
+            repliedOrDmed = true;
             await this.logs.create({
               telegram_id, instagram_account_id: botAccountId,
               type: 'success',
@@ -248,6 +274,7 @@ export class WebhookService {
         if (dm) {
           try {
             await this.instagram.sendDM(creds, commenterId, dm);
+            repliedOrDmed = true;
             await this.logs.create({
               telegram_id, instagram_account_id: botAccountId,
               type: 'success',
@@ -263,6 +290,10 @@ export class WebhookService {
             });
           }
         }
+      }
+
+      if (repliedOrDmed && mediaId && commenterId) {
+        await this.rateLimit.recordReply(commenterId, 'comment', 24, mediaId);
       }
     }
   }

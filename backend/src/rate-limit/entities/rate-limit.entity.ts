@@ -14,6 +14,9 @@ export class RateLimit {
   @Column()
   type: RateLimitType;
 
+  @Column({ nullable: true })
+  mediaId: string;
+
   @Column({ type: 'timestamptz' })
   lastSentAt: Date;
 

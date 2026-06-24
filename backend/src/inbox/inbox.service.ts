@@ -67,6 +67,16 @@ export class InboxService {
     });
   }
 
+  async getIncomingMessageCount(ig_account_id: string, participantIgsid: string): Promise<number> {
+    const conv = await this.convRepo.findOne({
+      where: { instagram_account_id: ig_account_id, participantIgsid },
+    });
+    if (!conv) return 0;
+    return this.msgRepo.count({
+      where: { conversationId: conv.id, direction: 'in' },
+    });
+  }
+
   // ─── Webhook dan kelgan DM ────────────────────────────────────────────────
 
   async handleIncomingDM(creds: IgCredentials, event: any): Promise<void> {

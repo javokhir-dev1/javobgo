@@ -126,7 +126,7 @@ export const adminGetUsers        = (page = 1, limit = 20) => api.get(`/api/admi
 export const adminSetUserRole     = (telegramId: string, role: 'user' | 'admin') => api.patch(`/api/admin/users/${telegramId}/role`, { role }).then(r => r.data);
 export const adminGetRateLimit    = () => api.get('/api/admin/rate-limit').then(r => r.data);
 export const adminGetConfig       = () => api.get('/api/admin/rate-limit/config').then(r => r.data);
-export const adminUpdateConfig    = (data: { maxRequestsPerHour?: number; warningThresholdPct?: number }) => api.patch('/api/admin/rate-limit/config', data).then(r => r.data);
+export const adminUpdateConfig    = (data: { maxRequestsPerHour?: number; warningThresholdPct?: number; dmLimit?: number; commentLimit?: number }) => api.patch('/api/admin/rate-limit/config', data).then(r => r.data);
 export const adminSetMaintenance  = (enabled: boolean) => api.post('/api/admin/maintenance', { enabled }).then(r => r.data);
 export const adminBlockAccount    = (id: string) => api.post('/api/admin/rate-limit/block', { instagram_account_id: id }).then(r => r.data);
 export const adminUnblockAccount  = (id: string) => api.delete(`/api/admin/rate-limit/block/${id}`).then(r => r.data);
