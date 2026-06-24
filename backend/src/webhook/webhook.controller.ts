@@ -54,9 +54,12 @@ export class WebhookController {
     res.sendStatus(200);
 
     setImmediate(() => {
-      this.webhookService.handleEntry(body).catch((err) => {
-        this.logger.error(`Webhook event xatosi: ${err.message}`);
-      });
+      const entries = Array.isArray(body.entry) ? body.entry : [body];
+      for (const entry of entries) {
+        this.webhookService.handleEntry(entry).catch((err) => {
+          this.logger.error(`Webhook event xatosi: ${err.message}`);
+        });
+      }
     });
   }
 }
