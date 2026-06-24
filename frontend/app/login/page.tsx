@@ -7,22 +7,60 @@ import { verifyAuthTokenAction } from '../actions/auth';
 import { getSettings } from '@/lib/api';
 
 function LoginContent() {
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const router = useRouter();
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    // Akkaunt mavjud bo'lsa (valid token), bosh sahifaga qaytarish
-    getSettings()
-      .then(() => router.replace('/'))
-      .catch(() => {}); // Token yo'q yoki yaroqsiz bo'lsa, shu yerda qoladi
-
     const token = searchParams.get('token');
     if (token) {
       submitToken(token);
+      return;
     }
+
+    const checkTgInitData = () => {
+      const tgInitData = (window as any).Telegram?.WebApp?.initData;
+      if (tgInitData) {
+        submitInitData(tgInitData);
+        return true;
+      }
+      return false;
+    };
+
+    if (checkTgInitData()) return;
+
+    const timer = setTimeout(() => {
+      if (!checkTgInitData()) {
+        getSettings()
+          .then(() => router.replace('/'))
+          .catch(() => setIsLoading(false));
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
   }, [router, searchParams]);
+
+  const submitInitData = async (initData: string) => {
+    setIsLoading(true);
+    setError('');
+    try {
+      const res = await fetch('/auth/telegram-webapp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ initData })
+      });
+      if (!res.ok) {
+        setError("Avtorizatsiyadan o'tib bo'lmadi. Telegram orqali qayta kiring.");
+        setIsLoading(false);
+        return;
+      }
+      router.push('/');
+    } catch {
+      setError("Server bilan bog'lanishda xatolik.");
+      setIsLoading(false);
+    }
+  };
 
   const submitToken = async (token: string) => {
     setIsLoading(true);
@@ -40,13 +78,13 @@ function LoginContent() {
         } else {
           setError("Noto'g'ri havola formati.");
         }
+        setIsLoading(false);
         return;
       }
 
       router.push('/');
     } catch {
       setError("Xatolik yuz berdi. Iltimos qayta urinib ko'ring.");
-    } finally {
       setIsLoading(false);
     }
   };
@@ -131,7 +169,7 @@ function LoginContent() {
               <div className="mb-10">
                 <h1 className="text-[32px] font-extrabold text-on-surface tracking-tight mb-3">Xush kelibsiz</h1>
                 <p className="text-[15px] text-on-surface-variant">
-                  Platformaga kirish uchun rasmiy Telegram botimizdan foydalaning.
+                  Platformaga kirish uchun rasmiy Telegram botimizdan foydalaning yoki Telegram orqali kiring.
                 </p>
               </div>
 

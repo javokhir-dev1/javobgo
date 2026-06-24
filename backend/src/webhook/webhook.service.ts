@@ -39,15 +39,24 @@ export class WebhookService {
     telegram_id: string,
     commenterName: string,
     commentText: string,
+    retries = 3
   ): Promise<string | null> {
-    try {
-      const prompt = `Foydalanuvchi nomi: ${commenterName}\nIzoh: ${commentText}`;
-      const reply = await this.agents.chat(agentId, telegram_id, [{ role: 'user', text: prompt }]);
-      return reply?.trim() || null;
-    } catch (err) {
-      this.logger.error(`AI javob xatosi (agentId=${agentId}): ${err.message}`);
-      return null;
+    const prompt = `Foydalanuvchi nomi: ${commenterName}\nIzoh: ${commentText}`;
+    
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        const reply = await this.agents.chat(agentId, telegram_id, [{ role: 'user', text: prompt }]);
+        return reply?.trim() || null;
+      } catch (err) {
+        if (attempt === retries) {
+          this.logger.error(`AI javob xatosi (agentId=${agentId}): ${err.message}`);
+          return null;
+        }
+        this.logger.warn(`AI xatosi (agentId=${agentId}), urinish ${attempt}/${retries}. ${attempt * 2}s kutilmoqda... xato: ${err.message}`);
+        await new Promise(resolve => setTimeout(resolve, attempt * 2000));
+      }
     }
+    return null;
   }
 
   async handleEntry(entry: any) {

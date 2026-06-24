@@ -87,11 +87,10 @@ export class AuthController {
       return res.status(401).json({ error: 'invalid_or_expired_token' });
     }
 
-    const isProduction = process.env.NODE_ENV === 'production';
     res.cookie('tg_access_token', result.jwt, {
       httpOnly: true,
-      secure: isProduction,
-      sameSite: 'lax',
+      secure: true,
+      sameSite: 'none',
       maxAge: 7 * 24 * 60 * 60 * 1000,
       path: '/',
     });
@@ -127,11 +126,51 @@ export class AuthController {
       return res.status(401).json({ error: 'invalid_or_expired_token' });
     }
 
-    const isProduction = process.env.NODE_ENV === 'production';
     res.cookie('tg_access_token', result.jwt, {
       httpOnly: true,
-      secure: isProduction,
-      sameSite: 'lax',
+      secure: true,
+      sameSite: 'none',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      path: '/',
+    });
+
+    return res.json({
+      user: {
+        telegram_id: result.user.telegram_id,
+        first_name: result.user.first_name,
+        username: result.user.username,
+        created_at: result.user.created_at,
+        avatar_url: result.user.avatar_url,
+      },
+    });
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @Post('telegram-webapp')
+  async telegramWebApp(
+    @Body() body: { initData: string },
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
+    const ip = req.ip || req.socket?.remoteAddress || 'unknown';
+    if (!checkRateLimit(ip, 20, 60_000)) {
+      return res.status(429).json({ error: 'too_many_requests' });
+    }
+
+    const initData = (body.initData || '').trim();
+    if (!initData) {
+      return res.status(400).json({ error: 'initData_missing' });
+    }
+
+    const result = await this.authService.authenticateTelegramWebApp(initData);
+    if (!result) {
+      return res.status(401).json({ error: 'invalid_initData' });
+    }
+
+    res.cookie('tg_access_token', result.jwt, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
       maxAge: 7 * 24 * 60 * 60 * 1000,
       path: '/',
     });

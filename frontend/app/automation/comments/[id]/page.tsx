@@ -128,21 +128,21 @@ export default function AutomationDetailPage() {
     <div className="h-full flex flex-col bg-background text-on-surface overflow-hidden">
       {/* Top bar */}
       <div className="flex-shrink-0 bg-background/95 backdrop-blur border-b border-outline-variant/30 px-6 py-3 flex items-center justify-between z-10">
-        <div className="flex items-center gap-3">
-          <button onClick={() => router.push('/automation')} className="text-on-surface-variant hover:text-on-surface transition-colors">
+        <div className="flex items-center gap-3 min-w-0 pr-4">
+          <button onClick={() => router.push('/automation')} className="flex-shrink-0 text-on-surface-variant hover:text-on-surface transition-colors">
             <ArrowLeft size={20} />
           </button>
-          <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #7C3AED, #8B5CF6)' }}>
+          <div className="flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #7C3AED, #8B5CF6)' }}>
             <Zap size={14} className="text-white" />
           </div>
-          <div>
-            <h1 className="font-semibold text-on-surface text-sm leading-tight">{form.name}</h1>
-            <span className={`text-xs ${form.isActive ? 'text-emerald-500' : 'text-on-surface-variant'}`}>
+          <div className="min-w-0">
+            <h1 className="font-semibold text-on-surface text-sm leading-tight truncate">{form.name}</h1>
+            <span className={`text-xs ${form.isActive ? 'text-emerald-500' : 'text-on-surface-variant'} truncate block`}>
               {form.isActive ? t('automation.active') : t('automation.inactive')}
             </span>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-shrink-0">
           <button onClick={handleToggle} className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border border-outline-variant/40 text-on-surface-variant hover:border-outline-variant transition-all">
             <span style={{
               width: '32px', height: '18px', borderRadius: '9px', padding: '2px',

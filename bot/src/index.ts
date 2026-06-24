@@ -68,8 +68,22 @@ bot.command('start', async (ctx: Context) => {
   const registered = await isUserRegistered(String(from.id)).catch(() => false);
 
   if (registered) {
+    const activeToken = await getActiveAuthToken(String(from.id));
+    let token = activeToken;
+    if (!token) {
+      token = await createAuthToken(String(from.id));
+    }
+    const loginUrl = `${SITE_URL}/login?token=${token}`;
     await ctx.replyWithMarkdown(
-      `Salom, *${from.first_name}*! Kirish kodini olish uchun /login yuboring.`,
+      `Salom, *${from.first_name}*!\n\nPlatformaga kirish uchun quyidagi tugmalardan birini tanlang:`,
+      {
+        reply_markup: {
+          inline_keyboard: [[
+            { text: '🌐 Brauzerda ochish', url: loginUrl },
+            { text: '📱 Web App orqali', web_app: { url: `${SITE_URL}/login` } },
+          ]],
+        },
+      },
     );
     return;
   }
@@ -118,7 +132,7 @@ bot.on('contact', async (ctx: Context) => {
         reply_markup: {
           inline_keyboard: [[
             { text: '🌐 Brauzerda ochish', url: loginUrl },
-            { text: '📱 Web App orqali', web_app: { url: loginUrl } },
+            { text: '📱 Web App orqali', web_app: { url: `${SITE_URL}/login` } },
           ]],
         },
       },
@@ -131,46 +145,6 @@ bot.on('contact', async (ctx: Context) => {
   }
 });
 
-// ─── /login ───────────────────────────────────────────────────────────────────
-
-bot.command('login', async (ctx: Context) => {
-  const from = ctx.from;
-  if (!from) return;
-
-  const telegramId = String(from.id);
-
-  try {
-    const registered = await isUserRegistered(telegramId);
-    if (!registered) {
-      await ctx.reply("Siz hali ro'yxatdan o'tmagansiz. /start komandasini yuboring.");
-      return;
-    }
-
-    const activeToken = await getActiveAuthToken(telegramId);
-    let token = activeToken;
-    if (!token) {
-      token = await createAuthToken(telegramId);
-    }
-
-    const loginUrl = `${SITE_URL}/login?token=${token}`;
-
-    await ctx.replyWithMarkdown(
-      `🔑 *Tizimga kirish*\n\nPlatformaga kirish uchun quyidagi tugmalardan birini tanlang:`,
-      {
-        reply_markup: {
-          inline_keyboard: [[
-            { text: '🌐 Brauzerda ochish', url: loginUrl },
-            { text: '📱 Web App orqali', web_app: { url: loginUrl } },
-          ]],
-        },
-      },
-    );
-  } catch (err: any) {
-    console.error('/login xatosi:', err.message);
-    await ctx.reply("Xatolik yuz berdi. Iltimos qayta urinib ko'ring.");
-  }
-});
-
 
 
 // ─── /help ────────────────────────────────────────────────────────────────────
@@ -179,7 +153,6 @@ bot.command('help', async (ctx: Context) => {
   await ctx.replyWithMarkdown(
     `*Avto Komment Bot — yordam*\n\n` +
     `🔹 /start — Ro'yxatdan o'tish yoki xush kelibsiz xabari\n` +
-    `🔹 /login — Saytga kirish uchun maxsus havola olish\n` +
     `🔹 /help  — Ushbu yordam xabari`,
   );
 });

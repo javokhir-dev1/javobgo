@@ -15,6 +15,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="uz" suppressHydrationWarning>
       <head>
         <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+        <script src="https://telegram.org/js/telegram-web-app.js"></script>
       </head>
       <body className="bg-background text-on-surface antialiased flex h-screen overflow-hidden selection:bg-brand-100 selection:text-brand-900">
         <ThemeProvider>

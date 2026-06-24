@@ -653,9 +653,18 @@ export default function AutomationCommentsPage() {
               {automations.map(auto => (
                 <div
                   key={auto.id}
-                  className="group bg-surface border border-outline-variant/30 rounded-2xl p-4 flex items-center gap-4 hover:border-primary/30 transition-all cursor-pointer"
+                  className="group bg-surface border border-outline-variant/30 rounded-2xl p-4 flex items-center gap-4 hover:border-primary/30 transition-all cursor-pointer relative"
                   onClick={() => router.push(`/automation/comments/${auto.id}`)}
                 >
+                  {/* Status Badge - Mobile Only */}
+                  <span className={`md:hidden absolute top-0 right-0 text-[10px] px-3 py-1 font-medium rounded-tr-2xl rounded-bl-xl border-b border-l border-outline-variant/30 ${
+                    auto.isActive
+                      ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                      : 'bg-surface-variant text-on-surface-variant'
+                  }`}>
+                    {auto.isActive ? t('automation.active') : t('automation.inactive')}
+                  </span>
+
                   <div
                     className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
                     style={auto.isActive ? { background: 'linear-gradient(135deg, #7C3AED, #8B5CF6)' } : {}}
@@ -664,9 +673,11 @@ export default function AutomationCommentsPage() {
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex items-center gap-2 md:mb-1">
                       <span className="font-medium text-on-surface truncate">{auto.name}</span>
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${
+                      
+                      {/* Status Badge - Desktop Only */}
+                      <span className={`hidden md:inline-flex text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${
                         auto.isActive
                           ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
                           : 'bg-surface-variant text-on-surface-variant'
@@ -674,7 +685,9 @@ export default function AutomationCommentsPage() {
                         {auto.isActive ? t('automation.active') : t('automation.inactive')}
                       </span>
                     </div>
-                    <div className="flex items-center gap-3 flex-wrap">
+
+                    {/* Detailed info - Desktop Only */}
+                    <div className="hidden md:flex items-center gap-3 flex-wrap">
                       {auto.replyEnabled && (
                         <span className="flex items-center gap-1 text-xs text-on-surface-variant">
                           <MessageSquare size={11} /> {t('dashboard.actionComments')}
