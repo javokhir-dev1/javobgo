@@ -6,6 +6,7 @@ import { Bot, Plus, ArrowRight, Trash2, X, Pencil } from 'lucide-react';
 import { getAgents, createAgent, updateAgent, deleteAgent } from '@/lib/api';
 import { useInstagramStatus } from '@/context/InstagramContext';
 import { useLanguage } from '@/context/LanguageContext';
+import { AgentAvatar } from '@/components/ui/AgentAvatar';
 
 interface Agent {
   id: number;
@@ -16,24 +17,17 @@ interface Agent {
   createdAt: string;
 }
 
+// Avatar picker uchun dicebear URL (AgentAvatar componentidan farqli, to'g'ridan URL kerak)
+function avatarUrl(seed: string) {
+  return `https://api.dicebear.com/9.x/bottts/svg?seed=${encodeURIComponent(seed)}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`;
+}
+
 // DiceBear avatar seeds — bottts uslubi (robotlar)
 const AVATARS = [
   'Felix', 'Jasmine', 'Max', 'Luna', 'Atlas',
   'Nova', 'Sage', 'Ember', 'Pixel', 'Bolt',
   'Spark', 'Echo', 'Orion', 'Zara', 'Kai',
 ];
-
-function avatarUrl(seed: string) {
-  return `https://api.dicebear.com/9.x/bottts/svg?seed=${seed}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`;
-}
-
-function AgentAvatar({ value, className = 'w-10 h-10' }: { value: string; className?: string }) {
-  if (value?.startsWith('dicebear:')) {
-    const seed = value.split(':')[2] || 'Felix';
-    return <img src={avatarUrl(seed)} className={className} alt="avatar" />;
-  }
-  return <span className="text-2xl leading-none">{value}</span>;
-}
 
 export default function AgentsPage() {
   const connected = useInstagramStatus();
@@ -258,14 +252,13 @@ export default function AgentsPage() {
                 {t('agents.form.cancel')}
               </button>
               <button onClick={handleSave} disabled={saving || !form.name.trim() || !form.systemPrompt.trim()}
-                className="flex-1 px-4 py-2.5 rounded-xl bg-primary text-white text-[14px] font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50">
-                {saving ? t('agents.form.saving') : editAgent ? t('agents.form.save') : t('agents.form.create')}
+                className="flex-1 px-4 py-2.5 rounded-xl bg-primary text-white text-[14px] font-semibold hover:bg-primary/90 disabled:opacity-50 transition-colors">
+                {saving ? t('agents.form.saving') : (editAgent ? t('agents.form.save') : t('agents.form.create'))}
               </button>
             </div>
           </div>
         </div>
       )}
     </div>
-    
   );
 }

@@ -41,26 +41,26 @@ export class AgentsController {
     return this.service.remove(+id, this.tid(req));
   }
 
-  /* ── Chat history ── */
   @Get(':id/messages')
-  getMessages(@Param('id') id: string) {
-    return this.service.getMessages(+id);
+  getMessages(@Req() req: Request, @Param('id') id: string) {
+    return this.service.getMessages(+id, this.tid(req));
   }
 
   @Post(':id/messages')
   saveMessage(
+    @Req() req: Request,
     @Param('id') id: string,
     @Body() body: { role: 'user' | 'model'; text: string },
   ) {
+    this.tid(req);
     return this.service.saveMessage(+id, body.role, body.text);
   }
 
   @Delete(':id/messages')
-  clearMessages(@Param('id') id: string) {
-    return this.service.clearMessages(+id);
+  clearMessages(@Req() req: Request, @Param('id') id: string) {
+    return this.service.clearMessages(+id, this.tid(req));
   }
 
-  /* ── AI ── */
   @Post(':id/chat')
   chat(
     @Req() req: Request,

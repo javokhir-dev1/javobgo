@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException, Logger } from '@nestjs/common';
 import * as crypto from 'crypto';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -8,8 +8,12 @@ import { TelegramUser } from '../telegram/telegram-user.entity';
 import { AuthToken } from './auth-token.entity';
 import * as bcrypt from 'bcrypt';
 
+const INIT_DATA_MAX_AGE_SEC = 300;
+
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
@@ -46,32 +50,17 @@ export class AuthService {
     return this.validateTelegramToken(token);
   }
 
-  async validateTelegramToken(
-    token: string,
-  ): Promise<{ jwt: string; user: TelegramUser } | null> {
-    console.log('[Auth] OTP qidirilmoqda:', token);
-
-    const authToken = await this.tokenRepo.findOne({
-      where: { token, is_used: false },
-    });
-
-    console.log('[Auth] DB da topildi:', !!authToken);
-    if (authToken) {
-      console.log('[Auth] expires_at:', authToken.expires_at, '| hozir:', new Date());
-      console.log('[Auth] muddati otganmi:', new Date() > authToken.expires_at);
-    }
-
+  async validateTelegramToken(token: string): Promise<{ jwt: string; user: TelegramUser } | null> {
+    const authToken = await this.tokenRepo.findOne({ where: { token, is_used: false } });
     if (!authToken) return null;
-    if (new Date() > authToken.expires_at) return null;
-
+    if (new Date() > authToken.expires_at) {
+      this.logger.warn('OTP muddati tugagan');
+      return null;
+    }
     authToken.is_used = true;
     await this.tokenRepo.save(authToken);
-
-    const user = await this.telegramUserRepo.findOne({
-      where: { telegram_id: authToken.telegram_id },
-    });
+    const user = await this.telegramUserRepo.findOne({ where: { telegram_id: authToken.telegram_id } });
     if (!user) return null;
-
     const payload = {
       sub: user.telegram_id,
       telegram_id: user.telegram_id,
@@ -80,38 +69,47 @@ export class AuthService {
       auth_type: 'telegram',
     };
     const jwt = this.jwtService.sign(payload, { expiresIn: '7d' });
-
     return { jwt, user };
   }
 
   validateTelegramInitData(initData: string): any {
-    console.log('[Auth] validateTelegramInitData:', initData);
     const urlParams = new URLSearchParams(initData);
     const hash = urlParams.get('hash');
-    if (!hash) {
-      console.log('[Auth] initData no hash');
+    if (!hash) return null;
+
+    const authDateStr = urlParams.get('auth_date');
+    if (!authDateStr) {
+      this.logger.warn("initData: auth_date yo'q");
+      return null;
+    }
+    const authDate = parseInt(authDateStr, 10);
+    const nowSec = Math.floor(Date.now() / 1000);
+    if (isNaN(authDate) || nowSec - authDate > INIT_DATA_MAX_AGE_SEC) {
+      this.logger.warn(`initData: auth_date eskirgan (${nowSec - authDate}s)`);
       return null;
     }
 
     urlParams.delete('hash');
-    
     const keys = Array.from(urlParams.keys()).sort();
     const dataCheckString = keys.map(k => `${k}=${urlParams.get(k)}`).join('\n');
-    
+
     const secretKey = crypto.createHmac('sha256', 'WebAppData')
       .update(process.env.TELEGRAM_BOT_TOKEN || '')
       .digest();
-      
+
     const calculatedHash = crypto.createHmac('sha256', secretKey)
       .update(dataCheckString)
       .digest('hex');
-      
-    console.log('[Auth] expected:', calculatedHash, 'got:', hash);
-    if (calculatedHash !== hash) return null;
-    
+
+    const hashBuf     = Buffer.from(hash);
+    const expectedBuf = Buffer.from(calculatedHash);
+    if (hashBuf.length !== expectedBuf.length || !crypto.timingSafeEqual(hashBuf, expectedBuf)) {
+      this.logger.warn('initData: HMAC imzo mos kelmadi');
+      return null;
+    }
+
     const userStr = urlParams.get('user');
     if (!userStr) return null;
-    
     try {
       return JSON.parse(userStr);
     } catch {
@@ -122,13 +120,11 @@ export class AuthService {
   async authenticateTelegramWebApp(initData: string): Promise<{ jwt: string; user: TelegramUser } | null> {
     const tgUser = this.validateTelegramInitData(initData);
     if (!tgUser || !tgUser.id) {
-      console.log('[Auth] tgUser invalid or null');
+      this.logger.warn('authenticateTelegramWebApp: initData tekshiruvi muvaffaqiyatsiz');
       return null;
     }
-
     const telegram_id = String(tgUser.id);
     let user = await this.telegramUserRepo.findOne({ where: { telegram_id } });
-    
     if (!user) {
       user = this.telegramUserRepo.create({
         telegram_id,
@@ -137,7 +133,6 @@ export class AuthService {
       });
       await this.telegramUserRepo.save(user);
     }
-
     const payload = {
       sub: user.telegram_id,
       telegram_id: user.telegram_id,
@@ -146,7 +141,6 @@ export class AuthService {
       auth_type: 'telegram',
     };
     const jwt = this.jwtService.sign(payload, { expiresIn: '7d' });
-
     return { jwt, user };
   }
 
@@ -170,7 +164,7 @@ export class AuthService {
     try {
       return this.jwtService.verify(token);
     } catch {
-      throw new UnauthorizedException('Notogri yoki muddati otgan token');
+      throw new UnauthorizedException("Notogri yoki muddati otgan token");
     }
   }
 }

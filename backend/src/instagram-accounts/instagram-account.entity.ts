@@ -30,9 +30,16 @@ export class InstagramAccount {
   @Column({ default: true })
   is_active: boolean;
 
-  /** Foydalanuvchi tanlagan aktiv akkaunt */
   @Column({ default: false })
   is_selected: boolean;
+
+  /** Token muddati tugash sanasi (Instagram long token ~60 kun) */
+  @Column({ nullable: true, type: 'timestamp' })
+  token_expires_at: Date | null;
+
+  /** Ushbu akkaunt uchun maxsus soatlik limit (null = global limit ishlatiladi) */
+  @Column({ nullable: true, type: 'int' })
+  customRateLimit: number | null;
 
   @CreateDateColumn()
   created_at: Date;

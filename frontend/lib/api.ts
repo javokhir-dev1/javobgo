@@ -118,3 +118,30 @@ export const syncInbox = () => api.post('/api/inbox/sync').then(r => r.data);
 export const getInboxUserInfo = (igsid: string) => api.get(`/api/inbox/user/${igsid}`).then(r => r.data);
 export const resetInbox = () => api.post('/api/inbox/reset').then(r => r.data);
 export const getInboxEventsUrl = () => '/api/inbox/events';
+
+// Admin API
+export const adminGetStats        = () => api.get('/api/admin/stats').then(r => r.data);
+export const adminGetHourlyStats  = () => api.get('/api/admin/stats/hourly').then(r => r.data);
+export const adminGetUsers        = (page = 1, limit = 20) => api.get(`/api/admin/users?page=${page}&limit=${limit}`).then(r => r.data);
+export const adminSetUserRole     = (telegramId: string, role: 'user' | 'admin') => api.patch(`/api/admin/users/${telegramId}/role`, { role }).then(r => r.data);
+export const adminGetRateLimit    = () => api.get('/api/admin/rate-limit').then(r => r.data);
+export const adminGetConfig       = () => api.get('/api/admin/rate-limit/config').then(r => r.data);
+export const adminUpdateConfig    = (data: { maxRequestsPerHour?: number; warningThresholdPct?: number }) => api.patch('/api/admin/rate-limit/config', data).then(r => r.data);
+export const adminSetMaintenance  = (enabled: boolean) => api.post('/api/admin/maintenance', { enabled }).then(r => r.data);
+export const adminBlockAccount    = (id: string) => api.post('/api/admin/rate-limit/block', { instagram_account_id: id }).then(r => r.data);
+export const adminUnblockAccount  = (id: string) => api.delete(`/api/admin/rate-limit/block/${id}`).then(r => r.data);
+export const adminSetCustomLimit  = (igId: string, customLimit: number | null) => api.patch(`/api/admin/rate-limit/override/${igId}`, { customLimit }).then(r => r.data);
+export const adminGetRequests     = (page = 1, limit = 50, telegramId?: string, igAccountId?: string) => {
+  const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+  if (telegramId)  params.set('telegramId', telegramId);
+  if (igAccountId) params.set('igAccountId', igAccountId);
+  return api.get(`/api/admin/requests?${params}`).then(r => r.data);
+};
+export const adminGetEndpoints    = () => api.get('/api/admin/endpoints').then(r => r.data);
+export const adminGetIgTokens     = () => api.get('/api/admin/ig-tokens').then(r => r.data);
+export const adminExportRequests  = (telegramId?: string, igAccountId?: string) => {
+  const params = new URLSearchParams();
+  if (telegramId)  params.set('telegramId', telegramId);
+  if (igAccountId) params.set('igAccountId', igAccountId);
+  return `/api/admin/requests/export?${params}`;
+};

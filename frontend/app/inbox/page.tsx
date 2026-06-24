@@ -2,411 +2,15 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { MessageCircle, Send, Search, X, Instagram, Settings, Bot, FileText, Plus, Trash2, ChevronRight, RefreshCw, Zap } from 'lucide-react';
-import {
-  getConversations, getInboxMessages, sendInboxMessage, getInboxEventsUrl, getInboxUserInfo,
-  getSettings, updateSettings, getDmMessages, updateDmMessages, getAgents, syncInbox,
-} from '@/lib/api';
+import { MessageCircle, Send, Search, X, RefreshCw, Zap } from 'lucide-react';
+import { getConversations, getInboxMessages, sendInboxMessage, getInboxEventsUrl, syncInbox } from '@/lib/api';
 import { useInstagramStatus } from '@/context/InstagramContext';
 import { useLanguage } from '@/context/LanguageContext';
-
-interface Conversation {
-  id: number;
-  igConversationId: string;
-  participantIgsid: string;
-  participantUsername: string;
-  participantName: string | null;
-  participantProfilePic: string | null;
-  lastMessage: string | null;
-  lastMessageAt: string | null;
-  unreadCount: number;
-  updatedAt: string;
-}
-
-interface InboxMessage {
-  id: number;
-  conversationId: number;
-  participantIgsid: string;
-  direction: 'in' | 'out';
-  messageText: string;
-  igCreatedAt: string | null;
-  createdAt: string;
-}
-
-function formatTime(dateStr: string | null, t: any): string {
-  if (!dateStr) return '';
-  const d = new Date(dateStr);
-  const now = new Date();
-  const diff = now.getTime() - d.getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return t('inbox.time.now');
-  if (mins < 60) return `${mins}${t('inbox.time.m')}`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}${t('inbox.time.h')}`;
-  const days = Math.floor(hrs / 24);
-  if (days < 7) return `${days}${t('inbox.time.d')}`;
-  return d.toLocaleDateString('uz-UZ', { day: '2-digit', month: '2-digit' });
-}
-
-function avatarColor(username: string): string {
-  const colors = [
-    '#3B82F6','#8B5CF6','#10B981','#F59E0B','#EF4444',
-    '#06B6D4','#F97316','#84CC16','#EC4899','#6366F1',
-  ];
-  let hash = 0;
-  for (const ch of username) hash = ch.charCodeAt(0) + ((hash << 5) - hash);
-  return colors[Math.abs(hash) % colors.length];
-}
-
-function Avatar({ username, profilePic, igsid, size = 40 }: { username: string; profilePic?: string | null; igsid?: string; size?: number }) {
-  if (profilePic) {
-    return (
-      <img
-        src={profilePic}
-        alt={username}
-        style={{ width: size, height: size, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
-        referrerPolicy="no-referrer"
-      />
-    );
-  }
-  const letter = (username || '?')[0].toUpperCase();
-  const bg = avatarColor(username || '?');
-  return (
-    <div style={{
-      width: size, height: size, borderRadius: '50%', backgroundColor: bg,
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      color: '#fff', fontWeight: 600, fontSize: size * 0.4, flexShrink: 0,
-    }}>
-      {letter}
-    </div>
-  );
-}
-
-interface UserInfo {
-  id: string;
-  username?: string;
-  name?: string;
-  profile_pic?: string;
-}
-
-// ─── Agent avatar helper ─────────────────────────────────────────────────────
-
-function AgentAvatar({ value, size = 28 }: { value: string; size?: number }) {
-  if (value?.startsWith('dicebear:')) {
-    const seed = value.split(':')[2] || 'Felix';
-    const url = `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(seed)}`;
-    return <img src={url} alt="avatar" style={{ width: size, height: size, borderRadius: '50%' }} />;
-  }
-  return <span style={{ fontSize: size * 0.65 }} className="leading-none">{value}</span>;
-}
-
-// ─── DM Sozlamalari paneli ───────────────────────────────────────────────────
-
-function DmSettingsPanel({ width, onClose }: { width: number | string; onClose?: () => void }) {
-  const { t } = useLanguage();
-  const [loading, setLoading]       = useState(true);
-  const [saving, setSaving]         = useState(false);
-  const [saved, setSaved]           = useState(false);
-  const [enabled, setEnabled]       = useState(false);
-  const [mode, setMode]             = useState<'template' | 'ai'>('template');
-  const [agentId, setAgentId]       = useState<number | null>(null);
-  const [agents, setAgents]         = useState<any[]>([]);
-  const [templates, setTemplates]   = useState<string[]>(['']);
-
-  // Dastlabki holat — o'zgarish borligini aniqlash uchun
-  const [initial, setInitial] = useState<{ enabled: boolean; mode: string; agentId: number | null; templates: string[] } | null>(null);
-
-  useEffect(() => {
-    Promise.all([getSettings(), getDmMessages(), getAgents()]).then(([s, msgs, ags]) => {
-      const en = s.dmAutoReplyEnabled ?? false;
-      const md = s.dmMode === 'ai' ? 'ai' : 'template';
-      const aid = s.dmAgentId ?? null;
-      const texts = Array.isArray(msgs) ? msgs.map((m: any) => m.text || m) : [];
-      const tmpl = texts.length ? texts : [''];
-      setEnabled(en); setMode(md as any); setAgentId(aid);
-      setAgents(Array.isArray(ags) ? ags : []);
-      setTemplates(tmpl);
-      setInitial({ enabled: en, mode: md, agentId: aid, templates: tmpl });
-    }).finally(() => setLoading(false));
-  }, []);
-
-  const hasChanges = initial !== null && (
-    enabled !== initial.enabled ||
-    mode !== initial.mode ||
-    agentId !== initial.agentId ||
-    JSON.stringify(templates) !== JSON.stringify(initial.templates)
-  );
-
-  const validTemplates = templates.filter(t => t.trim());
-  const templateError = mode === 'template' && enabled && validTemplates.length < 3
-    ? `${t('inbox.settings.errTemplates')} (${validTemplates.length})`
-    : null;
-  const agentError = mode === 'ai' && enabled && (!agentId || !agents.some(a => a.id === agentId))
-    ? true
-    : null;
-
-  const save = async () => {
-    setSaving(true);
-    setSaved(false);
-    try {
-      await updateSettings({ dmAutoReplyEnabled: enabled, dmMode: mode, dmAgentId: agentId });
-      if (mode === 'template') {
-        await updateDmMessages(templates.filter(t => t.trim()));
-      }
-      setInitial({ enabled, mode, agentId, templates: [...templates] });
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2500);
-    } catch {}
-    setSaving(false);
-  };
-
-  return (
-    <div style={width === '100%' ? undefined : { width }} className={`flex-shrink-0 flex flex-col bg-surface-container-lowest ${width === '100%' ? 'fixed inset-0 z-50' : ''}`}>
-      {/* Header */}
-      <div className="px-4 pt-5 pb-3 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Settings size={16} className="text-primary" />
-          <span className="text-[15px] font-semibold text-on-surface">{t('inbox.settings.title')}</span>
-        </div>
-        {onClose && (
-          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-outline-variant/20 transition-colors">
-            <X size={18} />
-          </button>
-        )}
-      </div>
-
-      {loading ? (
-        <div className="flex justify-center py-10">
-          <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-        </div>
-      ) : (
-        <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-5">
-
-          {/* Avto-javob toggle */}
-          <div className="flex items-center justify-between py-3 border-b border-outline-variant/20">
-            <div>
-              <p className="text-[14px] font-medium text-on-surface">{t('inbox.settings.autoReply')}</p>
-              <p className="text-[12px] text-on-surface-variant">{t('inbox.settings.autoReplyDesc')}</p>
-            </div>
-            <button
-              onClick={() => setEnabled(v => !v)}
-              className={`relative w-11 h-6 rounded-full transition-colors ${enabled ? 'bg-primary' : 'bg-outline-variant'}`}
-            >
-              <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${enabled ? 'translate-x-5' : ''}`} />
-            </button>
-          </div>
-
-          {enabled && (
-            <>
-              {/* Rejim tanlash */}
-              <div className="space-y-2">
-                <p className="text-[12px] font-medium text-on-surface-variant uppercase tracking-wide">{t('inbox.settings.replyType')}</p>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    onClick={() => setMode('template')}
-                    className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-colors ${
-                      mode === 'template' ? 'border-primary bg-primary/5 text-primary' : 'border-outline-variant/30 text-on-surface-variant hover:border-outline-variant'
-                    }`}
-                  >
-                    <FileText size={18} />
-                    <span className="text-[12px] font-medium">{t('inbox.settings.templates')}</span>
-                  </button>
-                  <button
-                    onClick={() => setMode('ai')}
-                    className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-colors ${
-                      mode === 'ai' ? 'border-primary bg-primary/5 text-primary' : 'border-outline-variant/30 text-on-surface-variant hover:border-outline-variant'
-                    }`}
-                  >
-                    <Bot size={18} />
-                    <span className="text-[12px] font-medium">{t('inbox.settings.aiAgent')}</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Shablonlar */}
-              {mode === 'template' && (
-                <div className="space-y-2">
-                  <p className="text-[12px] font-medium text-on-surface-variant uppercase tracking-wide">{t('inbox.settings.templates')}</p>
-                  {templates.map((tmpl, i) => (
-                    <div key={i} className="flex gap-2 items-start">
-                      <textarea
-                        value={tmpl}
-                        rows={2}
-                        onChange={e => {
-                          const next = [...templates];
-                          next[i] = e.target.value;
-                          setTemplates(next);
-                        }}
-                        placeholder={`${t('inbox.settings.templatePlaceholder')} ${i + 1}`}
-                        className="flex-1 text-[13px] px-3 py-2 rounded-xl border border-outline-variant/40 bg-surface-container text-on-surface placeholder:text-on-surface-variant/40 outline-none focus:border-primary/40 resize-none"
-                      />
-                      {templates.length > 1 && (
-                        <button
-                          onClick={() => setTemplates(templates.filter((_, j) => j !== i))}
-                          className="mt-1 w-7 h-7 flex items-center justify-center rounded-lg text-error hover:bg-error/10 transition-colors"
-                        >
-                          <Trash2 size={13} />
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                  <button
-                    onClick={() => setTemplates([...templates, ''])}
-                    className="flex items-center gap-1.5 text-[13px] text-primary hover:underline"
-                  >
-                    <Plus size={14} /> {t('inbox.settings.addTemplate')}
-                  </button>
-                  {templateError && (
-                    <p className="text-[12px] text-error mt-1">{templateError}</p>
-                  )}
-                </div>
-              )}
-
-              {/* AI Agent tanlash */}
-              {mode === 'ai' && (
-                <div className="space-y-2">
-                  <p className="text-[12px] font-medium text-on-surface-variant uppercase tracking-wide">Agent</p>
-                  {agents.length === 0 ? (
-                    <p className="text-[13px] text-on-surface-variant">{t('inbox.settings.agentNotFound')}</p>
-                  ) : (
-                    <div className="space-y-1.5">
-                      {agents.map((a: any) => (
-                        <button
-                          key={a.id}
-                          onClick={() => setAgentId(a.id)}
-                          className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl border-2 transition-colors text-left ${
-                            agentId === a.id ? 'border-primary bg-primary/5' : 'border-outline-variant/30 hover:border-outline-variant'
-                          }`}
-                        >
-                          <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
-                            <AgentAvatar value={a.emoji || '🤖'} size={28} />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-[13px] font-medium text-on-surface truncate">{a.name}</p>
-                          </div>
-                          {agentId === a.id && <ChevronRight size={14} className="text-primary flex-shrink-0" />}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-            </>
-          )}
-        </div>
-      )}
-
-      {/* Saqlash */}
-      <div className="px-4 py-3 border-t border-outline-variant/20">
-        <button
-          onClick={save}
-          disabled={saving || !hasChanges || !!templateError || !!agentError}
-          className={`w-full py-2.5 rounded-xl text-[14px] font-medium transition-colors ${
-            saved
-              ? 'bg-green-500 text-white'
-              : hasChanges && !templateError && !agentError
-                ? 'bg-primary text-white hover:bg-primary/90'
-                : 'bg-surface-container text-on-surface-variant cursor-not-allowed'
-          }`}
-        >
-          {saving ? t('inbox.settings.saving') : saved ? t('inbox.settings.saved') : t('general.save')}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function ProfileModal({ igsid, conv, onClose }: { igsid: string; conv: Conversation; onClose: () => void }) {
-  const [info, setInfo] = useState<UserInfo | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [imgZoom, setImgZoom] = useState(false);
-  const { t } = useLanguage();
-
-  useEffect(() => {
-    getInboxUserInfo(igsid)
-      .then(setInfo)
-      .catch(() => setInfo(null))
-      .finally(() => setLoading(false));
-  }, [igsid]);
-
-  const pic = info?.profile_pic || conv.participantProfilePic;
-  const username = info?.username || conv.participantUsername;
-  const name = info?.name || conv.participantName;
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={onClose}>
-      <div
-        className="bg-surface rounded-2xl shadow-2xl w-80 overflow-hidden"
-        onClick={e => e.stopPropagation()}
-      >
-        {/* Yopish */}
-        <div className="flex justify-end p-3 pb-0">
-          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-container transition-colors text-on-surface-variant">
-            <X size={16} />
-          </button>
-        </div>
-
-        {loading ? (
-          <div className="flex justify-center py-12">
-            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-          </div>
-        ) : (
-          <div className="px-6 pb-6 flex flex-col items-center text-center">
-            {/* Rasm */}
-            {pic ? (
-              <>
-                <button onClick={() => setImgZoom(true)} className="mb-3 rounded-full hover:opacity-90 transition-opacity focus:outline-none">
-                  <img src={pic} alt={username} className="w-20 h-20 rounded-full object-cover border-2 border-outline-variant/30" referrerPolicy="no-referrer" />
-                </button>
-                {imgZoom && (
-                  <div
-                    className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm"
-                    onClick={() => setImgZoom(false)}
-                  >
-                    <img
-                      src={pic}
-                      alt={username}
-                      className="max-w-[90vw] max-h-[90vh] rounded-2xl shadow-2xl object-contain"
-                      onClick={e => e.stopPropagation()}
-                      referrerPolicy="no-referrer"
-                    />
-                    <button
-                      onClick={() => setImgZoom(false)}
-                      className="absolute top-4 right-4 w-9 h-9 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
-                    >
-                      <X size={18} />
-                    </button>
-                  </div>
-                )}
-              </>
-            ) : (
-              <div style={{ width: 80, height: 80, borderRadius: '50%', backgroundColor: avatarColor(username || '?'), display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 32 }} className="mb-3">
-                {(username || '?')[0].toUpperCase()}
-              </div>
-            )}
-
-            {/* Ism */}
-            {name && <p className="text-[16px] font-semibold text-on-surface">{name}</p>}
-
-            {/* Username */}
-            <p className="text-[14px] text-on-surface-variant mt-0.5">@{username}</p>
-
-            {/* Instagram havolasi */}
-            <a
-              href={`https://instagram.com/${username}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-4 flex items-center gap-1.5 text-[13px] text-primary hover:underline"
-            >
-              <Instagram size={14} />
-              {t('inbox.profile.viewOnInstagram')}
-            </a>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
+import { Avatar } from '@/components/ui/Avatar';
+import type { Conversation, InboxMessage } from '@/components/inbox/types';
+import { formatTime } from '@/components/inbox/types';
+import { DmSettingsPanel } from '@/components/inbox/DmSettingsPanel';
+import { ProfileModal } from '@/components/inbox/ProfileModal';
 
 export default function InboxPage() {
   const { t } = useLanguage();
@@ -637,7 +241,7 @@ export default function InboxPage() {
               className="md:hidden flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 hover:bg-primary/20 text-primary transition-colors shrink-0"
             >
               <Zap size={14} />
-              <span className="text-[12px] font-semibold tracking-wide">DM avto yoqish</span>
+              <span className="text-[12px] font-semibold tracking-wide">DM agent yoqish</span>
             </button>
           </div>
         </div>
@@ -679,7 +283,7 @@ export default function InboxPage() {
                   }`}
                 >
                   <div className="relative flex-shrink-0" onClick={e => { e.stopPropagation(); setProfileModal(conv); }}>
-                    <Avatar username={conv.participantUsername || conv.participantIgsid} profilePic={conv.participantProfilePic} igsid={conv.participantIgsid} />
+                    <Avatar username={conv.participantUsername || conv.participantIgsid} profilePic={conv.participantProfilePic} />
                     {(conv.unreadCount || 0) > 0 && (
                       <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-primary text-white text-[10px] font-bold flex items-center justify-center">
                         {conv.unreadCount > 9 ? '9+' : conv.unreadCount}
@@ -722,7 +326,7 @@ export default function InboxPage() {
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
               </button>
               <button onClick={() => setProfileModal(selected)} className="rounded-full hover:opacity-80 transition-opacity">
-                <Avatar username={selected.participantUsername || selected.participantIgsid} profilePic={selected.participantProfilePic} igsid={selected.participantIgsid} size={36} />
+                <Avatar username={selected.participantUsername || selected.participantIgsid} profilePic={selected.participantProfilePic} size={36} />
               </button>
               <div>
                 <p className="text-[15px] font-semibold text-on-surface leading-tight">
@@ -808,7 +412,7 @@ export default function InboxPage() {
                   <Send size={16} />
                 </button>
               </div>
-              <p className="text-center mt-1.5 text-[11px] text-on-surface-variant/40">{t('inbox.chat.sendHint')}</p>
+              <p className="hidden md:block text-center mt-1.5 text-[11px] text-on-surface-variant/40">{t('inbox.chat.sendHint')}</p>
             </div>
           </>
         ) : (

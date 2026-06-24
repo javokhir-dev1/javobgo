@@ -4,17 +4,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Send, Bot, Trash2, Copy, Check } from 'lucide-react';
 import { getAgent, streamChatWithAgent, getAgentMessages, saveAgentMessage, clearAgentMessages } from '@/lib/api';
 import { useLanguage } from '@/context/LanguageContext';
-
-function avatarUrl(seed: string) {
-  return `https://api.dicebear.com/9.x/bottts/svg?seed=${seed}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`;
-}
-function AgentAvatar({ value, className = 'w-8 h-8' }: { value: string; className?: string }) {
-  if (value?.startsWith('dicebear:')) {
-    const seed = value.split(':')[2] || 'Felix';
-    return <img src={avatarUrl(seed)} className={className} alt="avatar" />;
-  }
-  return <span className="text-2xl leading-none">{value}</span>;
-}
+import { AgentAvatar } from '@/components/ui/AgentAvatar';
 
 function CopyButton({ text }: { text: string }) {
   const { t } = useLanguage();
@@ -307,7 +297,7 @@ export default function AgentChatPage() {
                 <Send size={16} />
               </button>
             </div>
-            <p className="text-center mt-2.5 text-[11px] text-on-surface-variant/40 tracking-wide">
+            <p className="hidden md:block text-center mt-2.5 text-[11px] text-on-surface-variant/40 tracking-wide">
               {t('agents.chat.sendHint')}
             </p>
           </div>

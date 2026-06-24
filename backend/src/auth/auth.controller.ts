@@ -14,6 +14,7 @@ import {
   ForbiddenException,
   UseInterceptors,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -23,8 +24,22 @@ import { InternalSecretGuard } from './internal-secret.guard';
 import { diskStorage } from 'multer';
 import { extname, join } from 'path';
 import { randomUUID } from 'crypto';
+import * as fs from 'fs';
+
+const logger = new Logger('AuthController');
 
 const rateLimitMap = new Map<string, number[]>();
+
+// Har 5 daqiqada eski yozuvlarni tozalash (Memory Leak oldini olish)
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, times] of rateLimitMap.entries()) {
+    const fresh = times.filter((t) => now - t < 60_000);
+    if (fresh.length === 0) rateLimitMap.delete(ip);
+    else rateLimitMap.set(ip, fresh);
+  }
+}, 5 * 60 * 1000).unref();
+
 function checkRateLimit(ip: string, max = 10, windowMs = 60_000): boolean {
   const now = Date.now();
   const hits = (rateLimitMap.get(ip) || []).filter((t) => now - t < windowMs);
@@ -42,6 +57,28 @@ function parseCookieToken(req: Request): string | null {
     if (k) cookies[k.trim()] = v.join('=').trim();
   });
   return cookies['tg_access_token'] || null;
+}
+
+// Magic number tekshiruvi (mimetype spoofing oldini olish)
+function checkMagicBytes(filePath: string): boolean {
+  try {
+    const buf = Buffer.alloc(12);
+    const fd = fs.openSync(filePath, 'r');
+    fs.readSync(fd, buf, 0, 12, 0);
+    fs.closeSync(fd);
+    // JPEG: FF D8 FF
+    if (buf[0] === 0xFF && buf[1] === 0xD8 && buf[2] === 0xFF) return true;
+    // PNG: 89 50 4E 47 0D 0A 1A 0A
+    if (buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4E && buf[3] === 0x47) return true;
+    // GIF: GIF87a / GIF89a
+    if (buf[0] === 0x47 && buf[1] === 0x49 && buf[2] === 0x46 && buf[3] === 0x38) return true;
+    // WebP: RIFF....WEBP
+    if (buf[0] === 0x52 && buf[1] === 0x49 && buf[2] === 0x46 && buf[3] === 0x46 &&
+        buf[8] === 0x57 && buf[9] === 0x45 && buf[10] === 0x42 && buf[11] === 0x50) return true;
+    return false;
+  } catch {
+    return false;
+  }
 }
 
 @Controller('auth')
@@ -67,26 +104,19 @@ export class AuthController {
   @UseGuards(InternalSecretGuard)
   @HttpCode(HttpStatus.OK)
   @Post('verify-token')
-  async verifyToken(
-    @Body() body: { token: string },
-    @Req() req: Request,
-    @Res() res: Response,
-  ) {
+  async verifyToken(@Body() body: { token: string }, @Req() req: Request, @Res() res: Response) {
     const ip = req.ip || req.socket?.remoteAddress || 'unknown';
     if (!checkRateLimit(ip, 10, 60_000)) {
       return res.status(429).json({ error: 'too_many_requests' });
     }
-
     const token = (body.token || '').trim();
     if (!token) {
       return res.status(400).json({ error: 'invalid_token_format' });
     }
-
     const result = await this.authService.verifyAuthToken(token);
     if (!result) {
       return res.status(401).json({ error: 'invalid_or_expired_token' });
     }
-
     res.cookie('tg_access_token', result.jwt, {
       httpOnly: true,
       secure: true,
@@ -94,7 +124,6 @@ export class AuthController {
       maxAge: 7 * 24 * 60 * 60 * 1000,
       path: '/',
     });
-
     return res.json({
       user: {
         telegram_id: result.user.telegram_id,
@@ -107,25 +136,18 @@ export class AuthController {
   }
 
   @Get('validate')
-  async validateToken(
-    @Query('token') token: string,
-    @Req() req: Request,
-    @Res() res: Response,
-  ) {
+  async validateToken(@Query('token') token: string, @Req() req: Request, @Res() res: Response) {
     const ip = req.ip || req.socket?.remoteAddress || 'unknown';
     if (!checkRateLimit(ip)) {
       throw new ForbiddenException('Too many requests');
     }
-
     if (!token) {
       return res.status(400).json({ error: 'token_missing' });
     }
-
     const result = await this.authService.validateTelegramToken(token);
     if (!result) {
       return res.status(401).json({ error: 'invalid_or_expired_token' });
     }
-
     res.cookie('tg_access_token', result.jwt, {
       httpOnly: true,
       secure: true,
@@ -133,7 +155,6 @@ export class AuthController {
       maxAge: 7 * 24 * 60 * 60 * 1000,
       path: '/',
     });
-
     return res.json({
       user: {
         telegram_id: result.user.telegram_id,
@@ -147,26 +168,19 @@ export class AuthController {
 
   @HttpCode(HttpStatus.OK)
   @Post('telegram-webapp')
-  async telegramWebApp(
-    @Body() body: { initData: string },
-    @Req() req: Request,
-    @Res() res: Response,
-  ) {
+  async telegramWebApp(@Body() body: { initData: string }, @Req() req: Request, @Res() res: Response) {
     const ip = req.ip || req.socket?.remoteAddress || 'unknown';
     if (!checkRateLimit(ip, 20, 60_000)) {
       return res.status(429).json({ error: 'too_many_requests' });
     }
-
     const initData = (body.initData || '').trim();
     if (!initData) {
       return res.status(400).json({ error: 'initData_missing' });
     }
-
     const result = await this.authService.authenticateTelegramWebApp(initData);
     if (!result) {
       return res.status(401).json({ error: 'invalid_initData' });
     }
-
     res.cookie('tg_access_token', result.jwt, {
       httpOnly: true,
       secure: true,
@@ -174,7 +188,6 @@ export class AuthController {
       maxAge: 7 * 24 * 60 * 60 * 1000,
       path: '/',
     });
-
     return res.json({
       user: {
         telegram_id: result.user.telegram_id,
@@ -190,14 +203,9 @@ export class AuthController {
   async me(@Req() req: Request) {
     const token = parseCookieToken(req);
     if (!token) throw new UnauthorizedException('Autentifikatsiya talab qilinadi');
-
-    // 1. JWT imzosi va muddatini tekshirish
     const payload = this.authService.verifyJwt(token);
-
-    // 2. DB da haqiqatda shu user borligini tekshirish
     const user = await this.authService.findUserByTelegramId(payload.telegram_id);
     if (!user) throw new UnauthorizedException('Foydalanuvchi topilmadi');
-
     return {
       telegram_id: user.telegram_id,
       first_name: user.first_name,
@@ -217,8 +225,10 @@ export class AuthController {
         },
       }),
       fileFilter: (_req, file, cb) => {
-        if (!file.originalname.match(/\.(jpg|jpeg|png|webp|gif)$/i)) {
-          return cb(new BadRequestException('Faqat rasm fayllari qabul qilinadi'), false);
+        const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+        const allowedExtensions = /\.(jpg|jpeg|png|webp|gif)$/i;
+        if (!allowedMimeTypes.includes(file.mimetype) || !allowedExtensions.test(file.originalname)) {
+          return cb(new BadRequestException('Faqat rasm fayllari qabul qilinadi (jpg, png, webp, gif)'), false);
         }
         cb(null, true);
       },
@@ -228,7 +238,6 @@ export class AuthController {
   async uploadAvatar(@Req() req: Request & { file?: any }, @Res() res: Response) {
     const token = parseCookieToken(req);
     if (!token) return res.status(401).json({ error: 'unauthorized' });
-
     let telegram_id: string;
     try {
       const payload = this.authService.verifyJwt(token);
@@ -236,19 +245,22 @@ export class AuthController {
     } catch {
       return res.status(401).json({ error: 'invalid_token' });
     }
-
-    // DB da user borligini tekshirish
     const user = await this.authService.findUserByTelegramId(telegram_id);
     if (!user) return res.status(401).json({ error: 'user_not_found' });
-
     if (!req.file) {
       return res.status(400).json({ error: 'file_required' });
     }
 
+    // Magic number tekshiruvi — mimetype spoofing oldini olish
+    const savedPath = req.file.path;
+    if (!checkMagicBytes(savedPath)) {
+      try { fs.unlinkSync(savedPath); } catch {}
+      logger.warn(`uploadAvatar: magic bytes mos kelmadi (${telegram_id})`);
+      return res.status(400).json({ error: 'invalid_image_file' });
+    }
+
     const avatarUrl = `/uploads/avatars/${req.file.filename}`;
-
     await this.authService.updateAvatar(telegram_id, avatarUrl);
-
     return res.json({ ok: true, avatar_url: avatarUrl });
   }
 
@@ -256,7 +268,6 @@ export class AuthController {
   async updateProfile(@Req() req: Request, @Res() res: Response, @Body() body: { first_name?: string }) {
     const token = parseCookieToken(req);
     if (!token) return res.status(401).json({ error: 'unauthorized' });
-
     let telegram_id: string;
     try {
       const payload = this.authService.verifyJwt(token);
@@ -264,7 +275,6 @@ export class AuthController {
     } catch {
       return res.status(401).json({ error: 'invalid_token' });
     }
-
     await this.authService.updateProfile(telegram_id, { first_name: body.first_name });
     const user = await this.authService.findUserByTelegramId(telegram_id);
     return res.json({

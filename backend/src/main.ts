@@ -1,5 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import { ValidationPipe, Logger } from '@nestjs/common';
 import { join } from 'path';
 import { AppModule } from './app.module';
 
@@ -7,28 +8,47 @@ import { AppModule } from './app.module';
 const cookieParser = require('cookie-parser');
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    rawBody: true,
+  });
+
+  app.use((_req: any, res: any, next: any) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('X-XSS-Protection', '1; mode=block');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+    next();
+  });
 
   app.use(cookieParser());
 
-  // Statik fayllarni serve qilish (avatarlar va boshqalar)
+  app.useGlobalPipes(new ValidationPipe({
+    whitelist: true,
+    forbidNonWhitelisted: false,
+    transform: true,
+  }));
+
   app.useStaticAssets(join(process.cwd(), 'uploads'), { prefix: '/uploads' });
 
-  const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:3000')
+  // CORS: faqat ro'yxatdagi originlarga ruxsat
+  const rawOrigins = (process.env.FRONTEND_URL || 'http://localhost:3000')
     .split(',')
-    .map(o => o.trim());
-
+    .map(o => o.trim())
+    .filter(Boolean);
   app.enableCors({
     origin: (origin, callback) => {
-      if (!origin) return callback(null, true);
-      if (allowedOrigins.some(o => origin.startsWith(o))) return callback(null, true);
-      callback(new Error('CORS: ' + origin + ' ruxsat etilmagan'));
+      // Origin yo'q bo'lsa (server-to-server, curl) — ruxsat emas credentials bilan
+      if (!origin) return callback(null, false);
+      if (rawOrigins.includes(origin)) return callback(null, true);
+      return callback(new Error(`CORS: ruxsat etilmagan origin: ${origin}`), false);
     },
     credentials: true,
   });
 
-  const port = process.env.PORT || 4000;
+  const port = process.env.PORT ?? 3001;
   await app.listen(port);
-  console.log('Backend ishga tushdi: http://localhost:' + port);
+  Logger.log(`Backend ishga tushdi: http://localhost:${port}`, 'Bootstrap');
 }
+
 bootstrap();

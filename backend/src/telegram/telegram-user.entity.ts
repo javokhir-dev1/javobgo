@@ -20,6 +20,9 @@ export class TelegramUser {
   @Column({ type: 'varchar', nullable: true })
   avatar_url: string | null;
 
+  @Column({ type: 'varchar', default: 'user' })
+  role: 'user' | 'admin';
+
   @CreateDateColumn()
   created_at: Date;
 }

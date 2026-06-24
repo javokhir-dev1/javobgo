@@ -130,8 +130,25 @@ export default function DashboardPage() {
             </div>
           </section>
 
-          {/* Statistika kartlari */}
-          <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {/* Statistika kartlari — mobileda bitta karta, desktopda alohida */}
+          <section className="sm:hidden bg-surface-container-lowest border border-outline-variant/30 rounded-2xl shadow-sm overflow-hidden">
+            <div className="flex divide-x divide-outline-variant/30">
+              {statCards.map(({ label, value, icon: Icon, iconBg }) => (
+                <div key={label} className="flex-1 flex flex-col items-center gap-2 py-4 px-2">
+                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${iconBg}`}>
+                    <Icon size={17} strokeWidth={2} />
+                  </div>
+                  <p className="text-[28px] font-bold text-on-surface leading-none">
+                    {value === null ? (
+                      <span className="inline-block w-7 h-6 bg-surface-container rounded animate-pulse" />
+                    ) : value}
+                  </p>
+                  <p className="text-[11px] text-on-surface-variant text-center leading-tight px-1">{label}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+          <section className="hidden sm:grid sm:grid-cols-3 gap-4">
             {statCards.map(({ label, value, icon: Icon, iconBg }) => (
               <div key={label} className="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-5 shadow-sm flex items-center gap-4">
                 <div className={`w-11 h-11 shrink-0 rounded-lg flex items-center justify-center ${iconBg}`}>
@@ -152,18 +169,18 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-7">
 
             {/* Tezkor harakatlar */}
-            <section className="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-6 shadow-sm">
-              <h3 className="text-[16px] font-semibold text-on-surface mb-4">{t('dashboard.quickActions')}</h3>
-              <div className="space-y-2">
+            <section className="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-4 sm:p-6 shadow-sm">
+              <h3 className="text-[16px] font-semibold text-on-surface mb-3 sm:mb-4">{t('dashboard.quickActions')}</h3>
+              <div className="space-y-1.5 sm:space-y-2">
                 {quickActions.map(({ href, icon: Icon, label, desc }) => (
                   <Link key={href} href={href}
-                    className="flex items-center gap-3 p-3 rounded-xl hover:bg-surface-container-low transition-colors group">
-                    <div className="w-9 h-9 shrink-0 rounded-lg bg-primary-fixed flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors duration-200">
-                      <Icon size={17} strokeWidth={2} />
+                    className="flex items-center gap-3 p-3.5 sm:p-3 rounded-xl active:bg-surface-container hover:bg-surface-container-low transition-colors group">
+                    <div className="w-10 h-10 sm:w-9 sm:h-9 shrink-0 rounded-lg bg-primary-fixed flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors duration-200">
+                      <Icon size={18} strokeWidth={2} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-[15px] font-medium text-on-surface leading-tight">{label}</p>
-                      <p className="text-[13px] text-on-surface-variant truncate">{desc}</p>
+                      {desc && <p className="text-[12px] text-on-surface-variant truncate mt-0.5">{desc}</p>}
                     </div>
                     <ArrowRight size={15} className="text-outline-variant group-hover:text-primary group-hover:translate-x-0.5 transition-all duration-200 shrink-0" />
                   </Link>
@@ -217,6 +234,5 @@ export default function DashboardPage() {
         </main>
       </div>
     </div>
-    
   );
 }

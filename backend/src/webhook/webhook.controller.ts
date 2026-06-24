@@ -1,6 +1,7 @@
-import { Controller, Get, Post, Query, Body, Res, HttpCode, Logger } from '@nestjs/common';
+import { Controller, Get, Post, Query, Body, Req, Res, HttpCode, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Response } from 'express';
+import type { Request, Response } from 'express';
+import * as crypto from 'crypto';
 import { WebhookService } from './webhook.service';
 
 @Controller('webhook')
@@ -12,7 +13,6 @@ export class WebhookController {
     private readonly config: ConfigService,
   ) {}
 
-  // Meta webhook verification
   @Get()
   verify(
     @Query('hub.mode') mode: string,
@@ -22,27 +22,41 @@ export class WebhookController {
   ) {
     const verifyToken = this.config.get('WEBHOOK_VERIFY_TOKEN');
     if (mode === 'subscribe' && token === verifyToken) {
-      console.log('✅ Webhook tasdiqlandi');
+      this.logger.log('Webhook tasdiqlandi');
       return res.status(200).send(challenge);
     }
     return res.sendStatus(403);
   }
 
-  // Instagram events — darhol 200 qaytaradi, keyin async ishlaydi
   @Post()
   @HttpCode(200)
-  receive(@Body() body: any) {
-    if (body.object !== 'instagram') return { status: 'ignored' };
-
-    // Fire-and-forget: Meta 200 kutmaydi, retry bo'lmaydi
-    setImmediate(() => {
-      for (const entry of body.entry ?? []) {
-        this.webhookService.handleEntry(entry).catch(err =>
-          this.logger.error(`Entry xatosi: ${err.message}`),
-        );
+  receive(@Req() req: Request & { rawBody?: Buffer }, @Body() body: any, @Res() res: Response) {
+    const appSecret = this.config.get<string>('INSTAGRAM_APP_SECRET');
+    if (appSecret) {
+      const sigHeader = req.headers['x-hub-signature-256'] as string | undefined;
+      if (!sigHeader) {
+        this.logger.warn("Webhook: x-hub-signature-256 header yo'q");
+        return res.sendStatus(403);
       }
-    });
+      const rawBody: Buffer = req.rawBody ?? Buffer.from(JSON.stringify(body));
+      const expected = 'sha256=' + crypto.createHmac('sha256', appSecret).update(rawBody).digest('hex');
+      const sigBuf      = Buffer.from(sigHeader);
+      const expectedBuf = Buffer.from(expected);
+      if (
+        sigBuf.length !== expectedBuf.length ||
+        !crypto.timingSafeEqual(sigBuf, expectedBuf)
+      ) {
+        this.logger.warn('Webhook: imzo mos kelmadi');
+        return res.sendStatus(403);
+      }
+    }
 
-    return { status: 'ok' };
+    res.sendStatus(200);
+
+    setImmediate(() => {
+      this.webhookService.handleEntry(body).catch((err) => {
+        this.logger.error(`Webhook event xatosi: ${err.message}`);
+      });
+    });
   }
 }

@@ -142,6 +142,19 @@ export class InboxService {
       if (exists) return;
     }
 
+    // Webapp orqali yuborilgan xabar uchun echo kelganda — dublikatdan saqlash
+    // sendMessage() igMessageId=null bilan saqlaydi; echo kelganda igMessageId yangilanadi, SSE qayta chiqarilmaydi
+    if (direction === 'out' && messageId) {
+      const sent = await this.msgRepo.findOne({
+        where: { conversationId: conv.id, direction: 'out', messageText, igMessageId: null as any },
+        order: { createdAt: 'DESC' },
+      });
+      if (sent) {
+        await this.msgRepo.update({ id: sent.id }, { igMessageId: messageId });
+        return; // SSE allaqachon sendMessage() da chiqarilgan
+      }
+    }
+
     const msg = this.msgRepo.create({
       instagram_account_id: ig_account_id,
       conversationId:       conv.id,
@@ -153,9 +166,7 @@ export class InboxService {
     });
     await this.msgRepo.save(msg);
 
-    if (direction === 'in') {
-      this.emit(ig_account_id, 'new_message', { conversation: conv, message: msg });
-    }
+    this.emit(ig_account_id, 'new_message', { conversation: conv, message: msg });
   }
 
   // ─── Xabar yuborish ───────────────────────────────────────────────────────
@@ -197,7 +208,9 @@ export class InboxService {
       igCreatedAt: new Date(),
     });
 
-    return this.msgRepo.save(msg);
+    const saved = await this.msgRepo.save(msg);
+    this.emit(ig_account_id, 'new_message', { conversation: conv, message: saved });
+    return saved;
   }
 
   // ─── Instagram API sync ───────────────────────────────────────────────────

@@ -49,24 +49,21 @@ export class AgentsService {
     return this.repo.remove(agent);
   }
 
-  /* ── Chat history ── */
-  getMessages(agentId: number) {
-    return this.msgRepo.find({
-      where: { agentId },
-      order: { createdAt: 'ASC' },
-    });
+  async getMessages(agentId: number, telegram_id: string) {
+    await this.findOne(agentId, telegram_id);
+    return this.msgRepo.find({ where: { agentId }, order: { createdAt: 'ASC' } });
   }
 
-  saveMessage(agentId: number, role: 'user' | 'model', text: string) {
+  async saveMessage(agentId: number, role: 'user' | 'model', text: string) {
     return this.msgRepo.save(this.msgRepo.create({ agentId, role, text }));
   }
 
-  async clearMessages(agentId: number) {
+  async clearMessages(agentId: number, telegram_id: string) {
+    await this.findOne(agentId, telegram_id);
     await this.msgRepo.delete({ agentId });
     return { success: true };
   }
 
-  /* ── AI ── */
   async chat(id: number, telegram_id: string, messages: MsgInput[]): Promise<string> {
     const agent = await this.findOne(id, telegram_id);
     const ai = new GoogleGenAI({ apiKey: this.config.get('GEMINI_API_KEY') });

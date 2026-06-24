@@ -28,6 +28,9 @@ import { InboxMessage } from './inbox/entities/inbox-message.entity';
 import { TelegramUser } from './telegram/telegram-user.entity';
 import { AuthToken } from './auth/auth-token.entity';
 import { User } from './users/user.entity';
+import { AdminModule } from './admin/admin.module';
+import { RequestLog } from './admin/entities/request-log.entity';
+import { ApiQuotaConfig } from './admin/entities/api-quota-config.entity';
 
 @Module({
   imports: [
@@ -45,9 +48,9 @@ import { User } from './users/user.entity';
         entities: [
           Settings, DmMessage, DmCounter, Log, RateLimit, CommentRule,
           Agent, ChatMessage, Automation, Conversation, InboxMessage,
-          TelegramUser, AuthToken, User, InstagramAccount,
+          TelegramUser, AuthToken, User, InstagramAccount, RequestLog, ApiQuotaConfig,
         ],
-        synchronize: true,
+        synchronize: process.env.NODE_ENV !== 'production',
         dropSchema: false,
       }),
     }),
@@ -64,6 +67,7 @@ import { User } from './users/user.entity';
     SettingsModule,
     DmMessagesModule,
     LogsModule,
+    AdminModule,
   ],
 })
 export class AppModule {}

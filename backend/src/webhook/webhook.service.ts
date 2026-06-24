@@ -98,23 +98,21 @@ export class WebhookService {
     const senderId = event.sender?.id;
     const isEcho = !!event.message?.is_echo;
     this.logger.log(`📩 DM event: sender=${senderId} echo=${isEcho} text=${!!event.message?.text}`);
+    this.logger.log(`📦 DM raw: ${JSON.stringify(event, null, 2)}`);
 
     if (!event.message?.text) return;
     if (!senderId) return;
 
-    // Echo = botning o'z xabari. Inboxga saqlamaymiz (autoreply o'zi saqlaydi).
-    if (isEcho) return;
-
-    // Faqat kiruvchi xabarlarni inboxga saqlaymiz
+    // Inbox ga saqlaymiz (kiruvchi ham, echo ham)
     try {
       await this.inboxService.handleIncomingDM(creds, event);
-      this.logger.log(`✅ Inbox saqlandi: sender=${senderId}`);
+      this.logger.log(`✅ Inbox saqlandi: sender=${senderId} echo=${isEcho}`);
     } catch (err) {
       this.logger.warn(`Inbox saqlash xatosi: ${err.message}`);
     }
 
-    // Bot o'z xabarlariga javob bermasligi kerak
-    if (senderId === botAccountId) return;
+    // Echo yoki bot o'z xabarlariga autoreply qilmasin
+    if (isEcho || senderId === botAccountId) return;
 
     const s = await this.settings.get();
     if (!s.dmAutoReplyEnabled) return;
