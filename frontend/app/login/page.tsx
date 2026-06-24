@@ -7,7 +7,7 @@ import { verifyAuthTokenAction } from '../actions/auth';
 import { getSettings } from '@/lib/api';
 
 function LoginContent() {
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -17,6 +17,13 @@ function LoginContent() {
     if (token) {
       submitToken(token);
       return;
+    }
+
+    const isTgWebApp = window.location.hash.includes('tgWebAppData') || 
+                       !!(window as any).Telegram?.WebApp?.initData;
+
+    if (isTgWebApp) {
+      setIsLoading(true);
     }
 
     const checkTgInitData = () => {
@@ -30,15 +37,20 @@ function LoginContent() {
 
     if (checkTgInitData()) return;
 
-    const timer = setTimeout(() => {
-      if (!checkTgInitData()) {
-        getSettings()
-          .then(() => router.replace('/'))
-          .catch(() => setIsLoading(false));
-      }
-    }, 500);
-
-    return () => clearTimeout(timer);
+    if (isTgWebApp) {
+      const timer = setTimeout(() => {
+        if (!checkTgInitData()) {
+          getSettings()
+            .then(() => router.replace('/'))
+            .catch(() => setIsLoading(false));
+        }
+      }, 500);
+      return () => clearTimeout(timer);
+    } else {
+      getSettings()
+        .then(() => router.replace('/'))
+        .catch(() => setIsLoading(false));
+    }
   }, [router, searchParams]);
 
   const submitInitData = async (initData: string) => {

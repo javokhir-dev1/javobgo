@@ -94,7 +94,20 @@ bot.command('start', async (ctx) => {
         return;
     const registered = await (0, db_1.isUserRegistered)(String(from.id)).catch(() => false);
     if (registered) {
-        await ctx.replyWithMarkdown(`Salom, *${from.first_name}*! Kirish kodini olish uchun /login yuboring.`);
+        const activeToken = await (0, db_1.getActiveAuthToken)(String(from.id));
+        let token = activeToken;
+        if (!token) {
+            token = await (0, db_1.createAuthToken)(String(from.id));
+        }
+        const loginUrl = `${SITE_URL}/login?token=${token}`;
+        await ctx.replyWithMarkdown(`Salom, *${from.first_name}*!\n\nPlatformaga kirish uchun quyidagi tugmalardan birini tanlang:`, {
+            reply_markup: {
+                inline_keyboard: [[
+                        { text: '🌐 Brauzerda ochish', url: loginUrl },
+                        { text: '📱 Web App orqali', web_app: { url: `${SITE_URL}/login` } },
+                    ]],
+            },
+        });
         return;
     }
     await ctx.replyWithMarkdown(`*Xush kelibsiz, ${from.first_name}!* 👋\n\n` +
@@ -131,7 +144,7 @@ bot.on('contact', async (ctx) => {
             reply_markup: {
                 inline_keyboard: [[
                         { text: '🌐 Brauzerda ochish', url: loginUrl },
-                        { text: '📱 Web App orqali', web_app: { url: loginUrl } },
+                        { text: '📱 Web App orqali', web_app: { url: `${SITE_URL}/login` } },
                     ]],
             },
         });
@@ -143,43 +156,10 @@ bot.on('contact', async (ctx) => {
         });
     }
 });
-// ─── /login ───────────────────────────────────────────────────────────────────
-bot.command('login', async (ctx) => {
-    const from = ctx.from;
-    if (!from)
-        return;
-    const telegramId = String(from.id);
-    try {
-        const registered = await (0, db_1.isUserRegistered)(telegramId);
-        if (!registered) {
-            await ctx.reply("Siz hali ro'yxatdan o'tmagansiz. /start komandasini yuboring.");
-            return;
-        }
-        const activeToken = await (0, db_1.getActiveAuthToken)(telegramId);
-        let token = activeToken;
-        if (!token) {
-            token = await (0, db_1.createAuthToken)(telegramId);
-        }
-        const loginUrl = `${SITE_URL}/login?token=${token}`;
-        await ctx.replyWithMarkdown(`🔑 *Tizimga kirish*\n\nPlatformaga kirish uchun quyidagi tugmalardan birini tanlang:`, {
-            reply_markup: {
-                inline_keyboard: [[
-                        { text: '🌐 Brauzerda ochish', url: loginUrl },
-                        { text: '📱 Web App orqali', web_app: { url: loginUrl } },
-                    ]],
-            },
-        });
-    }
-    catch (err) {
-        console.error('/login xatosi:', err.message);
-        await ctx.reply("Xatolik yuz berdi. Iltimos qayta urinib ko'ring.");
-    }
-});
 // ─── /help ────────────────────────────────────────────────────────────────────
 bot.command('help', async (ctx) => {
     await ctx.replyWithMarkdown(`*Avto Komment Bot — yordam*\n\n` +
         `🔹 /start — Ro'yxatdan o'tish yoki xush kelibsiz xabari\n` +
-        `🔹 /login — Saytga kirish uchun maxsus havola olish\n` +
         `🔹 /help  — Ushbu yordam xabari`);
 });
 // ─── Noma'lum xabarlar ────────────────────────────────────────────────────────
