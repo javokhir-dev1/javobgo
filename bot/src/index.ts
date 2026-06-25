@@ -68,11 +68,7 @@ bot.command('start', async (ctx: Context) => {
   const registered = await isUserRegistered(String(from.id)).catch(() => false);
 
   if (registered) {
-    const activeToken = await getActiveAuthToken(String(from.id));
-    let token = activeToken;
-    if (!token) {
-      token = await createAuthToken(String(from.id));
-    }
+    const token = await createAuthToken(String(from.id));
     const loginUrl = `${SITE_URL}/login?token=${token}`;
     await ctx.replyWithMarkdown(
       `Salom, *${from.first_name}*!\n\nPlatformaga kirish uchun quyidagi tugmalardan birini tanlang:`,

@@ -82,7 +82,7 @@ function LoginContent() {
 
       if (!result.ok) {
         if (result.error === 'invalid_or_expired_token') {
-          setError("Havola noto'g'ri yoki muddati o'tgan. Telegram bot orqali qayta urinib ko'ring.");
+          setError("Ushbu tugma ishlatib bo'lingan. Iltimos botga qaytib qaytadan /start bosing.");
         } else if (result.error === 'too_many_requests') {
           setError("Juda ko'p urinish. Biroz kuting.");
         } else if (result.error === 'backend_unreachable') {
