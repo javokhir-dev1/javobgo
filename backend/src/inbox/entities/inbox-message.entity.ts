@@ -30,6 +30,6 @@ export class InboxMessage {
   @Column({ nullable: true, type: 'timestamptz' })
   igCreatedAt: Date;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
 }
