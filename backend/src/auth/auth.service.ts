@@ -59,6 +59,23 @@ export class AuthService {
     }
     authToken.is_used = true;
     await this.tokenRepo.save(authToken);
+
+    if (authToken.message_id) {
+      const botToken = process.env.TELEGRAM_BOT_TOKEN;
+      if (botToken) {
+        fetch(`https://api.telegram.org/bot${botToken}/editMessageText`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: authToken.telegram_id,
+            message_id: authToken.message_id,
+            text: '✅ Tizimga kirdingiz.\n\nQayta kirish uchun botga /start deb yozing.',
+            reply_markup: { inline_keyboard: [] }
+          })
+        }).catch(e => this.logger.error('Telegram xabarni tahrirlashda xato:', e));
+      }
+    }
+
     const user = await this.telegramUserRepo.findOne({ where: { telegram_id: authToken.telegram_id } });
     if (!user) return null;
     const payload = {

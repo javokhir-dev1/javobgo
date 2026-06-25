@@ -80,3 +80,11 @@ export async function createAuthToken(telegramId: string): Promise<string> {
 
   return token;
 }
+
+/** Token qaysi xabarga biriktirilganligini saqlash (edit qilish uchun) */
+export async function setTokenMessageId(token: string, messageId: number): Promise<void> {
+  await pool.query(
+    `UPDATE auth_tokens SET message_id = $1 WHERE token = $2`,
+    [messageId, token]
+  );
+}

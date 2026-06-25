@@ -5,7 +5,7 @@ import * as https from 'https';
 import * as http from 'http';
 import { randomUUID } from 'crypto';
 import { Telegraf, Context } from 'telegraf';
-import { upsertTelegramUser, isUserRegistered, createAuthToken, getActiveAuthToken } from './db';
+import { upsertTelegramUser, isUserRegistered, createAuthToken, getActiveAuthToken, setTokenMessageId } from './db';
 
 const BOT_TOKEN        = process.env.TELEGRAM_BOT_TOKEN;
 const SITE_URL         = process.env.SITE_URL         || 'http://localhost:3000';
@@ -70,7 +70,7 @@ bot.command('start', async (ctx: Context) => {
   if (registered) {
     const token = await createAuthToken(String(from.id));
     const loginUrl = `${SITE_URL}/login?token=${token}`;
-    await ctx.replyWithMarkdown(
+    const sentMsg = await ctx.replyWithMarkdown(
       `Salom, *${from.first_name}*!\n\nPlatformaga kirish uchun quyidagi tugmalardan birini tanlang:`,
       {
         reply_markup: {
@@ -81,6 +81,7 @@ bot.command('start', async (ctx: Context) => {
         },
       },
     );
+    await setTokenMessageId(token, sentMsg.message_id);
     return;
   }
 

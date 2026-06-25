@@ -14,6 +14,9 @@ export class AuthToken {
   @Column({ default: false })
   is_used: boolean;
 
+  @Column({ nullable: true })
+  message_id: number;
+
   @Column()
   expires_at: Date;
 
