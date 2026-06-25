@@ -5,6 +5,7 @@ import { RequestLog } from './entities/request-log.entity';
 import { ApiQuotaConfig } from './entities/api-quota-config.entity';
 import { TelegramUser } from '../telegram/telegram-user.entity';
 import { InstagramAccount } from '../instagram-accounts/instagram-account.entity';
+import { Log } from '../logs/entities/log.entity';
 
 @Injectable()
 export class AdminService {
@@ -17,6 +18,8 @@ export class AdminService {
     private userRepo: Repository<TelegramUser>,
     @InjectRepository(InstagramAccount)
     private igRepo: Repository<InstagramAccount>,
+    @InjectRepository(Log)
+    private botLogRepo: Repository<Log>,
     private dataSource: DataSource,
   ) {}
 
@@ -207,12 +210,12 @@ export class AdminService {
     const result = await Promise.all(igAccounts.map(async (ig) => {
       const maxPerHour = ig.customRateLimit ?? cfg.maxRequestsPerHour;
 
-      const usedLastHour = await this.logRepo.count({
-        where: { instagram_account_id: ig.instagram_account_id, createdAt: MoreThan(oneHourAgo) },
+      const usedLastHour = await this.botLogRepo.count({
+        where: { instagram_account_id: ig.instagram_account_id, createdAt: MoreThan(oneHourAgo), type: 'success' },
       });
 
-      const firstInWindow = await this.logRepo.findOne({
-        where: { instagram_account_id: ig.instagram_account_id, createdAt: MoreThan(oneHourAgo) },
+      const firstInWindow = await this.botLogRepo.findOne({
+        where: { instagram_account_id: ig.instagram_account_id, createdAt: MoreThan(oneHourAgo), type: 'success' },
         order: { createdAt: 'ASC' },
       });
       const resetAt = firstInWindow
@@ -242,6 +245,25 @@ export class AdminService {
     }));
 
     return result.sort((a, b) => b.usedLastHour - a.usedLastHour);
+  }
+
+  // ── Bot Javoblari Limiti tekshiruvi (Webhook uchun) ────────────
+  async checkBotReplyLimit(igAccountId: string): Promise<boolean> {
+    const cfg = await this.getConfig();
+    const blocked: string[] = JSON.parse(cfg.blockedAccounts || '[]');
+    if (blocked.includes(igAccountId)) return false; // Bloklangan
+
+    const ig = await this.igRepo.findOne({ where: { instagram_account_id: igAccountId } });
+    if (!ig) return false;
+
+    const maxPerHour = ig.customRateLimit ?? cfg.maxRequestsPerHour;
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+
+    const usedLastHour = await this.botLogRepo.count({
+      where: { instagram_account_id: igAccountId, createdAt: MoreThan(oneHourAgo), type: 'success' },
+    });
+
+    return usedLastHour < maxPerHour;
   }
 
   // ── IG Token holati ─────────────────────────────────────────────

@@ -11,10 +11,11 @@ import { RequestLog } from './entities/request-log.entity';
 import { ApiQuotaConfig } from './entities/api-quota-config.entity';
 import { TelegramUser } from '../telegram/telegram-user.entity';
 import { InstagramAccount } from '../instagram-accounts/instagram-account.entity';
+import { Log } from '../logs/entities/log.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([RequestLog, ApiQuotaConfig, TelegramUser, InstagramAccount]),
+    TypeOrmModule.forFeature([RequestLog, ApiQuotaConfig, TelegramUser, InstagramAccount, Log]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

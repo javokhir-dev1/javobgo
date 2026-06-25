@@ -387,7 +387,7 @@ export default function AdminPage() {
                 </h3>
                 <div className="flex flex-wrap gap-4 items-end">
                   <div>
-                    <label className="text-xs text-white/40 block mb-1">Maks so'rov / soat (har bir IG akkaunt)</label>
+                    <label className="text-xs text-white/40 block mb-1">Soatlik bot javoblari (har bir IG akkaunt)</label>
                     <input type="number" value={editMax} onChange={e => setEditMax(e.target.value)}
                       className="bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white w-36 focus:outline-none focus:border-purple-400" />
                   </div>

@@ -119,6 +119,13 @@ export class WebhookService {
     const s = await this.settings.get();
     if (!s.dmAutoReplyEnabled) return;
 
+    // Soatlik javoblar limitini tekshirish
+    const canReply = await this.adminService.checkBotReplyLimit(botAccountId);
+    if (!canReply) {
+      this.logger.warn(`Soatlik javob limiti tugadi (DM): botAccountId=${botAccountId}`);
+      return;
+    }
+
     const adminCfg = await this.adminService.getConfig();
     const dmLimit = adminCfg.dmLimit ?? 10;
 
@@ -183,6 +190,13 @@ export class WebhookService {
 
     const activeAutomations = await this.automations.findActive(telegram_id, botAccountId);
     if (!activeAutomations.length) return;
+
+    // Soatlik javoblar limitini tekshirish
+    const canReply = await this.adminService.checkBotReplyLimit(botAccountId);
+    if (!canReply) {
+      this.logger.warn(`Soatlik javob limiti tugadi (Komment): botAccountId=${botAccountId}`);
+      return;
+    }
 
     const adminCfg = await this.adminService.getConfig();
     const commentLimit = adminCfg.commentLimit ?? 10;
