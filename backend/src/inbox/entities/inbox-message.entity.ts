@@ -30,6 +30,9 @@ export class InboxMessage {
   @Column({ nullable: true, type: 'timestamptz' })
   igCreatedAt: Date;
 
+  @Column({ type: 'bigint', nullable: true })
+  timestampMs: string;
+
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
 }

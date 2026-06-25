@@ -27,11 +27,14 @@ export class Conversation {
   @Column({ nullable: true })
   participantProfilePic: string;
 
-  @Column({ nullable: true, type: 'text' })
+  @Column({ type: 'text', nullable: true })
   lastMessage: string;
 
   @Column({ nullable: true, type: 'timestamptz' })
   lastMessageAt: Date;
+
+  @Column({ type: 'bigint', nullable: true })
+  lastMessageTimestampMs: string;
 
   @Column({ default: 0 })
   unreadCount: number;

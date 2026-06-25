@@ -108,8 +108,8 @@ export default function InboxPage() {
             const updated = [...prev];
             updated[idx] = { ...updated[idx], ...conversation };
             return updated.sort((a, b) =>
-              new Date(b.lastMessageAt || b.updatedAt).getTime() -
-              new Date(a.lastMessageAt || a.updatedAt).getTime()
+              (b.lastMessageTimestampMs ? Number(b.lastMessageTimestampMs) : new Date(b.lastMessageAt || b.updatedAt).getTime()) -
+              (a.lastMessageTimestampMs ? Number(a.lastMessageTimestampMs) : new Date(a.lastMessageAt || a.updatedAt).getTime())
             );
           }
           return [conversation, ...prev];
@@ -176,6 +176,7 @@ export default function InboxPage() {
       direction: 'out',
       messageText: text,
       igCreatedAt: new Date().toISOString(),
+      timestampMs: Date.now().toString(),
       createdAt: new Date().toISOString(),
     };
     setMessages(prev => [...prev, tempMsg]);
@@ -184,7 +185,7 @@ export default function InboxPage() {
       await sendInboxMessage(selected.participantIgsid, text);
       setConversations(prev =>
         prev.map(c => c.id === selected.id
-          ? { ...c, lastMessage: text, lastMessageAt: new Date().toISOString() }
+          ? { ...c, lastMessage: text, lastMessageAt: new Date().toISOString(), lastMessageTimestampMs: Date.now().toString() }
           : c
         )
       );
@@ -296,7 +297,7 @@ export default function InboxPage() {
                         @{conv.participantUsername || conv.participantIgsid}
                       </span>
                       <span className="text-[11px] text-on-surface-variant flex-shrink-0">
-                        {formatTime(conv.lastMessageAt || conv.updatedAt, t)}
+                        {formatTime(conv.lastMessageTimestampMs ? new Date(Number(conv.lastMessageTimestampMs)).toISOString() : conv.lastMessageAt || conv.updatedAt, t)}
                       </span>
                     </div>
                     <p className={`text-[12px] truncate mt-0.5 ${conv.unreadCount ? 'text-on-surface' : 'text-on-surface-variant'}`}>
@@ -352,16 +353,16 @@ export default function InboxPage() {
                   {messages.map((msg, i) => {
                     const isOut = msg.direction === 'out';
                     const prevMsg = messages[i - 1];
-                    const showTime = !prevMsg ||
-                      new Date(msg.igCreatedAt || msg.createdAt).getTime() -
-                      new Date(prevMsg.igCreatedAt || prevMsg.createdAt).getTime() > 5 * 60 * 1000;
+                    const msgTime = msg.timestampMs ? Number(msg.timestampMs) : new Date(msg.igCreatedAt || msg.createdAt).getTime();
+                    const prevTime = prevMsg ? (prevMsg.timestampMs ? Number(prevMsg.timestampMs) : new Date(prevMsg.igCreatedAt || prevMsg.createdAt).getTime()) : 0;
+                    const showTime = !prevMsg || msgTime - prevTime > 5 * 60 * 1000;
 
                     return (
                       <div key={msg.id}>
                         {showTime && (
                           <div className="text-center my-3">
                             <span className="text-[11px] text-on-surface-variant/50 bg-surface-container px-2 py-0.5 rounded-full">
-                              {new Date(msg.igCreatedAt || msg.createdAt).toLocaleString(undefined, {
+                              {new Date(msgTime).toLocaleString(undefined, {
                                 day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit',
                                 hour12: false,
                               })}

@@ -7,6 +7,7 @@ export interface Conversation {
   participantProfilePic: string | null;
   lastMessage: string | null;
   lastMessageAt: string | null;
+  lastMessageTimestampMs: string | null;
   unreadCount: number;
   updatedAt: string;
 }
@@ -17,7 +18,8 @@ export interface InboxMessage {
   participantIgsid: string;
   direction: 'in' | 'out';
   messageText: string;
-  igCreatedAt: string | null;
+  igCreatedAt: string;
+  timestampMs: string | null;
   createdAt: string;
 }
 

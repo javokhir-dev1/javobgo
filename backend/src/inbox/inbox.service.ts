@@ -136,11 +136,13 @@ export class InboxService {
         participantProfilePic,
         lastMessage:   messageText,
         lastMessageAt: now,
+        lastMessageTimestampMs: now.getTime().toString(),
         unreadCount:   direction === 'in' ? 1 : 0,
       });
     } else {
       conv.lastMessage   = messageText;
       conv.lastMessageAt = now;
+      conv.lastMessageTimestampMs = now.getTime().toString();
       if (direction === 'in') conv.unreadCount = (conv.unreadCount || 0) + 1;
     }
 
@@ -173,6 +175,7 @@ export class InboxService {
       direction,
       messageText,
       igCreatedAt:  now,
+      timestampMs:  now.getTime().toString(),
     });
     await this.msgRepo.save(msg);
 
@@ -201,11 +204,13 @@ export class InboxService {
         participantUsername: participantIgsid,
         lastMessage:   text,
         lastMessageAt: new Date(),
+        lastMessageTimestampMs: Date.now().toString(),
         unreadCount:   0,
       });
     } else {
       conv.lastMessage   = text;
       conv.lastMessageAt = new Date();
+      conv.lastMessageTimestampMs = Date.now().toString();
     }
     conv = await this.convRepo.save(conv);
 
@@ -216,6 +221,7 @@ export class InboxService {
       direction:   'out',
       messageText: text,
       igCreatedAt: new Date(),
+      timestampMs: Date.now().toString(),
     });
 
     const saved = await this.msgRepo.save(msg);
@@ -275,6 +281,7 @@ export class InboxService {
             participantProfilePic,
             igConversationId: convId,
             lastMessageAt: igConv.updated_time ? new Date(igConv.updated_time) : new Date(),
+            lastMessageTimestampMs: (igConv.updated_time ? new Date(igConv.updated_time).getTime() : Date.now()).toString(),
           });
           await this.convRepo.save(conv);
           syncedConvs++;
@@ -310,6 +317,7 @@ export class InboxService {
                 direction,
                 messageText:  msgText,
                 igCreatedAt:  detail.created_time ? new Date(detail.created_time) : new Date(),
+                timestampMs:  (detail.created_time ? new Date(detail.created_time).getTime() : Date.now()).toString(),
               });
               await this.msgRepo.save(msg);
               syncedMsgs++;
@@ -324,6 +332,7 @@ export class InboxService {
           if (lastMsg) {
             conv.lastMessage   = lastMsg.text;
             conv.lastMessageAt = lastMsg.at;
+            conv.lastMessageTimestampMs = lastMsg.at.getTime().toString();
             await this.convRepo.save(conv);
           }
         } catch (e) {
