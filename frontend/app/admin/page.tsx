@@ -211,7 +211,7 @@ export default function AdminPage() {
     { key: 'ratelimit', label: 'Rate Limit',  icon: Shield    },
     { key: 'requests',  label: 'So\'rovlar',  icon: Globe     },
     { key: 'endpoints', label: 'Endpointlar', icon: Zap       },
-    { key: 'igtokens',  label: 'IG Tokenlar', icon: Key       },
+    { key: 'igtokens',  label: 'IG Akkauntlar', icon: Key       },
   ];
 
   if (isNotFound) {
@@ -229,7 +229,7 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white">
+    <div className="flex-1 min-h-screen bg-[#0a0a0a] text-white flex flex-col">
       {/* Header */}
       <div className="border-b border-white/10 px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -610,6 +610,9 @@ export default function AdminPage() {
         {/* ── IG TOKENS ──────────────────────────────────── */}
         {!loading && tab === 'igtokens' && (
           <div className="space-y-4">
+            <h3 className="font-semibold flex items-center gap-2 text-sm">
+              <Key size={16} className="text-purple-400" /> Barcha Instagram Akkauntlar
+            </h3>
             <p className="text-xs text-white/40">
               Instagram long token ~60 kun davom etadi. Token tugashidan 14 kun oldin ogohlantirish ko'rsatiladi.
               Asterisk (*) — aniq muddat saqlanmagan, taxminiy hisob (ulangan sana + 60 kun).
