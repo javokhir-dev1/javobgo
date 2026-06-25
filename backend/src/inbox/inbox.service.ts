@@ -35,10 +35,12 @@ export class InboxService {
       this.rooms.set(ig_account_id, new Set());
     }
     this.rooms.get(ig_account_id)!.add(subject);
+    console.log(`[InboxService] SSE ULANDI: account=${ig_account_id}. Jami ulanishlar: ${this.rooms.get(ig_account_id)!.size}`);
 
     return subject.asObservable().pipe(
       finalize(() => {
         this.rooms.get(ig_account_id)?.delete(subject);
+        console.log(`[InboxService] SSE UZILDI: account=${ig_account_id}. Qolgan ulanishlar: ${this.rooms.get(ig_account_id)?.size || 0}`);
         if (this.rooms.get(ig_account_id)?.size === 0) {
           this.rooms.delete(ig_account_id);
         }
@@ -47,7 +49,14 @@ export class InboxService {
   }
 
   private emit(ig_account_id: string, type: string, data: any): void {
-    this.rooms.get(ig_account_id)?.forEach(sub => sub.next({ type, data }));
+    console.log(`[InboxService] EMIT CHAQIRILDI: account=${ig_account_id}, type=${type}`);
+    const subs = this.rooms.get(ig_account_id);
+    if (!subs || subs.size === 0) {
+      console.log(`[InboxService] DIQQAT: ${ig_account_id} uchun tayyor SSE ulanish yo'q! Browser ulanmagan.`);
+    } else {
+      console.log(`[InboxService] ${subs.size} ta aktiv ulanishga ma'lumot jo'natilmoqda...`);
+      subs.forEach(sub => sub.next({ type, data }));
+    }
   }
 
   // ─── Conversations ─────────────────────────────────────────────────────────

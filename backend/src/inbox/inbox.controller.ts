@@ -42,11 +42,15 @@ export class InboxController {
   @Header('X-Accel-Buffering', 'no')
   async events(@Req() req: Request): Promise<Observable<MessageEvent>> {
     const { ig_account_id } = await this.getCreds(req);
+    console.log(`[SSE CONTROLLER] YANGI ULANISH OCHILDI: account=${ig_account_id}`);
     return this.inbox.subscribe(ig_account_id).pipe(
-      map(({ type, data }) => ({
-        type,
-        data: JSON.stringify(data),
-      })),
+      map(({ type, data }) => {
+        console.log(`[SSE CONTROLLER] BROWSERGA JO'NATILMOQDA: type=${type}`);
+        return {
+          type,
+          data: JSON.stringify(data),
+        };
+      }),
     );
   }
 
