@@ -374,7 +374,7 @@ export default function InboxPage() {
                           </div>
                         )}
                         <div className={`flex ${isOut ? 'justify-end' : 'justify-start'}`}>
-                          <div className={`max-w-[70%] px-3.5 py-2 rounded-2xl text-[14px] leading-relaxed ${
+                          <div className={`max-w-[70%] px-3.5 py-2 rounded-2xl text-[14px] leading-relaxed break-words min-w-0 ${
                             isOut
                               ? 'bg-primary text-white rounded-br-sm'
                               : 'bg-surface-container text-on-surface rounded-bl-sm border border-outline-variant/20'
