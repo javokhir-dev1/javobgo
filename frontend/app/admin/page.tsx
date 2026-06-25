@@ -229,7 +229,7 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="flex-1 min-h-screen bg-[#0a0a0a] text-white flex flex-col">
+    <div className="flex-1 h-full overflow-y-auto bg-[#0a0a0a] text-white flex flex-col relative z-0">
       {/* Header */}
       <div className="border-b border-white/10 px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
