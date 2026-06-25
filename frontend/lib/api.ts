@@ -143,5 +143,9 @@ export const adminExportRequests  = (telegramId?: string, igAccountId?: string) 
   const params = new URLSearchParams();
   if (telegramId)  params.set('telegramId', telegramId);
   if (igAccountId) params.set('igAccountId', igAccountId);
+  if (igAccountId) params.set('igAccountId', igAccountId);
   return `/api/admin/requests/export?${params}`;
 };
+
+export const adminGetAutomations  = () => api.get('/api/admin/automations').then(r => r.data);
+export const adminGetAgents       = () => api.get('/api/admin/agents').then(r => r.data);

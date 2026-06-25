@@ -130,4 +130,16 @@ export class AdminController {
   getEndpoints() {
     return this.adminService.getEndpointStats();
   }
+
+  // GET /api/admin/automations
+  @Get('automations')
+  getAutomations() {
+    return this.adminService.getAllAutomations();
+  }
+
+  // GET /api/admin/agents
+  @Get('agents')
+  getAgents() {
+    return this.adminService.getAllAgents();
+  }
 }

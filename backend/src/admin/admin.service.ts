@@ -6,6 +6,8 @@ import { ApiQuotaConfig } from './entities/api-quota-config.entity';
 import { TelegramUser } from '../telegram/telegram-user.entity';
 import { InstagramAccount } from '../instagram-accounts/instagram-account.entity';
 import { Log } from '../logs/entities/log.entity';
+import { Automation } from '../automations/entities/automation.entity';
+import { Agent } from '../agents/entities/agent.entity';
 
 @Injectable()
 export class AdminService {
@@ -20,6 +22,10 @@ export class AdminService {
     private igRepo: Repository<InstagramAccount>,
     @InjectRepository(Log)
     private botLogRepo: Repository<Log>,
+    @InjectRepository(Automation)
+    private automationRepo: Repository<Automation>,
+    @InjectRepository(Agent)
+    private agentRepo: Repository<Agent>,
     private dataSource: DataSource,
   ) {}
 
@@ -197,6 +203,33 @@ export class AdminService {
     }));
 
     return { data: enriched, total, page, limit, totalPages: Math.ceil(total / limit) };
+  }
+
+  // ── Automations ──────────────────────────────────────────────────
+  async getAllAutomations() {
+    const automations = await this.automationRepo.find({ order: { createdAt: 'DESC' } });
+    // Join with telegram_user and igRepo manually if needed, or just return basic info
+    const enriched = await Promise.all(automations.map(async (auto) => {
+      const ig = auto.instagram_account_id ? await this.igRepo.findOne({ where: { instagram_account_id: auto.instagram_account_id } }) : null;
+      return {
+        ...auto,
+        instagram_username: ig?.instagram_username || null,
+      };
+    }));
+    return enriched;
+  }
+
+  // ── Agents ───────────────────────────────────────────────────────
+  async getAllAgents() {
+    const agents = await this.agentRepo.find({ order: { createdAt: 'DESC' } });
+    const enriched = await Promise.all(agents.map(async (agent) => {
+      const ig = agent.instagram_account_id ? await this.igRepo.findOne({ where: { instagram_account_id: agent.instagram_account_id } }) : null;
+      return {
+        ...agent,
+        instagram_username: ig?.instagram_username || null,
+      };
+    }));
+    return enriched;
   }
 
   // ── Rate limit holati (har bir IG akkaunt bo'yicha) ────────────

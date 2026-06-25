@@ -6,16 +6,17 @@ import {
   Users, Activity, Shield, AlertTriangle, CheckCircle2,
   RefreshCw, Settings, Ban, Unlock, ChevronLeft, ChevronRight,
   Clock, Zap, TrendingUp, Globe, Lock, Key, Download, Power,
-  BarChart2, XCircle,
+  BarChart2, XCircle, Bot, Cpu,
 } from 'lucide-react';
 import {
   adminGetStats, adminGetHourlyStats, adminGetUsers, adminGetRateLimit,
   adminGetConfig, adminUpdateConfig, adminBlockAccount, adminUnblockAccount,
   adminGetRequests, adminGetEndpoints, adminSetUserRole, adminSetMaintenance,
   adminSetCustomLimit, adminGetIgTokens, adminExportRequests,
+  adminGetAutomations, adminGetAgents,
 } from '@/lib/api';
 
-type Tab = 'overview' | 'users' | 'ratelimit' | 'requests' | 'endpoints' | 'igtokens';
+type Tab = 'overview' | 'users' | 'ratelimit' | 'igtokens' | 'automations' | 'agents';
 
 function StatCard({ icon: Icon, label, value, sub, color = 'blue' }: any) {
   const colors: Record<string, string> = {
@@ -115,6 +116,8 @@ export default function AdminPage() {
   const [reqPage, setReqPage]     = useState(1);
   const [endpoints, setEndpoints] = useState<any[]>([]);
   const [igTokens, setIgTokens]   = useState<any[]>([]);
+  const [automations, setAutomations] = useState<any[]>([]);
+  const [agents, setAgents]       = useState<any[]>([]);
 
   const [editMax, setEditMax]     = useState('');
   const [editWarn, setEditWarn]   = useState('');
@@ -157,11 +160,17 @@ export default function AdminPage() {
       } else if (tab === 'igtokens') {
         const t = await adminGetIgTokens();
         setIgTokens(t);
+      } else if (tab === 'automations') {
+        const a = await adminGetAutomations();
+        setAutomations(a);
+      } else if (tab === 'agents') {
+        const ag = await adminGetAgents();
+        setAgents(ag);
       }
-    } catch (e: any) {
-      if (e?.response?.status === 403) {
+    } catch (err: any) {
+      if (err?.response?.status === 403) {
         setIsNotFound(true);
-      } else if (e?.response?.status === 401) {
+      } else if (err?.response?.status === 401) {
         setError('Tizimga kiring');
       } else {
         setError('Ma\'lumot yuklanmadi');
@@ -210,6 +219,8 @@ export default function AdminPage() {
     { key: 'users',     label: 'Userlar',     icon: Users     },
     { key: 'ratelimit', label: 'Rate Limit',  icon: Shield    },
     { key: 'igtokens',  label: 'IG Akkauntlar', icon: Key       },
+    { key: 'automations',label: 'Avtomatizatsiyalar', icon: Zap },
+    { key: 'agents',    label: 'AI Agentlar', icon: Bot       },
   ];
 
   if (isNotFound) {
@@ -676,6 +687,105 @@ export default function AdminPage() {
                   ))}
                   {igTokens.length === 0 && (
                     <tr><td colSpan={6} className="py-8 text-center text-white/30">IG akkauntlar yo'q</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+        )}
+
+        {/* ── AUTOMATIONS ────────────────────────────────── */}
+        {!loading && tab === 'automations' && (
+          <div className="space-y-4">
+            <h3 className="font-semibold flex items-center gap-2 text-sm">
+              <Zap size={16} className="text-purple-400" /> Barcha Avtomatizatsiyalar
+            </h3>
+            <div className="overflow-x-auto rounded-xl border border-white/10">
+              <table className="w-full text-sm">
+                <thead className="bg-white/5">
+                  <tr className="text-white/40 border-b border-white/10">
+                    <th className="text-left py-2 px-3">ID</th>
+                    <th className="text-left py-2 px-3">Nomi</th>
+                    <th className="text-left py-2 px-3">IG Akkaunt</th>
+                    <th className="text-center py-2 px-3">Holat</th>
+                    <th className="text-center py-2 px-3">Izoh/DM</th>
+                    <th className="text-center py-2 px-3">Sana</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {automations.map((a: any) => (
+                    <tr key={a.id} className="border-b border-white/5 hover:bg-white/5">
+                      <td className="py-2 px-3 font-mono text-white/50">#{a.id}</td>
+                      <td className="py-2 px-3 font-medium">{a.name}</td>
+                      <td className="py-2 px-3 text-white/70">
+                        {a.instagram_username ? `@${a.instagram_username}` : 'Barcha'}
+                        <br />
+                        <span className="text-xs text-white/40 font-mono">{a.telegram_id}</span>
+                      </td>
+                      <td className="py-2 px-3 text-center">
+                        {a.isActive
+                          ? <span className="bg-green-500/20 text-green-400 px-2 py-0.5 rounded text-xs font-medium">Faol</span>
+                          : <span className="bg-red-500/20 text-red-400 px-2 py-0.5 rounded text-xs font-medium">To'xtatilgan</span>}
+                      </td>
+                      <td className="py-2 px-3 text-center text-xs">
+                        <div className="flex gap-2 justify-center">
+                          {a.replyEnabled ? <span className="text-blue-400 border border-blue-400/30 px-1.5 rounded">Izoh</span> : <span className="text-white/20 border border-white/10 px-1.5 rounded">Izoh</span>}
+                          {a.dmEnabled ? <span className="text-purple-400 border border-purple-400/30 px-1.5 rounded">DM</span> : <span className="text-white/20 border border-white/10 px-1.5 rounded">DM</span>}
+                        </div>
+                      </td>
+                      <td className="py-2 px-3 text-center text-xs text-white/50">
+                        {new Date(a.createdAt).toLocaleString()}
+                      </td>
+                    </tr>
+                  ))}
+                  {automations.length === 0 && (
+                    <tr><td colSpan={6} className="py-8 text-center text-white/30">Avtomatizatsiyalar yo'q</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* ── AGENTS ─────────────────────────────────────── */}
+        {!loading && tab === 'agents' && (
+          <div className="space-y-4">
+            <h3 className="font-semibold flex items-center gap-2 text-sm">
+              <Bot size={16} className="text-purple-400" /> Barcha AI Agentlar
+            </h3>
+            <div className="overflow-x-auto rounded-xl border border-white/10">
+              <table className="w-full text-sm">
+                <thead className="bg-white/5">
+                  <tr className="text-white/40 border-b border-white/10">
+                    <th className="text-center py-2 px-3 w-10">#</th>
+                    <th className="text-left py-2 px-3">Agent Nomi</th>
+                    <th className="text-left py-2 px-3">Tavsif / Prompt</th>
+                    <th className="text-left py-2 px-3">IG Akkaunt / Egasi</th>
+                    <th className="text-center py-2 px-3">Sana</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {agents.map((ag: any) => (
+                    <tr key={ag.id} className="border-b border-white/5 hover:bg-white/5">
+                      <td className="py-2 px-3 text-center text-xl">{ag.emoji}</td>
+                      <td className="py-2 px-3 font-medium text-white">{ag.name}</td>
+                      <td className="py-2 px-3">
+                        <div className="text-xs text-white/70 mb-1">{ag.description || 'Tavsif yo\'q'}</div>
+                        <div className="text-[10px] text-white/40 max-w-xs truncate">{ag.systemPrompt}</div>
+                      </td>
+                      <td className="py-2 px-3 text-white/70">
+                        {ag.instagram_username ? `@${ag.instagram_username}` : 'Umumiy'}
+                        <br />
+                        <span className="text-xs text-white/40 font-mono">{ag.telegram_id}</span>
+                      </td>
+                      <td className="py-2 px-3 text-center text-xs text-white/50">
+                        {new Date(ag.createdAt).toLocaleString()}
+                      </td>
+                    </tr>
+                  ))}
+                  {agents.length === 0 && (
+                    <tr><td colSpan={5} className="py-8 text-center text-white/30">AI Agentlar yo'q</td></tr>
                   )}
                 </tbody>
               </table>
