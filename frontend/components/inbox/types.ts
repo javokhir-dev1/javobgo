@@ -40,5 +40,5 @@ export function formatTime(dateStr: string | null, t: (key: string) => string): 
   if (hrs < 24) return `${hrs}${t('inbox.time.h')}`;
   const days = Math.floor(hrs / 24);
   if (days < 7) return `${days}${t('inbox.time.d')}`;
-  return d.toLocaleDateString('uz-UZ', { day: '2-digit', month: '2-digit' });
+  return d.toLocaleDateString(undefined, { day: '2-digit', month: '2-digit' });
 }

@@ -361,8 +361,9 @@ export default function InboxPage() {
                         {showTime && (
                           <div className="text-center my-3">
                             <span className="text-[11px] text-on-surface-variant/50 bg-surface-container px-2 py-0.5 rounded-full">
-                              {new Date(msg.igCreatedAt || msg.createdAt).toLocaleString('uz-UZ', {
-                                day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
+                              {new Date(msg.igCreatedAt || msg.createdAt).toLocaleString(undefined, {
+                                day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit',
+                                hour12: false,
                               })}
                             </span>
                           </div>

@@ -82,8 +82,8 @@ export class InboxService {
   async handleIncomingDM(creds: IgCredentials, event: any): Promise<void> {
     const messageText: string = event.message?.text || '';
     const messageId: string   = event.message?.mid  || '';
-    // Instagram timestamp ishlatilmaydi — server vaqti ishlatiladi
-    const now = new Date();
+    // Instagram timestamp (Unix ms, UTC) ni ishlatamiz; yo'q bo'lsa server vaqti
+    const now = event.timestamp ? new Date(Number(event.timestamp)) : new Date();
 
     const ig_account_id       = creds.accountId;
 
@@ -219,7 +219,8 @@ export class InboxService {
     });
 
     const saved = await this.msgRepo.save(msg);
-    this.emit(ig_account_id, 'new_message', { conversation: conv, message: saved });
+    // SSE emit qilinmaydi — frontend optimistic UI orqali allaqachon xabarni ko'rsatadi.
+    // Instagram echo webhook kelganda handleIncomingDM deduplication qiladi.
     return saved;
   }
 
