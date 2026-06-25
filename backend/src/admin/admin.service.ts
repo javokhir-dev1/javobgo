@@ -91,21 +91,19 @@ export class AdminService {
     const [totalUsers, totalIgAccounts, totalRequests, requestsLastHour, requestsLastDay] = await Promise.all([
       this.userRepo.count(),
       this.igRepo.count(),
-      this.logRepo.count(),
-      this.logRepo.count({ where: { createdAt: MoreThan(oneHourAgo) } }),
-      this.logRepo.count({ where: { createdAt: MoreThan(oneDayAgo) } }),
+      this.botLogRepo.count({ where: { type: 'success' } }),
+      this.botLogRepo.count({ where: { type: 'success', createdAt: MoreThan(oneHourAgo) } }),
+      this.botLogRepo.count({ where: { type: 'success', createdAt: MoreThan(oneDayAgo) } }),
     ]);
 
-    const recentLogs = await this.logRepo.find({
-      order: { createdAt: 'DESC' },
-      take: 1000,
-      select: ['durationMs', 'statusCode'],
-    });
-    const avgLatencyMs = recentLogs.length
-      ? Math.round(recentLogs.reduce((s, l) => s + l.durationMs, 0) / recentLogs.length)
-      : 0;
-    const errorRate = recentLogs.length
-      ? Math.round((recentLogs.filter(l => l.statusCode >= 400).length / recentLogs.length) * 100)
+    const [totalErrors, totalSuccess] = await Promise.all([
+      this.botLogRepo.count({ where: { type: 'error' } }),
+      this.botLogRepo.count({ where: { type: 'success' } }),
+    ]);
+
+    const avgLatencyMs = 0;
+    const errorRate = (totalErrors + totalSuccess) > 0
+      ? Math.round((totalErrors / (totalErrors + totalSuccess)) * 100)
       : 0;
 
     const cfg = await this.getConfig();
@@ -126,19 +124,19 @@ export class AdminService {
     };
   }
 
-  /** So'nggi 24 soat bo'yicha soatlik statistika */
+  /** So'nggi 24 soat bo'yicha soatlik statistika (Javoblar - Logs) */
   async getHourlyStats(): Promise<{ hour: string; count: number; errors: number; avgMs: number }[]> {
     const rows = await this.dataSource.query(`
       SELECT
         to_char(date_trunc('hour', "createdAt"), 'HH24:00') AS hour_label,
         date_trunc('hour', "createdAt")                     AS hour_ts,
-        COUNT(*)::int                                       AS count,
-        SUM(CASE WHEN "statusCode" >= 400 THEN 1 ELSE 0 END)::int AS errors,
-        ROUND(AVG("durationMs"))::int                       AS avg_ms
-      FROM request_logs
+        SUM(CASE WHEN type = 'success' THEN 1 ELSE 0 END)::int AS count,
+        SUM(CASE WHEN type = 'error' THEN 1 ELSE 0 END)::int   AS errors,
+        0 AS avg_ms
+      FROM logs
       WHERE "createdAt" >= NOW() - INTERVAL '24 hours'
       GROUP BY hour_ts, hour_label
-      ORDER BY hour_ts
+      ORDER BY hour_ts ASC
     `);
 
     // 24 soatlik bo'sh slotlarni to'ldirish
