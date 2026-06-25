@@ -209,8 +209,6 @@ export default function AdminPage() {
     { key: 'overview',  label: 'Umumiy',      icon: Activity  },
     { key: 'users',     label: 'Userlar',     icon: Users     },
     { key: 'ratelimit', label: 'Rate Limit',  icon: Shield    },
-    { key: 'requests',  label: 'So\'rovlar',  icon: Globe     },
-    { key: 'endpoints', label: 'Endpointlar', icon: Zap       },
     { key: 'igtokens',  label: 'IG Akkauntlar', icon: Key       },
   ];
 
