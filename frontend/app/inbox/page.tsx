@@ -243,10 +243,10 @@ export default function InboxPage() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowMobileDmSettings(true)}
-              className="md:hidden flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 hover:bg-primary/20 text-primary transition-colors shrink-0"
-              title="DM agent yoqish"
+              className="md:hidden flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 hover:bg-primary/20 text-primary transition-colors text-[13px] font-medium"
             >
-              <Zap size={16} />
+              <Zap size={14} />
+              <span>DM agent yoqish</span>
             </button>
           </div>
         </div>
