@@ -3,9 +3,13 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Settings } from './entities/settings.entity';
 import { SettingsService } from './settings.service';
 import { SettingsController } from './settings.controller';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Settings])],
+  imports: [
+    TypeOrmModule.forFeature([Settings]),
+    AuthModule,
+  ],
   providers: [SettingsService],
   controllers: [SettingsController],
   exports: [SettingsService],
