@@ -1,5 +1,5 @@
 import {
-  Controller, Get, Post, Param, Body, Req, Sse,
+  Controller, Get, Post, Param, Body, Req, Sse, Header,
   MessageEvent, HttpCode, UnauthorizedException, NotFoundException,
 } from '@nestjs/common';
 import { Observable, map } from 'rxjs';
@@ -39,6 +39,7 @@ export class InboxController {
 
   /** SSE — faqat shu akkauntning xabarlari keladi */
   @Sse('events')
+  @Header('X-Accel-Buffering', 'no')
   async events(@Req() req: Request): Promise<Observable<MessageEvent>> {
     const { ig_account_id } = await this.getCreds(req);
     return this.inbox.subscribe(ig_account_id).pipe(
