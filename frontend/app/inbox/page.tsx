@@ -214,7 +214,7 @@ export default function InboxPage() {
 
   return (
     
-    <div className="h-full flex overflow-hidden bg-surface-container-low">
+    <div className="h-full flex overflow-x-hidden bg-surface-container-low">
       {profileModal && (
         <ProfileModal
           igsid={profileModal.participantIgsid}
@@ -226,7 +226,7 @@ export default function InboxPage() {
       {/* ── Chap panel ── */}
       <div 
         style={{ '--left-width': `${leftWidth}px` } as React.CSSProperties}
-        className={`flex-shrink-0 flex-col bg-surface-container-lowest w-full md:w-[var(--left-width)] ${selected ? 'hidden md:flex' : 'flex'}`}
+        className={`flex-shrink-0 flex-col bg-surface-container-lowest w-full md:w-[var(--left-width)] h-full ${selected ? 'hidden md:flex' : 'flex'}`}
       >
 
         {/* Header */}
@@ -243,10 +243,10 @@ export default function InboxPage() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowMobileDmSettings(true)}
-              className="md:hidden flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 hover:bg-primary/20 text-primary transition-colors shrink-0"
+              className="md:hidden flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 hover:bg-primary/20 text-primary transition-colors shrink-0"
+              title="DM agent yoqish"
             >
-              <Zap size={14} />
-              <span className="text-[12px] font-semibold tracking-wide">DM agent yoqish</span>
+              <Zap size={16} />
             </button>
           </div>
         </div>
@@ -322,7 +322,7 @@ export default function InboxPage() {
       />
 
       {/* ── O'rta panel ── */}
-      <div className={`flex-1 flex-col overflow-hidden ${selected ? 'flex' : 'hidden md:flex'}`}>
+      <div className={`flex-1 flex-col overflow-hidden h-full ${selected ? 'flex' : 'hidden md:flex'}`}>
         {selected ? (
           <>
             {/* Chat header */}
