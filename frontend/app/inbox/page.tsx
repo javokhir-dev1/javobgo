@@ -178,11 +178,15 @@ export default function InboxPage() {
       igCreatedAt: new Date().toISOString(),
       timestampMs: Date.now().toString(),
       createdAt: new Date().toISOString(),
+      pending: true,
     };
     setMessages(prev => [...prev, tempMsg]);
 
     try {
-      await sendInboxMessage(selected.participantIgsid, text);
+      const savedMsg = await sendInboxMessage(selected.participantIgsid, text);
+      if (savedMsg?.id) {
+        setMessages(prev => prev.map(m => m.id === tempMsg.id ? { ...m, ...savedMsg } : m));
+      }
       setConversations(prev =>
         prev.map(c => c.id === selected.id
           ? { ...c, lastMessage: text, lastMessageAt: new Date().toISOString(), lastMessageTimestampMs: Date.now().toString() }
@@ -355,7 +359,7 @@ export default function InboxPage() {
                     const prevMsg = messages[i - 1];
                     const msgTime = msg.timestampMs ? Number(msg.timestampMs) : new Date(msg.igCreatedAt || msg.createdAt).getTime();
                     const prevTime = prevMsg ? (prevMsg.timestampMs ? Number(prevMsg.timestampMs) : new Date(prevMsg.igCreatedAt || prevMsg.createdAt).getTime()) : 0;
-                    const showTime = !prevMsg || msgTime - prevTime > 5 * 60 * 1000;
+                    const showTime = !msg.pending && (!prevMsg || msgTime - prevTime > 5 * 60 * 1000);
 
                     return (
                       <div key={msg.id}>

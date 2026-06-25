@@ -21,6 +21,7 @@ export interface InboxMessage {
   igCreatedAt: string;
   timestampMs: string | null;
   createdAt: string;
+  pending?: boolean;
 }
 
 export interface UserInfo {
