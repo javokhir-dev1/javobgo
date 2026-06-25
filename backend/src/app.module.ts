@@ -52,6 +52,7 @@ import { ApiQuotaConfig } from './admin/entities/api-quota-config.entity';
         ],
         synchronize: process.env.NODE_ENV !== 'production',
         dropSchema: false,
+        timezone: 'UTC',
       }),
     }),
 
