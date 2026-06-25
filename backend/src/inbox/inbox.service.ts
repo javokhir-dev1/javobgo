@@ -191,7 +191,8 @@ export class InboxService {
   ): Promise<InboxMessage> {
     const ig_account_id = creds.accountId;
 
-    await this.instagram.sendDM(creds, participantIgsid, text);
+    const igRes = await this.instagram.sendDM(creds, participantIgsid, text);
+    const igMessageId: string | null = igRes?.message_id || null;
 
     let conv = await this.convRepo.findOne({
       where: { instagram_account_id: ig_account_id, participantIgsid },
@@ -218,6 +219,7 @@ export class InboxService {
       instagram_account_id: ig_account_id,
       conversationId:       conv.id,
       participantIgsid,
+      igMessageId:  igMessageId,
       direction:   'out',
       messageText: text,
       igCreatedAt: new Date(),
@@ -308,6 +310,18 @@ export class InboxService {
 
               const direction: 'in' | 'out' =
                 detail.from?.id === participantIgsid ? 'in' : 'out';
+
+              // igMessageId=null bo'lgan webapp xabarlarini duplicate qilmaslik
+              if (direction === 'out') {
+                const dupOut = await this.msgRepo.findOne({
+                  where: { conversationId: conv.id, direction: 'out', messageText: msgText, igMessageId: null as any },
+                  order: { createdAt: 'DESC' },
+                });
+                if (dupOut) {
+                  await this.msgRepo.update({ id: dupOut.id }, { igMessageId: igMsg.id });
+                  continue;
+                }
+              }
 
               const msg = this.msgRepo.create({
                 instagram_account_id: ig_account_id,

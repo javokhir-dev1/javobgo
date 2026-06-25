@@ -182,7 +182,11 @@ export default function InboxPage() {
     setMessages(prev => [...prev, tempMsg]);
 
     try {
-      await sendInboxMessage(selected.participantIgsid, text);
+      const savedMsg = await sendInboxMessage(selected.participantIgsid, text);
+      // Optimistic message-ni server response bilan almashtirish (to'g'ri timestamp uchun)
+      if (savedMsg?.id) {
+        setMessages(prev => prev.map(m => m.id === tempMsg.id ? { ...m, ...savedMsg } : m));
+      }
       setConversations(prev =>
         prev.map(c => c.id === selected.id
           ? { ...c, lastMessage: text, lastMessageAt: new Date().toISOString(), lastMessageTimestampMs: Date.now().toString() }
