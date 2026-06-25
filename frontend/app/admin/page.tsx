@@ -229,37 +229,55 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="flex-1 h-full overflow-y-auto bg-[#0a0a0a] text-white flex flex-col relative z-0">
-      {/* Header */}
-      <div className="border-b border-white/10 px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
+    <div className="flex h-screen bg-[#0a0a0a] text-white overflow-hidden relative z-0 w-full">
+      
+      {/* Sidebar (Yon menyu) */}
+      <div className="w-64 border-r border-white/10 flex flex-col flex-shrink-0 bg-[#0f0f0f]">
+        {/* Header / Logo */}
+        <div className="px-6 py-5 border-b border-white/10 flex items-center gap-3">
           <Shield size={24} className="text-purple-400" />
-          <span className="text-lg font-bold">Admin Panel</span>
+          <span className="text-lg font-bold tracking-tight">Admin Panel</span>
         </div>
-        <button onClick={load} className="p-2 hover:bg-white/10 rounded-lg transition">
-          <RefreshCw size={16} className={loading ? 'animate-spin text-white/40' : 'text-white/60'} />
-        </button>
-      </div>
-
-      {/* Tabs */}
-      <div className="flex border-b border-white/10 px-4 gap-1 overflow-x-auto">
-        {tabs.map(t => (
-          <button
-            key={t.key}
-            onClick={() => { setTab(t.key); }}
-            className={`flex items-center gap-2 px-4 py-3 text-sm whitespace-nowrap border-b-2 transition ${
-              tab === t.key
-                ? 'border-purple-400 text-white'
-                : 'border-transparent text-white/40 hover:text-white/70'
-            }`}
-          >
-            <t.icon size={14} />
-            {t.label}
+        
+        {/* Tabs as vertical nav */}
+        <div className="flex flex-col p-4 gap-1.5 overflow-y-auto flex-1">
+          {tabs.map(t => (
+            <button
+              key={t.key}
+              onClick={() => { setTab(t.key); }}
+              className={`flex items-center gap-3 px-4 py-3 text-sm rounded-xl transition-all duration-200 ${
+                tab === t.key
+                  ? 'bg-purple-500/20 text-purple-400 font-medium border border-purple-500/30 shadow-[0_0_15px_-3px_rgba(168,85,247,0.15)]'
+                  : 'text-white/40 hover:bg-white/5 hover:text-white/80 border border-transparent'
+              }`}
+            >
+              <t.icon size={16} className={tab === t.key ? 'text-purple-400' : 'text-white/40'} />
+              {t.label}
+            </button>
+          ))}
+        </div>
+        
+        {/* Back to App */}
+        <div className="p-4 border-t border-white/10 mt-auto">
+          <button onClick={() => window.location.href = '/'} className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition-colors text-sm font-medium">
+            <ChevronLeft size={16} />
+            Asosiy dasturga qaytish
           </button>
-        ))}
+        </div>
       </div>
 
-      <div className="p-6">
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col h-full overflow-hidden">
+        {/* Top bar */}
+        <div className="border-b border-white/10 px-6 py-4 flex items-center justify-end bg-[#0a0a0a]">
+          <button onClick={load} className="flex items-center gap-2 px-3 py-1.5 hover:bg-white/10 rounded-lg transition text-sm text-white/60 hover:text-white">
+            <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+            Yangilash
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-6 bg-[#0a0a0a]">
         {loading && (
           <div className="flex justify-center py-16">
             <RefreshCw size={24} className="animate-spin text-white/30" />
@@ -667,6 +685,7 @@ export default function AdminPage() {
           </div>
         )}
       </div>
+    </div>
     </div>
   );
 }
