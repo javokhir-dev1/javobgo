@@ -151,12 +151,7 @@ export default function AdminPage() {
         setEditWarn(String(cfg.warningThresholdPct));
         setEditDmLimit(String(cfg.dmLimit ?? 10));
         setEditCommentLimit(String(cfg.commentLimit ?? 10));
-      } else if (tab === 'requests') {
-        const r = await adminGetRequests(reqPage, 50);
-        setRequests(r);
-      } else if (tab === 'endpoints') {
-        const e = await adminGetEndpoints();
-        setEndpoints(e);
+
       } else if (tab === 'igtokens') {
         const t = await adminGetIgTokens();
         setIgTokens(t);
@@ -524,115 +519,6 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* ── REQUESTS ───────────────────────────────────── */}
-        {!loading && tab === 'requests' && requests && (
-          <div className="space-y-4">
-            <div className="flex justify-end">
-              <a
-                href={adminExportRequests()}
-                download
-                className="flex items-center gap-2 px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-lg text-sm transition"
-              >
-                <Download size={14} /> CSV yuklab olish
-              </a>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-white/40 border-b border-white/10">
-                    <th className="text-left py-2 px-3">Vaqt</th>
-                    <th className="text-left py-2 px-3">Metod</th>
-                    <th className="text-left py-2 px-3">Endpoint</th>
-                    <th className="text-center py-2 px-3">Status</th>
-                    <th className="text-center py-2 px-3">Kechikish</th>
-                    <th className="text-left py-2 px-3">Telegram ID</th>
-                    <th className="text-left py-2 px-3">IG akkaunt</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {requests.data.map((r: any) => (
-                    <tr key={r.id} className="border-b border-white/5 hover:bg-white/5">
-                      <td className="py-1.5 px-3 text-xs text-white/40">
-                        {new Date(r.createdAt).toLocaleTimeString()}
-                      </td>
-                      <td className="py-1.5 px-3">
-                        <span className={`text-xs font-mono px-1.5 py-0.5 rounded ${
-                          r.method === 'GET'    ? 'bg-blue-500/20 text-blue-300'   :
-                          r.method === 'POST'   ? 'bg-green-500/20 text-green-300' :
-                          r.method === 'DELETE' ? 'bg-red-500/20 text-red-300'     :
-                          'bg-yellow-500/20 text-yellow-300'
-                        }`}>{r.method}</span>
-                      </td>
-                      <td className="py-1.5 px-3 text-xs font-mono text-white/70 max-w-xs truncate">{r.endpoint}</td>
-                      <td className="py-1.5 px-3 text-center">
-                        <span className={`text-xs font-bold ${
-                          r.statusCode < 300 ? 'text-green-400' : r.statusCode < 500 ? 'text-yellow-400' : 'text-red-400'
-                        }`}>{r.statusCode}</span>
-                      </td>
-                      <td className="py-1.5 px-3 text-center text-xs text-white/50">{r.durationMs}ms</td>
-                      <td className="py-1.5 px-3 text-xs text-white/40 font-mono">{r.telegram_id || '—'}</td>
-                      <td className="py-1.5 px-3 text-xs text-white/40">{r.instagram_account_id || '—'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <div className="flex items-center justify-between text-sm text-white/50">
-              <span>Jami: {requests.total} ta</span>
-              <div className="flex items-center gap-2">
-                <button onClick={() => setReqPage(p => Math.max(1, p - 1))} disabled={reqPage === 1}
-                  className="p-1 hover:bg-white/10 rounded disabled:opacity-30"><ChevronLeft size={16} /></button>
-                <span>{reqPage} / {requests.totalPages}</span>
-                <button onClick={() => setReqPage(p => Math.min(requests.totalPages, p + 1))} disabled={reqPage >= requests.totalPages}
-                  className="p-1 hover:bg-white/10 rounded disabled:opacity-30"><ChevronRight size={16} /></button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ── ENDPOINTS ──────────────────────────────────── */}
-        {!loading && tab === 'endpoints' && (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-white/40 border-b border-white/10">
-                  <th className="text-left py-2 px-3">Endpoint</th>
-                  <th className="text-center py-2 px-3">So'rovlar (24s)</th>
-                  <th className="text-center py-2 px-3">O'rtacha ms</th>
-                  <th className="text-center py-2 px-3">Xato %</th>
-                  <th className="text-left py-2 px-3">Yuklanish</th>
-                </tr>
-              </thead>
-              <tbody>
-                {endpoints.map((e: any, i: number) => (
-                  <tr key={i} className="border-b border-white/5 hover:bg-white/5">
-                    <td className="py-2 px-3 font-mono text-xs text-white/80">{e.endpoint}</td>
-                    <td className="py-2 px-3 text-center font-medium">{e.count}</td>
-                    <td className="py-2 px-3 text-center text-white/60">
-                      <span className={e.avgMs > 1000 ? 'text-red-400' : e.avgMs > 500 ? 'text-yellow-400' : ''}>
-                        {e.avgMs}ms
-                      </span>
-                    </td>
-                    <td className="py-2 px-3 text-center">
-                      <span className={e.errorRate > 10 ? 'text-red-400' : e.errorRate > 5 ? 'text-yellow-400' : 'text-green-400'}>
-                        {e.errorRate}%
-                      </span>
-                    </td>
-                    <td className="py-2 px-3">
-                      <div className="h-1.5 bg-white/10 rounded-full w-full max-w-24">
-                        <div className="h-full bg-purple-500 rounded-full"
-                          style={{ width: `${Math.min(100, (e.count / (endpoints[0]?.count || 1)) * 100)}%` }} />
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-                {endpoints.length === 0 && (
-                  <tr><td colSpan={5} className="py-8 text-center text-white/30">Ma'lumot yo'q</td></tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        )}
 
         {/* ── IG TOKENS ──────────────────────────────────── */}
         {!loading && tab === 'igtokens' && (
@@ -691,6 +577,7 @@ export default function AdminPage() {
                 </tbody>
               </table>
             </div>
+          </div>
         )}
 
         {/* ── AUTOMATIONS ────────────────────────────────── */}
@@ -791,6 +678,7 @@ export default function AdminPage() {
           </div>
         )}
       </div>
+    </div>
     </div>
   );
 }
