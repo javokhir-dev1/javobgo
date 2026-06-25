@@ -243,6 +243,11 @@ export class WebhookService {
         if (useReplyAi) {
           reply = await this.generateAiReply(auto.replyAgentId!, telegram_id, commenterName, commentText);
           usedAgent = true;
+          // AI muvaffaqiyatsiz bo'lsa → shablon bilan fallback
+          if (!reply) {
+            const tmpl = this.pickRandom(auto.replyTemplates || []);
+            if (tmpl) { reply = tmpl.replace('{name}', commenterName).replace('{comment}', commentText); usedAgent = false; }
+          }
         } else if (keywordMatched) {
           // Kalit so'z mos keldi → shablon
           const tmpl = this.pickRandom(auto.replyTemplates || []);
@@ -281,6 +286,11 @@ export class WebhookService {
         if (useDmAi) {
           dm = await this.generateAiReply(auto.dmAgentId!, telegram_id, commenterName, commentText);
           usedAgent = true;
+          // AI muvaffaqiyatsiz bo'lsa → shablon bilan fallback
+          if (!dm) {
+            const tmpl = this.pickRandom(auto.dmTemplates || []);
+            if (tmpl) { dm = tmpl.replace('{name}', commenterName).replace('{comment}', commentText); usedAgent = false; }
+          }
         } else if (keywordMatched) {
           // Kalit so'z mos keldi → shablon
           const tmpl = this.pickRandom(auto.dmTemplates || []);

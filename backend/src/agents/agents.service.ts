@@ -68,7 +68,7 @@ export class AgentsService {
     const agent = await this.findOne(id, telegram_id);
     const ai = new GoogleGenAI({ apiKey: this.config.get('GEMINI_API_KEY') });
     const response = await ai.models.generateContent({
-      model: 'gemini-3.5-flash',
+      model: 'gemini-2.5-flash',
       config: { systemInstruction: agent.systemPrompt },
       contents: messages.map(m => ({ role: m.role, parts: [{ text: m.text }] })),
     });
@@ -81,7 +81,7 @@ export class AgentsService {
     const history = messages.slice(0, -1).map(m => ({ role: m.role, parts: [{ text: m.text }] }));
     const lastMessage = messages[messages.length - 1].text;
     const chat = ai.chats.create({
-      model: 'gemini-3.5-flash',
+      model: 'gemini-2.5-flash',
       config: { systemInstruction: agent.systemPrompt },
       history,
     });
