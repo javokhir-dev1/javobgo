@@ -238,14 +238,15 @@ export class WebhookService {
         let reply: string | null = null;
         let usedAgent = false;
 
-        if (keywordMatched) {
+        // AI ishlatish: 'any' trigger + agent, YOKI keyword mos kelmadi + agent
+        const useReplyAi = !!auto.replyAgentId && (auto.triggerType === 'any' || !keywordMatched);
+        if (useReplyAi) {
+          reply = await this.generateAiReply(auto.replyAgentId!, telegram_id, commenterName, commentText);
+          usedAgent = true;
+        } else if (keywordMatched) {
           // Kalit so'z mos keldi → shablon
           const tmpl = this.pickRandom(auto.replyTemplates || []);
           if (tmpl) reply = tmpl.replace('{name}', commenterName).replace('{comment}', commentText);
-        } else if (auto.replyAgentId) {
-          // Kalit so'z mos kelmadi, lekin AI agent yoqilgan → AI javob beradi
-          reply = await this.generateAiReply(auto.replyAgentId, telegram_id, commenterName, commentText);
-          usedAgent = true;
         }
 
         if (reply) {
@@ -275,14 +276,15 @@ export class WebhookService {
         let dm: string | null = null;
         let usedAgent = false;
 
-        if (keywordMatched) {
+        // AI ishlatish: 'any' trigger + agent, YOKI keyword mos kelmadi + agent
+        const useDmAi = !!auto.dmAgentId && (auto.triggerType === 'any' || !keywordMatched);
+        if (useDmAi) {
+          dm = await this.generateAiReply(auto.dmAgentId!, telegram_id, commenterName, commentText);
+          usedAgent = true;
+        } else if (keywordMatched) {
           // Kalit so'z mos keldi → shablon
           const tmpl = this.pickRandom(auto.dmTemplates || []);
           if (tmpl) dm = tmpl.replace('{name}', commenterName).replace('{comment}', commentText);
-        } else if (auto.dmAgentId) {
-          // Kalit so'z mos kelmadi → AI agent DM yuboradi
-          dm = await this.generateAiReply(auto.dmAgentId, telegram_id, commenterName, commentText);
-          usedAgent = true;
         }
 
         if (dm) {
