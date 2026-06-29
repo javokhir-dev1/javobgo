@@ -1,12 +1,10 @@
-import { Injectable, UnauthorizedException, ConflictException, Logger } from '@nestjs/common';
+import { Injectable, UnauthorizedException, Logger } from '@nestjs/common';
 import * as crypto from 'crypto';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { UsersService } from '../users/users.service';
 import { TelegramUser } from '../telegram/telegram-user.entity';
 import { AuthToken } from './auth-token.entity';
-import * as bcrypt from 'bcrypt';
 
 const INIT_DATA_MAX_AGE_SEC = 300;
 
@@ -15,36 +13,12 @@ export class AuthService {
   private readonly logger = new Logger(AuthService.name);
 
   constructor(
-    private usersService: UsersService,
     private jwtService: JwtService,
     @InjectRepository(TelegramUser)
     private telegramUserRepo: Repository<TelegramUser>,
     @InjectRepository(AuthToken)
     private tokenRepo: Repository<AuthToken>,
   ) {}
-
-  async validateUser(email: string, pass: string): Promise<any> {
-    const user = await this.usersService.findByEmail(email);
-    if (user && (await bcrypt.compare(pass, user.passwordHash))) {
-      const { passwordHash, ...result } = user;
-      return result;
-    }
-    return null;
-  }
-
-  async login(user: any) {
-    const payload = { email: user.email, sub: user.id };
-    return { access_token: this.jwtService.sign(payload) };
-  }
-
-  async register(name: string, email: string, pass: string) {
-    const existingUser = await this.usersService.findByEmail(email);
-    if (existingUser) throw new ConflictException('Email already in use');
-    const passwordHash = await bcrypt.hash(pass, 10);
-    const newUser = await this.usersService.create({ name, email, passwordHash });
-    const { passwordHash: _, ...result } = newUser;
-    return result;
-  }
 
   async verifyAuthToken(token: string): Promise<{ jwt: string; user: TelegramUser } | null> {
     return this.validateTelegramToken(token);

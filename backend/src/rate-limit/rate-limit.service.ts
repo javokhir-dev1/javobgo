@@ -20,35 +20,42 @@ export class RateLimitService {
     mediaId?: string,
   ): Promise<{ allowed: boolean; reason?: string }> {
     const now = new Date();
-    
+
     const whereClause: any = { userId, type };
     if (mediaId) {
       whereClause.mediaId = mediaId;
     } else if (type === 'comment') {
-      // If no mediaId provided for comment but we need it, we can fallback to IsNull or just query global
       whereClause.mediaId = IsNull();
     }
 
     const record = await this.repo.findOne({ where: whereClause });
+    if (!record) return { allowed: true };
 
-    if (record) {
-      const userResetAt = record.userResetAt ? new Date(record.userResetAt) : null;
-      const isCooldownOver = !userResetAt || now >= userResetAt;
-      if (isCooldownOver) return { allowed: true };
-      if (record.userReplyCount >= perUserLimit) {
-        const remainingMin = Math.ceil((userResetAt.getTime() - now.getTime()) / 60000);
-        const remainingHr = (remainingMin / 60).toFixed(1);
-        return {
-          allowed: false,
-          reason: `@${userId} ${perUserLimit} ta javob oldi, ${remainingHr} soatdan keyin davom etadi`,
-        };
-      }
+    const userResetAt = record.userResetAt ? new Date(record.userResetAt) : null;
+    const isCooldownOver = !userResetAt || now >= userResetAt;
+
+    // Cooldown tugagan bo'lsa — sanog'i ahamiyatsiz, qayta boshlash mumkin
+    if (isCooldownOver) return { allowed: true };
+
+    // Cooldown hali davom etmoqda — limitni tekshirish
+    if (record.userReplyCount >= perUserLimit) {
+      const remainingMin = Math.ceil((userResetAt.getTime() - now.getTime()) / 60000);
+      const remainingHr = (remainingMin / 60).toFixed(1);
+      return {
+        allowed: false,
+        reason: `@${userId} ${perUserLimit} ta javob oldi, ${remainingHr} soatdan keyin davom etadi`,
+      };
     }
 
     return { allowed: true };
   }
 
-  async recordReply(userId: string, type: RateLimitType, cooldownHours = 24, mediaId?: string): Promise<void> {
+  async recordReply(
+    userId: string,
+    type: RateLimitType,
+    cooldownHours = 24,
+    mediaId?: string,
+  ): Promise<void> {
     const now = new Date();
     const userResetAt = new Date(now.getTime() + cooldownHours * 3_600_000);
 
@@ -63,7 +70,7 @@ export class RateLimitService {
 
     if (!record) {
       record = this.repo.create({
-        userId, type, mediaId,
+        userId, type, mediaId: mediaId ?? null,
         lastSentAt: now,
         userReplyCount: 1,
         userResetAt,
@@ -73,12 +80,14 @@ export class RateLimitService {
     } else {
       const isCooldownOver = !record.userResetAt || now >= new Date(record.userResetAt);
       if (isCooldownOver) {
+        // Cooldown tugagan — sanoqni qayta boshlash
         record.userReplyCount = 1;
         record.userResetAt = userResetAt;
       } else {
         record.userReplyCount += 1;
       }
       record.lastSentAt = now;
+      record.dailyCount = (record.dailyCount ?? 0) + 1;
     }
 
     await this.repo.save(record);

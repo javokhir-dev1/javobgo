@@ -116,7 +116,7 @@ export class WebhookService {
     // Echo yoki bot o'z xabarlariga autoreply qilmasin
     if (isEcho || senderId === botAccountId) return;
 
-    const s = await this.settings.get();
+    const s = await this.settings.get(botAccountId);
     if (!s.dmAutoReplyEnabled) return;
 
     // Soatlik javoblar limitini tekshirish
@@ -321,6 +321,7 @@ export class WebhookService {
       if (repliedOrDmed && mediaId && commenterId) {
         await this.rateLimit.recordReply(commenterId, 'comment', 24, mediaId);
       }
+
     }
   }
 }

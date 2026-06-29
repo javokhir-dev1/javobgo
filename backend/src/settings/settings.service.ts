@@ -11,18 +11,18 @@ export class SettingsService {
     private repo: Repository<Settings>,
   ) {}
 
-  async get(): Promise<Settings> {
-    let settings = await this.repo.findOne({ where: { id: 1 } });
+  async get(instagram_account_id: string): Promise<Settings> {
+    let settings = await this.repo.findOne({ where: { instagram_account_id } });
     if (!settings) {
-      settings = this.repo.create({ id: 1 });
+      settings = this.repo.create({ instagram_account_id });
       await this.repo.save(settings);
     }
     return settings;
   }
 
-  async update(dto: UpdateSettingsDto): Promise<Settings> {
-    await this.get(); // ensure row exists
-    await this.repo.update(1, dto as any);
-    return this.get();
+  async update(instagram_account_id: string, dto: UpdateSettingsDto): Promise<Settings> {
+    await this.get(instagram_account_id); // ensure row exists
+    await this.repo.update({ instagram_account_id }, dto as any);
+    return this.get(instagram_account_id);
   }
 }

@@ -1,9 +1,13 @@
-import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, Index } from 'typeorm';
 
 @Entity('settings')
 export class Settings {
   @PrimaryGeneratedColumn()
   id: number;
+
+  @Index()
+  @Column({ unique: true })
+  instagram_account_id: string;
 
   @Column({ default: false })
   dmAutoReplyEnabled: boolean;

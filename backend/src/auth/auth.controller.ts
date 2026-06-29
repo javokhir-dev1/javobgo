@@ -14,7 +14,6 @@ import {
   ForbiddenException,
   UseInterceptors,
   BadRequestException,
-  HttpException,
   Logger,
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
@@ -88,27 +87,6 @@ export class AuthController {
     private authService: AuthService,
     private configService: ConfigService,
   ) {}
-
-  @Post('register')
-  async register(@Body() body: any, @Req() req: Request) {
-    const ip = req.ip || req.socket?.remoteAddress || 'unknown';
-    if (!checkRateLimit(ip, 3, 60_000)) {
-      throw new HttpException('Juda ko\'p urinishlar. Iltimos 1 daqiqa kuting.', 429);
-    }
-    return this.authService.register(body.name, body.email, body.password);
-  }
-
-  @HttpCode(HttpStatus.OK)
-  @Post('login')
-  async login(@Body() body: any, @Req() req: Request) {
-    const ip = req.ip || req.socket?.remoteAddress || 'unknown';
-    if (!checkRateLimit(ip, 5, 60_000)) {
-      throw new HttpException('Juda ko\'p urinishlar. Iltimos 1 daqiqa kuting.', 429);
-    }
-    const user = await this.authService.validateUser(body.email, body.password);
-    if (!user) throw new UnauthorizedException('Invalid credentials');
-    return this.authService.login(user);
-  }
 
   @UseGuards(InternalSecretGuard)
   @HttpCode(HttpStatus.OK)

@@ -13,6 +13,8 @@ import { AutomationsModule } from './automations/automations.module';
 import { InboxModule } from './inbox/inbox.module';
 import { AuthModule } from './auth/auth.module';
 import { InstagramAccountsModule } from './instagram-accounts/instagram-accounts.module';
+import { AdminModule } from './admin/admin.module';
+import { TasksModule } from './tasks/tasks.module';
 import { InstagramAccount } from './instagram-accounts/instagram-account.entity';
 import { Agent } from './agents/entities/agent.entity';
 import { ChatMessage } from './agents/entities/chat-message.entity';
@@ -27,8 +29,6 @@ import { Conversation } from './inbox/entities/conversation.entity';
 import { InboxMessage } from './inbox/entities/inbox-message.entity';
 import { TelegramUser } from './telegram/telegram-user.entity';
 import { AuthToken } from './auth/auth-token.entity';
-import { User } from './users/user.entity';
-import { AdminModule } from './admin/admin.module';
 import { RequestLog } from './admin/entities/request-log.entity';
 import { ApiQuotaConfig } from './admin/entities/api-quota-config.entity';
 
@@ -48,7 +48,7 @@ import { ApiQuotaConfig } from './admin/entities/api-quota-config.entity';
         entities: [
           Settings, DmMessage, DmCounter, Log, RateLimit, CommentRule,
           Agent, ChatMessage, Automation, Conversation, InboxMessage,
-          TelegramUser, AuthToken, User, InstagramAccount, RequestLog, ApiQuotaConfig,
+          TelegramUser, AuthToken, InstagramAccount, RequestLog, ApiQuotaConfig,
         ],
         synchronize: process.env.NODE_ENV !== 'production',
         dropSchema: false,
@@ -69,6 +69,7 @@ import { ApiQuotaConfig } from './admin/entities/api-quota-config.entity';
     DmMessagesModule,
     LogsModule,
     AdminModule,
+    TasksModule,
   ],
 })
 export class AppModule {}

@@ -38,7 +38,11 @@ export class WebhookController {
         this.logger.warn("Webhook: x-hub-signature-256 header yo'q");
         return res.sendStatus(403);
       }
-      const rawBody: Buffer = req.rawBody ?? Buffer.from(JSON.stringify(body));
+      if (!req.rawBody) {
+        this.logger.warn("Webhook: rawBody mavjud emas, so'rov rad etildi");
+        return res.sendStatus(403);
+      }
+      const rawBody: Buffer = req.rawBody;
       const expected = 'sha256=' + crypto.createHmac('sha256', appSecret).update(rawBody).digest('hex');
       const sigBuf      = Buffer.from(sigHeader);
       const expectedBuf = Buffer.from(expected);

@@ -6,13 +6,11 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { CookieAuthGuard } from './cookie-auth.guard';
-import { UsersModule } from '../users/users.module';
 import { TelegramUser } from '../telegram/telegram-user.entity';
 import { AuthToken } from './auth-token.entity';
 
 @Module({
   imports: [
-    UsersModule,
     PassportModule,
     TypeOrmModule.forFeature([TelegramUser, AuthToken]),
     JwtModule.registerAsync({

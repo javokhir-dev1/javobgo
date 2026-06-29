@@ -14,13 +14,17 @@ interface MsgInput {
 
 @Injectable()
 export class AgentsService {
+  private readonly ai: GoogleGenAI;
+
   constructor(
     @InjectRepository(Agent)
     private repo: Repository<Agent>,
     @InjectRepository(ChatMessage)
     private msgRepo: Repository<ChatMessage>,
     private config: ConfigService,
-  ) {}
+  ) {
+    this.ai = new GoogleGenAI({ apiKey: this.config.get('GEMINI_API_KEY') });
+  }
 
   findAll(telegram_id: string, instagram_account_id?: string) {
     const where: any = { telegram_id };
@@ -66,8 +70,7 @@ export class AgentsService {
 
   async chat(id: number, telegram_id: string, messages: MsgInput[]): Promise<string> {
     const agent = await this.findOne(id, telegram_id);
-    const ai = new GoogleGenAI({ apiKey: this.config.get('GEMINI_API_KEY') });
-    const response = await ai.models.generateContent({
+    const response = await this.ai.models.generateContent({
       model: 'gemini-2.5-flash',
       config: { systemInstruction: agent.systemPrompt },
       contents: messages.map(m => ({ role: m.role, parts: [{ text: m.text }] })),
@@ -77,10 +80,9 @@ export class AgentsService {
 
   async *chatStream(id: number, telegram_id: string, messages: MsgInput[]): AsyncGenerator<string> {
     const agent = await this.findOne(id, telegram_id);
-    const ai = new GoogleGenAI({ apiKey: this.config.get('GEMINI_API_KEY') });
     const history = messages.slice(0, -1).map(m => ({ role: m.role, parts: [{ text: m.text }] }));
     const lastMessage = messages[messages.length - 1].text;
-    const chat = ai.chats.create({
+    const chat = this.ai.chats.create({
       model: 'gemini-2.5-flash',
       config: { systemInstruction: agent.systemPrompt },
       history,
