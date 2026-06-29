@@ -14,6 +14,12 @@ export class DmMessage {
   @Column({ type: 'text' })
   text: string;
 
+  @Column({ type: 'varchar', nullable: true, default: null })
+  buttonText: string | null;
+
+  @Column({ type: 'varchar', nullable: true, default: null })
+  buttonUrl: string | null;
+
   @Column({ default: 0 })
   sortOrder: number;
 

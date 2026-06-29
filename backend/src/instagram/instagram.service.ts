@@ -29,6 +29,33 @@ export class InstagramService {
     return res.data;
   }
 
+  async sendDMWithButton(
+    creds: IgCredentials,
+    recipientId: string,
+    text: string,
+    buttonTitle: string,
+    buttonUrl: string,
+  ) {
+    const res = await axios.post(`${BASE_URL}/${creds.accountId}/messages`, {
+      recipient: { id: recipientId },
+      message: {
+        attachment: {
+          type: 'template',
+          payload: {
+            template_type: 'cta_url',
+            payload: {
+              url: buttonUrl,
+              button_title: buttonTitle,
+            },
+            text,
+          },
+        },
+      },
+      access_token: creds.token,
+    });
+    return res.data;
+  }
+
   async getAccountInfo(creds: IgCredentials) {
     const res = await axios.get(`${BASE_URL}/${creds.accountId}`, {
       params: {

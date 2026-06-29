@@ -44,7 +44,6 @@ export class WebhookService {
     retries = 3,
   ): Promise<string | null> {
     const prompt = 'Foydalanuvchi nomi: ' + commenterName + '\nIzoh: ' + commentText;
-
     for (let attempt = 1; attempt <= retries; attempt++) {
       try {
         const reply = await this.agents.chat(agentId, instagram_account_id, [{ role: 'user', text: prompt }]);
@@ -54,7 +53,7 @@ export class WebhookService {
           this.logger.error('AI javob xatosi (agentId=' + agentId + '): ' + err.message);
           return null;
         }
-        this.logger.warn('AI xatosi (agentId=' + agentId + '), urinish ' + attempt + '/' + retries + '. ' + (attempt * 2) + 's kutilmoqda... xato: ' + err.message);
+        this.logger.warn('AI xatosi (agentId=' + agentId + '), urinish ' + attempt + '/' + retries + ': ' + err.message);
         await new Promise(resolve => setTimeout(resolve, attempt * 2000));
       }
     }
@@ -63,7 +62,7 @@ export class WebhookService {
 
   async handleEntry(entry: any) {
     const igAccountId: string = entry.id;
-    this.logger.log('Webhook entry: ' + igAccountId + ' | messaging:' + (entry.messaging?.length ?? 0) + ' changes:' + (entry.changes?.length ?? 0));
+    this.logger.log('Webhook entry: ' + igAccountId);
 
     const account = await this.igAccounts.findByInstagramAccountId(igAccountId);
     if (!account) {
@@ -99,7 +98,6 @@ export class WebhookService {
   ) {
     const senderId = event.sender?.id;
     const isEcho = !!event.message?.is_echo;
-    this.logger.log('DM event: sender=' + senderId + ' echo=' + isEcho + ' text=' + !!event.message?.text);
 
     if (!event.message?.text) return;
     if (!senderId) return;
@@ -117,16 +115,15 @@ export class WebhookService {
 
     const canReply = await this.adminService.checkBotReplyLimit(botAccountId);
     if (!canReply) {
-      this.logger.warn('Soatlik javob limiti tugadi (DM): botAccountId=' + botAccountId);
+      this.logger.warn('Soatlik limit tugadi (DM): ' + botAccountId);
       return;
     }
 
     const adminCfg = await this.adminService.getConfig();
     const dmLimit = adminCfg.dmLimit ?? 10;
-
     const incomingCount = await this.inboxService.getIncomingMessageCount(botAccountId, senderId);
     if (incomingCount > dmLimit) {
-      this.logger.log('Limit: ' + senderId + ' ' + dmLimit + ' tadan ko`p xabar yubordi (' + incomingCount + '), javob berish to`xtatildi.');
+      this.logger.log('DM limit: ' + senderId + ' ' + incomingCount + ' xabar yubordi');
       return;
     }
 
@@ -135,26 +132,34 @@ export class WebhookService {
     const userMessage = event.message.text;
 
     try {
-      let reply: string | null = null;
-
       if (s.dmMode === 'ai' && s.dmAgentId) {
         const convs = await this.inboxService.getConversations(botAccountId);
         const conv  = convs.find(c => c.participantIgsid === senderId);
         const senderName = conv?.participantUsername || senderId;
-        reply = await this.generateAiReply(s.dmAgentId, botAccountId, senderName, userMessage);
+        const reply = await this.generateAiReply(s.dmAgentId, botAccountId, senderName, userMessage);
+        if (!reply) return;
+        await this.inboxService.sendMessage(creds, senderId, reply);
+        await this.logs.create({
+          telegram_id, instagram_account_id: botAccountId,
+          type: 'success', action: 'DM Avtoreply (AI)',
+          message: reply.substring(0, 100), user: senderId,
+          userMessage: userMessage.substring(0, 200),
+        });
       } else {
-        reply = await this.dmMessages.getNextMessage(telegram_id, botAccountId);
+        const msgData = await this.dmMessages.getNextMessageData(telegram_id, botAccountId);
+        if (!msgData) return;
+        if (msgData.buttonText && msgData.buttonUrl) {
+          await this.instagram.sendDMWithButton(creds, senderId, msgData.text, msgData.buttonText, msgData.buttonUrl);
+        } else {
+          await this.inboxService.sendMessage(creds, senderId, msgData.text);
+        }
+        await this.logs.create({
+          telegram_id, instagram_account_id: botAccountId,
+          type: 'success', action: 'DM Avtoreply',
+          message: msgData.text.substring(0, 100), user: senderId,
+          userMessage: userMessage.substring(0, 200),
+        });
       }
-
-      if (!reply) return;
-
-      await this.inboxService.sendMessage(creds, senderId, reply);
-      await this.logs.create({
-        telegram_id, instagram_account_id: botAccountId,
-        type: 'success', action: 'DM Avtoreply',
-        message: reply.substring(0, 100), user: senderId,
-        userMessage: userMessage.substring(0, 200),
-      });
     } catch (err) {
       await this.logs.create({
         telegram_id, instagram_account_id: botAccountId,
@@ -186,7 +191,7 @@ export class WebhookService {
 
     const canReply = await this.adminService.checkBotReplyLimit(botAccountId);
     if (!canReply) {
-      this.logger.warn('Soatlik javob limiti tugadi (Komment): botAccountId=' + botAccountId);
+      this.logger.warn('Soatlik limit tugadi (Komment): ' + botAccountId);
       return;
     }
 
@@ -212,7 +217,7 @@ export class WebhookService {
       if (mediaId && commenterId) {
         const limitCheck = await this.rateLimit.canReply(commenterId, 'comment', 24, commentLimit, mediaId);
         if (!limitCheck.allowed) {
-          this.logger.log('Limit: @' + commenterName + ' media (' + mediaId + ') uchun ' + commentLimit + ' ta koment yozdi. Javob to`xtatildi.');
+          this.logger.log('Komment limit: @' + commenterName);
           continue;
         }
       }
@@ -256,7 +261,6 @@ export class WebhookService {
               telegram_id, instagram_account_id: botAccountId,
               type: 'error', action: 'Komment Javob',
               message: err.message, user: commenterName,
-              userMessage: commentText?.substring(0, 200),
             });
           }
         }
@@ -300,7 +304,7 @@ export class WebhookService {
         }
       }
 
-      if (repliedOrDmed && mediaId && commenterId) {
+      if (repliedOrDmed && commenterId) {
         await this.rateLimit.recordReply(commenterId, 'comment', 24, mediaId);
       }
     }

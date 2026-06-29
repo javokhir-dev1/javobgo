@@ -33,8 +33,9 @@ export const disconnectInstagramAccount = (igId: string) => api.delete(`/api/ins
 export const getInstagramPosts  = () => api.get('/api/instagram/posts').then(r => r.data);
 
 // DM Messages
+export interface DmMessageItem { text: string; buttonText?: string | null; buttonUrl?: string | null; }
 export const getDmMessages = () => api.get('/api/dm-messages').then(r => r.data);
-export const updateDmMessages = (messages: string[]) =>
+export const updateDmMessages = (messages: DmMessageItem[]) =>
   api.put('/api/dm-messages', { messages }).then(r => r.data);
 
 // Logs

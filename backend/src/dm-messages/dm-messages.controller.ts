@@ -26,7 +26,11 @@ export class DmMessagesController {
     const counter = await this.service.getCounter(tid, igId);
     return {
       success: true,
-      messages: messages.map((m) => m.text),
+      messages: messages.map((m) => ({
+        text: m.text,
+        buttonText: m.buttonText ?? null,
+        buttonUrl: m.buttonUrl ?? null,
+      })),
       currentIndex: counter.currentIndex,
     };
   }

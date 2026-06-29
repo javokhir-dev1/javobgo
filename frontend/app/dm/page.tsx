@@ -1,14 +1,14 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { Save, Plus, Trash2 } from 'lucide-react';
+import { Save, Plus, Trash2, Link2, X } from 'lucide-react';
 import Topbar from '@/components/Topbar';
 import Toggle from '@/components/Toggle';
 import Alert from '@/components/Alert';
-import { getSettings, updateSettings, getDmMessages, updateDmMessages } from '@/lib/api';
+import { getSettings, updateSettings, getDmMessages, updateDmMessages, DmMessageItem } from '@/lib/api';
 
 export default function DmPage() {
   const [dmAutoReplyEnabled, setDmAutoReplyEnabled] = useState(false);
-  const [messages, setMessages]   = useState<string[]>([]);
+  const [messages, setMessages] = useState<DmMessageItem[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [alert, setAlert] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
   const [saving, setSaving] = useState(false);
@@ -18,7 +18,7 @@ export default function DmPage() {
       setDmAutoReplyEnabled(d.settings.dmAutoReplyEnabled ?? false);
     });
     getDmMessages().then(d => {
-      setMessages(d.messages);
+      setMessages(d.messages.length ? d.messages : [{ text: '' }]);
       setCurrentIndex(d.currentIndex);
     });
   }, []);
@@ -38,8 +38,14 @@ export default function DmPage() {
   };
 
   const saveDmMessages = async () => {
-    const filtered = messages.filter(m => m.trim());
+    const filtered = messages.filter(m => m.text.trim());
     if (filtered.length === 0) return showAlert('error', 'Kamida 1 ta xabar kerak');
+    // Validate: if buttonText or buttonUrl provided, both must be present
+    for (const m of filtered) {
+      if ((m.buttonText && !m.buttonUrl) || (!m.buttonText && m.buttonUrl)) {
+        return showAlert('error', 'Tugma matni va URL ikkalasi ham to\'ldirilishi kerak');
+      }
+    }
     setSaving(true);
     try {
       await updateDmMessages(filtered);
@@ -50,9 +56,27 @@ export default function DmPage() {
     finally { setSaving(false); }
   };
 
-  const updateMsg = (i: number, val: string) => { const c = [...messages]; c[i] = val; setMessages(c); };
-  const removeMsg = (i: number) => { if (messages.length <= 1) return showAlert('error', 'Kamida 1 ta xabar'); setMessages(messages.filter((_, idx) => idx !== i)); };
-  const addMsg    = () => setMessages([...messages, '']);
+  const updateMsg = (i: number, field: keyof DmMessageItem, val: string) => {
+    const c = [...messages];
+    c[i] = { ...c[i], [field]: val };
+    setMessages(c);
+  };
+
+  const toggleButton = (i: number) => {
+    const c = [...messages];
+    if (c[i].buttonText !== undefined) {
+      c[i] = { ...c[i], buttonText: undefined, buttonUrl: undefined };
+    } else {
+      c[i] = { ...c[i], buttonText: '', buttonUrl: '' };
+    }
+    setMessages(c);
+  };
+
+  const removeMsg = (i: number) => {
+    if (messages.length <= 1) return showAlert('error', 'Kamida 1 ta xabar');
+    setMessages(messages.filter((_, idx) => idx !== i));
+  };
+  const addMsg = () => setMessages([...messages, { text: '' }]);
 
   return (
     <>
@@ -86,24 +110,60 @@ export default function DmPage() {
           </div>
           <p className="text-xs text-gray-400 mb-5">Har bir yangi DM ga navbat bilan yuboriladi.</p>
 
-          <div className="space-y-2.5">
+          <div className="space-y-3">
             {messages.map((msg, i) => (
-              <div key={i} className={`flex gap-2.5 items-start border-[1.5px] rounded-xl px-3 py-2.5 transition-colors ${
+              <div key={i} className={`border-[1.5px] rounded-xl transition-colors ${
                 i === currentIndex ? 'border-accent bg-accent-light/40' : 'border-gray-100 bg-gray-50'
               }`}>
-                <div className={`w-6 h-6 rounded-lg flex-shrink-0 flex items-center justify-center text-[11px] font-bold mt-0.5 ${
-                  i === currentIndex ? 'bg-accent text-white' : 'bg-accent-light text-accent'
-                }`}>{i + 1}</div>
-                <textarea
-                  rows={2}
-                  value={msg}
-                  onChange={e => updateMsg(i, e.target.value)}
-                  className="flex-1 bg-transparent border-none outline-none text-sm text-gray-800 resize-none leading-relaxed"
-                />
-                <button onClick={() => removeMsg(i)}
-                  className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0">
-                  <Trash2 size={14} />
-                </button>
+                {/* Text row */}
+                <div className="flex gap-2.5 items-start px-3 py-2.5">
+                  <div className={`w-6 h-6 rounded-lg flex-shrink-0 flex items-center justify-center text-[11px] font-bold mt-0.5 ${
+                    i === currentIndex ? 'bg-accent text-white' : 'bg-accent-light text-accent'
+                  }`}>{i + 1}</div>
+                  <textarea
+                    rows={2}
+                    value={msg.text}
+                    onChange={e => updateMsg(i, 'text', e.target.value)}
+                    placeholder="Xabar matni..."
+                    className="flex-1 bg-transparent border-none outline-none text-sm text-gray-800 resize-none leading-relaxed"
+                  />
+                  <div className="flex gap-1 flex-shrink-0">
+                    <button
+                      onClick={() => toggleButton(i)}
+                      title={msg.buttonText !== undefined ? 'Tugmani olib tashlash' : 'URL tugma qo\'shish'}
+                      className={`p-1.5 rounded-lg transition-colors ${
+                        msg.buttonText !== undefined
+                          ? 'text-accent bg-accent-light hover:bg-accent/20'
+                          : 'text-gray-400 hover:text-accent hover:bg-accent-light'
+                      }`}>
+                      <Link2 size={14} />
+                    </button>
+                    <button onClick={() => removeMsg(i)}
+                      className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Button URL fields */}
+                {msg.buttonText !== undefined && (
+                  <div className="border-t border-dashed border-gray-200 mx-3 pt-2.5 pb-2.5 flex gap-2">
+                    <input
+                      type="text"
+                      value={msg.buttonText || ''}
+                      onChange={e => updateMsg(i, 'buttonText', e.target.value)}
+                      placeholder="Tugma matni (mas: Ko'proq)"
+                      className="flex-1 text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 outline-none focus:border-accent bg-white"
+                    />
+                    <input
+                      type="url"
+                      value={msg.buttonUrl || ''}
+                      onChange={e => updateMsg(i, 'buttonUrl', e.target.value)}
+                      placeholder="https://..."
+                      className="flex-1 text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 outline-none focus:border-accent bg-white"
+                    />
+                  </div>
+                )}
               </div>
             ))}
           </div>
