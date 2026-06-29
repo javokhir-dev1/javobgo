@@ -252,6 +252,8 @@ export default function Sidebar() {
       <div className="px-4 py-3 border-t border-outline-variant/20">
         <Link
           href="/privacy-policy"
+          target="_blank"
+          rel="noopener noreferrer"
           className="block text-[10px] text-on-surface-variant/50 hover:text-on-surface-variant transition-colors mb-1"
         >
           Maxfiylik siyosati

@@ -167,7 +167,7 @@ function LoginContent() {
 
         {/* Footer */}
         <div className="absolute bottom-4 left-0 right-0 text-center px-4">
-          <Link href="/privacy-policy" className="text-[11px] text-on-surface-variant/50 hover:text-on-surface-variant transition-colors">
+          <Link href="/privacy-policy" target="_blank" rel="noopener noreferrer" className="text-[11px] text-on-surface-variant/50 hover:text-on-surface-variant transition-colors">
             Maxfiylik siyosati
           </Link>
           <p className="text-[11px] text-on-surface-variant/40 mt-0.5">
