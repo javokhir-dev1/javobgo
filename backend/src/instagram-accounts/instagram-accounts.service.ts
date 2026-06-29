@@ -58,37 +58,19 @@ export class InstagramAccountsService {
     return this.dataSource.transaction(async (manager) => {
       const igRepo = manager.getRepository(InstagramAccount);
 
-      // Bu instagram_account_id boshqa telegram_id ostida bormi?
-      const existingOwner = await igRepo.findOne({ where: { instagram_account_id } });
-
-      if (existingOwner && existingOwner.telegram_id !== telegram_id) {
-        const oldTelegramId = existingOwner.telegram_id;
-        this.logger.log(
-          `Ownership transfer: instagram=${instagram_account_id} ${oldTelegramId} => ${telegram_id}`,
-        );
-
-        // Bogliq barcha jadvallarda telegram_id ni yangilash
-        const tables = ['automations', 'agents', 'comment_rules', 'dm_messages', 'settings'];
-        for (const table of tables) {
-          await manager.query(
-            `UPDATE "${table}" SET telegram_id = $1 WHERE telegram_id = $2 AND instagram_account_id = $3`,
-            [telegram_id, oldTelegramId, instagram_account_id],
-          );
-        }
-
-        // InstagramAccount yozuvini yangi telegram_id ga otkazish
-        await igRepo.update({ id: existingOwner.id }, { telegram_id, ...data, is_active: true });
-        return igRepo.findOne({ where: { id: existingOwner.id } });
-      }
-
-      // Oddiy upsert
+      // Bu telegram_id + instagram_account_id kombinatsiyasi mavjudmi?
       let account = await igRepo.findOne({ where: { telegram_id, instagram_account_id } });
       const existingCount = await igRepo.count({ where: { telegram_id, is_active: true } });
       const isFirst = !account && existingCount === 0;
 
       if (account) {
+        // Mavjud — token va ma'lumotlarni yangilaymiz
         Object.assign(account, data, { is_active: true });
       } else {
+        // Yangi ulanish — boshqa TG akkauntlar ham ushbu IG ga ulangan bo'lishi mumkin (sharing)
+        this.logger.log(
+          `Instagram akkaunt ulandi: instagram=${instagram_account_id} telegram=${telegram_id}`,
+        );
         account = igRepo.create({
           telegram_id,
           instagram_account_id,
