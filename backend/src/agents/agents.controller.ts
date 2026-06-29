@@ -19,11 +19,13 @@ export class AgentsController {
   private igId(req: Request) { return extractActiveIgId(req, this.jwtService, this.igAccounts); }
 
   @Get()
-  async findAll(@Req() req: Request) { return this.service.findAll(this.tid(req), await this.igId(req)); }
+  async findAll(@Req() req: Request) {
+    return this.service.findAll(this.tid(req), await this.igId(req));
+  }
 
   @Get(':id')
-  findOne(@Req() req: Request, @Param('id') id: string) {
-    return this.service.findOne(+id, this.tid(req));
+  async findOne(@Req() req: Request, @Param('id') id: string) {
+    return this.service.findOne(+id, await this.igId(req));
   }
 
   @Post()
@@ -32,22 +34,22 @@ export class AgentsController {
   }
 
   @Patch(':id')
-  update(@Req() req: Request, @Param('id') id: string, @Body() dto: Partial<CreateAgentDto>) {
-    return this.service.update(+id, this.tid(req), dto);
+  async update(@Req() req: Request, @Param('id') id: string, @Body() dto: Partial<CreateAgentDto>) {
+    return this.service.update(+id, await this.igId(req), dto);
   }
 
   @Delete(':id')
-  remove(@Req() req: Request, @Param('id') id: string) {
-    return this.service.remove(+id, this.tid(req));
+  async remove(@Req() req: Request, @Param('id') id: string) {
+    return this.service.remove(+id, await this.igId(req));
   }
 
   @Get(':id/messages')
-  getMessages(@Req() req: Request, @Param('id') id: string) {
-    return this.service.getMessages(+id, this.tid(req));
+  async getMessages(@Req() req: Request, @Param('id') id: string) {
+    return this.service.getMessages(+id, await this.igId(req));
   }
 
   @Post(':id/messages')
-  saveMessage(
+  async saveMessage(
     @Req() req: Request,
     @Param('id') id: string,
     @Body() body: { role: 'user' | 'model'; text: string },
@@ -57,17 +59,17 @@ export class AgentsController {
   }
 
   @Delete(':id/messages')
-  clearMessages(@Req() req: Request, @Param('id') id: string) {
-    return this.service.clearMessages(+id, this.tid(req));
+  async clearMessages(@Req() req: Request, @Param('id') id: string) {
+    return this.service.clearMessages(+id, await this.igId(req));
   }
 
   @Post(':id/chat')
-  chat(
+  async chat(
     @Req() req: Request,
     @Param('id') id: string,
     @Body() body: { messages: { role: 'user' | 'model'; text: string }[] },
   ) {
-    return this.service.chat(+id, this.tid(req), body.messages);
+    return this.service.chat(+id, await this.igId(req), body.messages);
   }
 
   @Post(':id/stream')
@@ -77,19 +79,19 @@ export class AgentsController {
     @Body() body: { messages: { role: 'user' | 'model'; text: string }[] },
     @Res() res: Response,
   ) {
-    const tid = this.tid(req);
+    const igId = await this.igId(req);
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.flushHeaders();
     try {
-      const generator = this.service.chatStream(+id, tid, body.messages);
+      const generator = this.service.chatStream(+id, igId, body.messages);
       for await (const chunk of generator) {
-        res.write(`data: ${JSON.stringify({ text: chunk })}\n\n`);
+        res.write('data: ' + JSON.stringify({ text: chunk }) + '\n\n');
       }
     } catch (err) {
-      res.write(`data: ${JSON.stringify({ error: err.message })}\n\n`);
+      res.write('data: ' + JSON.stringify({ error: err.message }) + '\n\n');
     } finally {
       res.write('data: [DONE]\n\n');
       res.end();

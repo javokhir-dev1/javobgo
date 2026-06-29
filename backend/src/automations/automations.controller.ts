@@ -24,8 +24,8 @@ export class AutomationsController {
   }
 
   @Get(':id')
-  findOne(@Req() req: Request, @Param('id') id: string) {
-    return this.service.findOne(+id, this.tid(req));
+  async findOne(@Req() req: Request, @Param('id') id: string) {
+    return this.service.findOne(+id, await this.igId(req));
   }
 
   @Post()
@@ -34,17 +34,17 @@ export class AutomationsController {
   }
 
   @Patch(':id')
-  update(@Req() req: Request, @Param('id') id: string, @Body() dto: Partial<CreateAutomationDto>) {
-    return this.service.update(+id, this.tid(req), dto);
+  async update(@Req() req: Request, @Param('id') id: string, @Body() dto: Partial<CreateAutomationDto>) {
+    return this.service.update(+id, await this.igId(req), dto);
   }
 
   @Patch(':id/toggle')
-  toggle(@Req() req: Request, @Param('id') id: string) {
-    return this.service.toggle(+id, this.tid(req));
+  async toggle(@Req() req: Request, @Param('id') id: string) {
+    return this.service.toggle(+id, await this.igId(req));
   }
 
   @Delete(':id')
-  remove(@Req() req: Request, @Param('id') id: string) {
-    return this.service.remove(+id, this.tid(req));
+  async remove(@Req() req: Request, @Param('id') id: string) {
+    return this.service.remove(+id, await this.igId(req));
   }
 }

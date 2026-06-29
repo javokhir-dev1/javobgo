@@ -27,13 +27,14 @@ export class AgentsService {
   }
 
   findAll(telegram_id: string, instagram_account_id?: string) {
-    const where: any = { telegram_id };
-    if (instagram_account_id) where.instagram_account_id = instagram_account_id;
-    return this.repo.find({ where, order: { createdAt: 'DESC' } });
+    if (instagram_account_id) {
+      return this.repo.find({ where: { instagram_account_id }, order: { createdAt: 'DESC' } });
+    }
+    return this.repo.find({ where: { telegram_id }, order: { createdAt: 'DESC' } });
   }
 
-  async findOne(id: number, telegram_id: string) {
-    const agent = await this.repo.findOne({ where: { id, telegram_id } });
+  async findOne(id: number, instagram_account_id: string) {
+    const agent = await this.repo.findOne({ where: { id, instagram_account_id } });
     if (!agent) throw new NotFoundException('Agent topilmadi');
     return agent;
   }
@@ -42,19 +43,19 @@ export class AgentsService {
     return this.repo.save(this.repo.create({ ...dto, telegram_id, instagram_account_id: instagram_account_id ?? null }));
   }
 
-  async update(id: number, telegram_id: string, dto: Partial<CreateAgentDto>) {
-    await this.findOne(id, telegram_id);
+  async update(id: number, instagram_account_id: string, dto: Partial<CreateAgentDto>) {
+    await this.findOne(id, instagram_account_id);
     await this.repo.update(id, dto);
-    return this.findOne(id, telegram_id);
+    return this.findOne(id, instagram_account_id);
   }
 
-  async remove(id: number, telegram_id: string) {
-    const agent = await this.findOne(id, telegram_id);
+  async remove(id: number, instagram_account_id: string) {
+    const agent = await this.findOne(id, instagram_account_id);
     return this.repo.remove(agent);
   }
 
-  async getMessages(agentId: number, telegram_id: string) {
-    await this.findOne(agentId, telegram_id);
+  async getMessages(agentId: number, instagram_account_id: string) {
+    await this.findOne(agentId, instagram_account_id);
     return this.msgRepo.find({ where: { agentId }, order: { createdAt: 'ASC' } });
   }
 
@@ -62,14 +63,14 @@ export class AgentsService {
     return this.msgRepo.save(this.msgRepo.create({ agentId, role, text }));
   }
 
-  async clearMessages(agentId: number, telegram_id: string) {
-    await this.findOne(agentId, telegram_id);
+  async clearMessages(agentId: number, instagram_account_id: string) {
+    await this.findOne(agentId, instagram_account_id);
     await this.msgRepo.delete({ agentId });
     return { success: true };
   }
 
-  async chat(id: number, telegram_id: string, messages: MsgInput[]): Promise<string> {
-    const agent = await this.findOne(id, telegram_id);
+  async chat(id: number, instagram_account_id: string, messages: MsgInput[]): Promise<string> {
+    const agent = await this.findOne(id, instagram_account_id);
     const response = await this.ai.models.generateContent({
       model: 'gemini-2.5-flash',
       config: { systemInstruction: agent.systemPrompt },
@@ -78,8 +79,8 @@ export class AgentsService {
     return response.text ?? '';
   }
 
-  async *chatStream(id: number, telegram_id: string, messages: MsgInput[]): AsyncGenerator<string> {
-    const agent = await this.findOne(id, telegram_id);
+  async *chatStream(id: number, instagram_account_id: string, messages: MsgInput[]): AsyncGenerator<string> {
+    const agent = await this.findOne(id, instagram_account_id);
     const history = messages.slice(0, -1).map(m => ({ role: m.role, parts: [{ text: m.text }] }));
     const lastMessage = messages[messages.length - 1].text;
     const chat = this.ai.chats.create({

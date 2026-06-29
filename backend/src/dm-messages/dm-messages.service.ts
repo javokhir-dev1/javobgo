@@ -15,15 +15,18 @@ export class DmMessagesService {
   ) {}
 
   async findAll(telegram_id: string, instagram_account_id?: string): Promise<DmMessage[]> {
-    const where: any = { telegram_id };
-    if (instagram_account_id) where.instagram_account_id = instagram_account_id;
-    return this.messageRepo.find({ where, order: { sortOrder: 'ASC' } });
+    if (instagram_account_id) {
+      return this.messageRepo.find({ where: { instagram_account_id }, order: { sortOrder: 'ASC' } });
+    }
+    return this.messageRepo.find({ where: { telegram_id }, order: { sortOrder: 'ASC' } });
   }
 
   async replaceAll(texts: string[], telegram_id: string, instagram_account_id?: string): Promise<DmMessage[]> {
-    const where: any = { telegram_id };
-    if (instagram_account_id) where.instagram_account_id = instagram_account_id;
-    await this.messageRepo.delete(where);
+    if (instagram_account_id) {
+      await this.messageRepo.delete({ instagram_account_id });
+    } else {
+      await this.messageRepo.delete({ telegram_id });
+    }
     const entities = texts.map((text, i) =>
       this.messageRepo.create({ text, sortOrder: i, telegram_id, instagram_account_id: instagram_account_id ?? null }),
     );
@@ -44,8 +47,7 @@ export class DmMessagesService {
   }
 
   async getCounter(telegram_id: string, instagram_account_id?: string): Promise<DmCounter> {
-    const where: any = { telegram_id };
-    if (instagram_account_id) where.instagram_account_id = instagram_account_id;
+    const where: any = instagram_account_id ? { instagram_account_id } : { telegram_id };
     let counter = await this.counterRepo.findOne({ where });
     if (!counter) {
       counter = this.counterRepo.create({ telegram_id, instagram_account_id: instagram_account_id ?? null, currentIndex: 0 });
@@ -55,8 +57,7 @@ export class DmMessagesService {
   }
 
   private async resetCounter(telegram_id: string, instagram_account_id?: string) {
-    const where: any = { telegram_id };
-    if (instagram_account_id) where.instagram_account_id = instagram_account_id;
+    const where: any = instagram_account_id ? { instagram_account_id } : { telegram_id };
     const counter = await this.counterRepo.findOne({ where });
     if (counter) {
       await this.counterRepo.update(counter.id, { currentIndex: 0 });

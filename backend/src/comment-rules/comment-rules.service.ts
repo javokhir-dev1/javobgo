@@ -12,21 +12,24 @@ export class CommentRulesService {
   ) {}
 
   findAll(telegram_id: string, instagram_account_id?: string): Promise<CommentRule[]> {
-    const where: any = { telegram_id };
-    if (instagram_account_id) where.instagram_account_id = instagram_account_id;
-    return this.repo.find({ where, order: { createdAt: 'DESC' } });
+    if (instagram_account_id) {
+      return this.repo.find({ where: { instagram_account_id }, order: { createdAt: 'DESC' } });
+    }
+    return this.repo.find({ where: { telegram_id }, order: { createdAt: 'DESC' } });
   }
 
   findByPostId(postId: string, telegram_id: string, instagram_account_id?: string): Promise<CommentRule | null> {
-    const where: any = { postId, isActive: true, telegram_id };
-    if (instagram_account_id) where.instagram_account_id = instagram_account_id;
-    return this.repo.findOne({ where });
+    if (instagram_account_id) {
+      return this.repo.findOne({ where: { postId, isActive: true, instagram_account_id } });
+    }
+    return this.repo.findOne({ where: { postId, isActive: true, telegram_id } });
   }
 
   findGlobal(telegram_id: string, instagram_account_id?: string): Promise<CommentRule | null> {
-    const where: any = { postId: '__global__', isActive: true, telegram_id };
-    if (instagram_account_id) where.instagram_account_id = instagram_account_id;
-    return this.repo.findOne({ where });
+    if (instagram_account_id) {
+      return this.repo.findOne({ where: { postId: '__global__', isActive: true, instagram_account_id } });
+    }
+    return this.repo.findOne({ where: { postId: '__global__', isActive: true, telegram_id } });
   }
 
   create(dto: CreateCommentRuleDto, telegram_id: string, instagram_account_id?: string): Promise<CommentRule> {
