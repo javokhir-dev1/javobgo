@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { Bot, Zap, Shield, AlertTriangle, Loader2, Send } from 'lucide-react';
 import { verifyAuthTokenAction } from '../actions/auth';
 import { getSettings } from '@/lib/api';
@@ -162,6 +163,16 @@ function LoginContent() {
           <span style={{ fontFamily: "'Segoe UI', Roboto, Helvetica, Arial, sans-serif", fontSize: '20px', fontWeight: 900, letterSpacing: '-0.5px', lineHeight: 1 }}>
             <span className="text-on-surface">Javob</span><span style={{ color: '#8B5CF6' }}>Go</span>
           </span>
+        </div>
+
+        {/* Footer */}
+        <div className="absolute bottom-4 left-0 right-0 text-center px-4">
+          <Link href="/privacy-policy" className="text-[11px] text-on-surface-variant/50 hover:text-on-surface-variant transition-colors">
+            Maxfiylik siyosati
+          </Link>
+          <p className="text-[11px] text-on-surface-variant/40 mt-0.5">
+            © {new Date().getFullYear()} Barcha huquqlar himoyalangan. Xizmatlar «ZO'R PLAY» MCHJ tomonidan ko'rsatiladi.
+          </p>
         </div>
 
         <div className="w-full max-w-[420px] text-center">
