@@ -247,6 +247,20 @@ export default function Sidebar() {
           </div>
         </Link>
       </div>
+
+      {/* Footer */}
+      <div className="px-4 py-3 border-t border-outline-variant/20">
+        <Link
+          href="/privacy-policy"
+          className="block text-[10px] text-on-surface-variant/50 hover:text-on-surface-variant transition-colors mb-1"
+        >
+          Maxfiylik siyosati
+        </Link>
+        <p className="text-[10px] text-on-surface-variant/40 leading-snug">
+          &copy; {new Date().getFullYear()} Barcha huquqlar himoyalangan.{" "}
+          Xizmatlar &laquo;ZO&apos;R PLAY&raquo; MCHJ tomonidan ko&apos;rsatiladi.
+        </p>
+      </div>
     </aside>
   );
 }
