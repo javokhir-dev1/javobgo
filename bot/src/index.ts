@@ -123,7 +123,7 @@ bot.on('contact', async (ctx: Context) => {
     const token = await createAuthToken(telegramId);
     const loginUrl = `${SITE_URL}/login?token=${token}`;
 
-    await ctx.replyWithMarkdown(
+    const sentMsg = await ctx.replyWithMarkdown(
       `✅ *Ro'yxatdan o'tdingiz!*\n\nPlatformaga kirish uchun quyidagi tugmalardan birini tanlang:`,
       {
         reply_markup: {
@@ -134,6 +134,7 @@ bot.on('contact', async (ctx: Context) => {
         },
       },
     );
+    await setTokenMessageId(token, sentMsg.message_id);
   } catch (err: any) {
     console.error('Contact xatosi:', err.message);
     await ctx.reply("Xatolik yuz berdi. Iltimos qayta urinib ko'ring.", {
