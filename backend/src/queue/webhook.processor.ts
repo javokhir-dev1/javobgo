@@ -1,7 +1,8 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Logger } from '@nestjs/common';
-import { Job, Queue } from 'bullmq';
+import { Job } from 'bullmq';
 import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 import { WebhookService } from '../webhook/webhook.service';
 import { AdminService } from '../admin/admin.service';
 import { WEBHOOK_QUEUE } from './queue.module';
@@ -18,7 +19,7 @@ export class WebhookProcessor extends WorkerHost {
     super();
   }
 
-  async process(job: Job<{ entry: any; attempt?: number }>) {
+  async process(job: Job<{ entry: any }>) {
     const { entry } = job.data;
     const igAccountId: string = entry?.id;
 
@@ -27,7 +28,6 @@ export class WebhookProcessor extends WorkerHost {
       return;
     }
 
-    // Soatlik limit tekshiruvi
     const limitResult = await this.adminService.checkBotReplyLimitWithDelay(igAccountId);
 
     if (!limitResult.allowed) {
@@ -36,7 +36,6 @@ export class WebhookProcessor extends WorkerHost {
       this.logger.warn(
         'Soatlik limit: ' + igAccountId + '. ' + delayMin + ' daqiqadan keyin qayta ishlanadi.'
       );
-      // Limitga yetganda o'chirib yuborish o'rniga navbatga qaytaramiz
       await this.queue.add('process', job.data, {
         delay: delayMs,
         attempts: 3,
