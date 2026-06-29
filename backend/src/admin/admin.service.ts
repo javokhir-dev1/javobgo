@@ -29,7 +29,6 @@ export class AdminService {
     private dataSource: DataSource,
   ) {}
 
-  // ── Konfiguratsiya ──────────────────────────────────────────────
   async getConfig(): Promise<ApiQuotaConfig> {
     let cfg = await this.configRepo.findOne({ where: {} });
     if (!cfg) {
@@ -77,12 +76,10 @@ export class AdminService {
     await this.configRepo.save(cfg);
   }
 
-  /** IG akkaunt uchun maxsus soatlik limit o'rnatish (null = global) */
   async setIgAccountCustomLimit(igAccountId: string, customLimit: number | null): Promise<void> {
     await this.igRepo.update({ instagram_account_id: igAccountId }, { customRateLimit: customLimit });
   }
 
-  // ── Umumiy statistika ──────────────────────────────────────────
   async getOverallStats() {
     const now = new Date();
     const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
@@ -101,7 +98,6 @@ export class AdminService {
       this.botLogRepo.count({ where: { type: 'success' } }),
     ]);
 
-    const avgLatencyMs = 0;
     const errorRate = (totalErrors + totalSuccess) > 0
       ? Math.round((totalErrors / (totalErrors + totalSuccess)) * 100)
       : 0;
@@ -114,7 +110,7 @@ export class AdminService {
       totalRequests,
       requestsLastHour,
       requestsLastDay,
-      avgLatencyMs,
+      avgLatencyMs: 0,
       errorRate,
       maintenanceMode: cfg.maintenanceMode,
       rateLimitConfig: {
@@ -124,7 +120,6 @@ export class AdminService {
     };
   }
 
-  /** So'nggi 24 soat bo'yicha soatlik statistika (Javoblar - Logs) */
   async getHourlyStats(): Promise<{ hour: string; count: number; errors: number; avgMs: number }[]> {
     const rows = await this.dataSource.query(`
       SELECT
@@ -139,7 +134,6 @@ export class AdminService {
       ORDER BY hour_ts ASC
     `);
 
-    // 24 soatlik bo'sh slotlarni to'ldirish
     const map = new Map<string, { count: number; errors: number; avgMs: number }>();
     for (const r of rows) {
       map.set(r.hour_label, { count: r.count, errors: r.errors, avgMs: r.avg_ms || 0 });
@@ -156,7 +150,6 @@ export class AdminService {
     return result;
   }
 
-  // ── Foydalanuvchilar ro'yxati ──────────────────────────────────
   async getUsers(page = 1, limit = 20) {
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
     const users = await this.userRepo.find({
@@ -203,48 +196,39 @@ export class AdminService {
     return { data: enriched, total, page, limit, totalPages: Math.ceil(total / limit) };
   }
 
-  // ── Automations ──────────────────────────────────────────────────
   async getAllAutomations() {
     const automations = await this.automationRepo.find({ order: { createdAt: 'DESC' } });
-    // Join with telegram_user and igRepo manually if needed, or just return basic info
     const enriched = await Promise.all(automations.map(async (auto) => {
-      const ig = auto.instagram_account_id ? await this.igRepo.findOne({ where: { instagram_account_id: auto.instagram_account_id } }) : null;
-      return {
-        ...auto,
-        instagram_username: ig?.instagram_username || null,
-      };
+      const ig = auto.instagram_account_id
+        ? await this.igRepo.findOne({ where: { instagram_account_id: auto.instagram_account_id } })
+        : null;
+      return { ...auto, instagram_username: ig?.instagram_username || null };
     }));
     return enriched;
   }
 
-  // ── Agents ───────────────────────────────────────────────────────
   async getAllAgents() {
     const agents = await this.agentRepo.find({ order: { createdAt: 'DESC' } });
     const enriched = await Promise.all(agents.map(async (agent) => {
-      const ig = agent.instagram_account_id ? await this.igRepo.findOne({ where: { instagram_account_id: agent.instagram_account_id } }) : null;
-      return {
-        ...agent,
-        instagram_username: ig?.instagram_username || null,
-      };
+      const ig = agent.instagram_account_id
+        ? await this.igRepo.findOne({ where: { instagram_account_id: agent.instagram_account_id } })
+        : null;
+      return { ...agent, instagram_username: ig?.instagram_username || null };
     }));
     return enriched;
   }
 
-  // ── Rate limit holati (har bir IG akkaunt bo'yicha) ────────────
   async getRateLimitStatus() {
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
     const cfg = await this.getConfig();
     const blocked: string[] = JSON.parse(cfg.blockedAccounts || '[]');
-
     const igAccounts = await this.igRepo.find({ order: { created_at: 'DESC' } });
 
     const result = await Promise.all(igAccounts.map(async (ig) => {
       const maxPerHour = ig.customRateLimit ?? cfg.maxRequestsPerHour;
-
       const usedLastHour = await this.botLogRepo.count({
         where: { instagram_account_id: ig.instagram_account_id, createdAt: MoreThan(oneHourAgo), type: 'success' },
       });
-
       const firstInWindow = await this.botLogRepo.findOne({
         where: { instagram_account_id: ig.instagram_account_id, createdAt: MoreThan(oneHourAgo), type: 'success' },
         order: { createdAt: 'ASC' },
@@ -252,7 +236,6 @@ export class AdminService {
       const resetAt = firstInWindow
         ? new Date(firstInWindow.createdAt.getTime() + 60 * 60 * 1000)
         : null;
-
       const remaining = Math.max(0, maxPerHour - usedLastHour);
       const usedPct   = Math.round((usedLastHour / maxPerHour) * 100);
       const isBlocked = blocked.includes(ig.instagram_account_id);
@@ -278,14 +261,20 @@ export class AdminService {
     return result.sort((a, b) => b.usedLastHour - a.usedLastHour);
   }
 
-  // ── Bot Javoblari Limiti tekshiruvi (Webhook uchun) ────────────
   async checkBotReplyLimit(igAccountId: string): Promise<boolean> {
+    const result = await this.checkBotReplyLimitWithDelay(igAccountId);
+    return result.allowed;
+  }
+
+  async checkBotReplyLimitWithDelay(
+    igAccountId: string,
+  ): Promise<{ allowed: boolean; delayMs?: number }> {
     const cfg = await this.getConfig();
     const blocked: string[] = JSON.parse(cfg.blockedAccounts || '[]');
-    if (blocked.includes(igAccountId)) return false; // Bloklangan
+    if (blocked.includes(igAccountId)) return { allowed: false, delayMs: 60_000 };
 
     const ig = await this.igRepo.findOne({ where: { instagram_account_id: igAccountId } });
-    if (!ig) return false;
+    if (!ig) return { allowed: false, delayMs: 60_000 };
 
     const maxPerHour = ig.customRateLimit ?? cfg.maxRequestsPerHour;
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
@@ -294,16 +283,27 @@ export class AdminService {
       where: { instagram_account_id: igAccountId, createdAt: MoreThan(oneHourAgo), type: 'success' },
     });
 
-    return usedLastHour < maxPerHour;
+    if (usedLastHour < maxPerHour) return { allowed: true };
+
+    // Eng eski log qachon 1 soatlik oynadan chiqadi - reset vaqti
+    const oldestLog = await this.botLogRepo.findOne({
+      where: { instagram_account_id: igAccountId, createdAt: MoreThan(oneHourAgo), type: 'success' },
+      order: { createdAt: 'ASC' },
+    });
+
+    const resetAt = oldestLog
+      ? new Date(oldestLog.createdAt.getTime() + 60 * 60 * 1000 + 5_000)
+      : new Date(Date.now() + 60_000);
+
+    const delayMs = Math.max(resetAt.getTime() - Date.now(), 10_000);
+    return { allowed: false, delayMs };
   }
 
-  // ── IG Token holati ─────────────────────────────────────────────
   async getIgTokenStatus() {
     const igAccounts = await this.igRepo.find({ order: { created_at: 'DESC' } });
     const now = Date.now();
 
     return igAccounts.map(ig => {
-      // token_expires_at yo'q bo'lsa — updated_at + 60 kun deb hisoblash
       const expiresAt = ig.token_expires_at
         ? new Date(ig.token_expires_at)
         : new Date(ig.updated_at.getTime() + 60 * 24 * 60 * 60 * 1000);
@@ -328,7 +328,6 @@ export class AdminService {
     });
   }
 
-  // ── So'rov loglari ─────────────────────────────────────────────
   async getRequestLogs(page = 1, limit = 50, telegramId?: string, igAccountId?: string) {
     const where: any = {};
     if (telegramId)  where.telegram_id = telegramId;
@@ -344,7 +343,6 @@ export class AdminService {
     return { data, total, page, limit, totalPages: Math.ceil(total / limit) };
   }
 
-  /** CSV eksport uchun barcha loglarni qaytarish (so'nggi 10 000 ta) */
   async exportRequestLogs(telegramId?: string, igAccountId?: string) {
     const where: any = {};
     if (telegramId)  where.telegram_id = telegramId;
@@ -357,7 +355,6 @@ export class AdminService {
     });
   }
 
-  // ── Endpoint statistikasi ──────────────────────────────────────
   async getEndpointStats() {
     const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
     const logs = await this.logRepo.find({
@@ -367,7 +364,7 @@ export class AdminService {
 
     const stats: Record<string, { count: number; totalMs: number; errors: number }> = {};
     for (const log of logs) {
-      const key = `${log.method} ${log.endpoint}`;
+      const key = log.method + ' ' + log.endpoint;
       if (!stats[key]) stats[key] = { count: 0, totalMs: 0, errors: 0 };
       stats[key].count++;
       stats[key].totalMs += log.durationMs;
@@ -385,7 +382,6 @@ export class AdminService {
       .slice(0, 20);
   }
 
-  // ── Foydalanuvchi rolini o'zgartirish ─────────────────────────
   async setUserRole(telegramId: string, role: 'user' | 'admin'): Promise<void> {
     await this.userRepo.update({ telegram_id: telegramId }, { role });
   }

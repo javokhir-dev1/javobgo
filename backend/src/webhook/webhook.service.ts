@@ -38,23 +38,23 @@ export class WebhookService {
 
   private async generateAiReply(
     agentId: number,
-    telegram_id: string,
+    instagram_account_id: string,
     commenterName: string,
     commentText: string,
-    retries = 3
+    retries = 3,
   ): Promise<string | null> {
-    const prompt = `Foydalanuvchi nomi: ${commenterName}\nIzoh: ${commentText}`;
-    
+    const prompt = 'Foydalanuvchi nomi: ' + commenterName + '\nIzoh: ' + commentText;
+
     for (let attempt = 1; attempt <= retries; attempt++) {
       try {
-        const reply = await this.agents.chat(agentId, telegram_id, [{ role: 'user', text: prompt }]);
+        const reply = await this.agents.chat(agentId, instagram_account_id, [{ role: 'user', text: prompt }]);
         return reply?.trim() || null;
       } catch (err) {
         if (attempt === retries) {
-          this.logger.error(`AI javob xatosi (agentId=${agentId}): ${err.message}`);
+          this.logger.error('AI javob xatosi (agentId=' + agentId + '): ' + err.message);
           return null;
         }
-        this.logger.warn(`AI xatosi (agentId=${agentId}), urinish ${attempt}/${retries}. ${attempt * 2}s kutilmoqda... xato: ${err.message}`);
+        this.logger.warn('AI xatosi (agentId=' + agentId + '), urinish ' + attempt + '/' + retries + '. ' + (attempt * 2) + 's kutilmoqda... xato: ' + err.message);
         await new Promise(resolve => setTimeout(resolve, attempt * 2000));
       }
     }
@@ -63,11 +63,11 @@ export class WebhookService {
 
   async handleEntry(entry: any) {
     const igAccountId: string = entry.id;
-    this.logger.log(`📨 Webhook entry: ${igAccountId} | messaging:${entry.messaging?.length ?? 0} changes:${entry.changes?.length ?? 0}`);
+    this.logger.log('Webhook entry: ' + igAccountId + ' | messaging:' + (entry.messaging?.length ?? 0) + ' changes:' + (entry.changes?.length ?? 0));
 
     const account = await this.igAccounts.findByInstagramAccountId(igAccountId);
     if (!account) {
-      this.logger.warn(`Webhook: ${igAccountId} uchun foydalanuvchi topilmadi`);
+      this.logger.warn('Webhook: ' + igAccountId + ' uchun foydalanuvchi topilmadi');
       return;
     }
 
@@ -99,40 +99,34 @@ export class WebhookService {
   ) {
     const senderId = event.sender?.id;
     const isEcho = !!event.message?.is_echo;
-    this.logger.log(`📩 DM event: sender=${senderId} echo=${isEcho} text=${!!event.message?.text}`);
-    this.logger.log(`📦 DM raw: ${JSON.stringify(event, null, 2)}`);
+    this.logger.log('DM event: sender=' + senderId + ' echo=' + isEcho + ' text=' + !!event.message?.text);
 
     if (!event.message?.text) return;
     if (!senderId) return;
 
-    // Inbox ga saqlaymiz (kiruvchi ham, echo ham)
     try {
       await this.inboxService.handleIncomingDM(creds, event);
-      this.logger.log(`✅ Inbox saqlandi: sender=${senderId} echo=${isEcho}`);
     } catch (err) {
-      this.logger.warn(`Inbox saqlash xatosi: ${err.message}`);
+      this.logger.warn('Inbox saqlash xatosi: ' + err.message);
     }
 
-    // Echo yoki bot o'z xabarlariga autoreply qilmasin
     if (isEcho || senderId === botAccountId) return;
 
     const s = await this.settings.get(botAccountId);
     if (!s.dmAutoReplyEnabled) return;
 
-    // Soatlik javoblar limitini tekshirish
     const canReply = await this.adminService.checkBotReplyLimit(botAccountId);
     if (!canReply) {
-      this.logger.warn(`Soatlik javob limiti tugadi (DM): botAccountId=${botAccountId}`);
+      this.logger.warn('Soatlik javob limiti tugadi (DM): botAccountId=' + botAccountId);
       return;
     }
 
     const adminCfg = await this.adminService.getConfig();
     const dmLimit = adminCfg.dmLimit ?? 10;
 
-    // Limit check: agar foydalanuvchi dmLimit tadan ko'p xabar yuborgan bo'lsa, javob bermaymiz
     const incomingCount = await this.inboxService.getIncomingMessageCount(botAccountId, senderId);
     if (incomingCount > dmLimit) {
-      this.logger.log(`Limit: ${senderId} ${dmLimit} tadan ko'p xabar yubordi (${incomingCount}), javob berish to'xtatildi.`);
+      this.logger.log('Limit: ' + senderId + ' ' + dmLimit + ' tadan ko`p xabar yubordi (' + incomingCount + '), javob berish to`xtatildi.');
       return;
     }
 
@@ -147,14 +141,13 @@ export class WebhookService {
         const convs = await this.inboxService.getConversations(botAccountId);
         const conv  = convs.find(c => c.participantIgsid === senderId);
         const senderName = conv?.participantUsername || senderId;
-        reply = await this.generateAiReply(s.dmAgentId, telegram_id, senderName, userMessage);
+        reply = await this.generateAiReply(s.dmAgentId, botAccountId, senderName, userMessage);
       } else {
         reply = await this.dmMessages.getNextMessage(telegram_id, botAccountId);
       }
 
       if (!reply) return;
 
-      // Autoreply yuboramiz va inboxga 'out' sifatida saqlaymiz
       await this.inboxService.sendMessage(creds, senderId, reply);
       await this.logs.create({
         telegram_id, instagram_account_id: botAccountId,
@@ -186,15 +179,14 @@ export class WebhookService {
 
     if (commenterId && commenterId === botAccountId) return;
 
-    this.logger.log(`Yangi komment: @${commenterName}: "${commentText}"`);
+    this.logger.log('Yangi komment: @' + commenterName + ': "' + commentText + '"');
 
     const activeAutomations = await this.automations.findActive(telegram_id, botAccountId);
     if (!activeAutomations.length) return;
 
-    // Soatlik javoblar limitini tekshirish
     const canReply = await this.adminService.checkBotReplyLimit(botAccountId);
     if (!canReply) {
-      this.logger.warn(`Soatlik javob limiti tugadi (Komment): botAccountId=${botAccountId}`);
+      this.logger.warn('Soatlik javob limiti tugadi (Komment): botAccountId=' + botAccountId);
       return;
     }
 
@@ -206,7 +198,6 @@ export class WebhookService {
         if (!mediaId || !auto.postIds.includes(mediaId)) continue;
       }
 
-      // Kalit so'z tekshiruvi
       let keywordMatched = true;
       if (auto.triggerType === 'keyword') {
         const validKw = (auto.keywords || []).filter(k => k?.trim());
@@ -216,13 +207,12 @@ export class WebhookService {
         }
       }
 
-      // Kalit so'z mos kelmadi VA agent ham yo'q → o'tkazib yubor
       if (!keywordMatched && !auto.replyAgentId && !auto.dmAgentId) continue;
 
       if (mediaId && commenterId) {
         const limitCheck = await this.rateLimit.canReply(commenterId, 'comment', 24, commentLimit, mediaId);
         if (!limitCheck.allowed) {
-          this.logger.log(`Limit: @${commenterName} media (${mediaId}) uchun ${commentLimit} ta koment yozdi. Javob to'xtatildi.`);
+          this.logger.log('Limit: @' + commenterName + ' media (' + mediaId + ') uchun ' + commentLimit + ' ta koment yozdi. Javob to`xtatildi.');
           continue;
         }
       }
@@ -233,23 +223,19 @@ export class WebhookService {
 
       let repliedOrDmed = false;
 
-      // Izohga javob
       if (auto.replyEnabled) {
         let reply: string | null = null;
         let usedAgent = false;
 
-        // AI ishlatish: 'any' trigger + agent, YOKI keyword mos kelmadi + agent
         const useReplyAi = !!auto.replyAgentId && (auto.triggerType === 'any' || !keywordMatched);
         if (useReplyAi) {
-          reply = await this.generateAiReply(auto.replyAgentId!, telegram_id, commenterName, commentText);
+          reply = await this.generateAiReply(auto.replyAgentId!, botAccountId, commenterName, commentText);
           usedAgent = true;
-          // AI muvaffaqiyatsiz bo'lsa → shablon bilan fallback
           if (!reply) {
             const tmpl = this.pickRandom(auto.replyTemplates || []);
             if (tmpl) { reply = tmpl.replace('{name}', commenterName).replace('{comment}', commentText); usedAgent = false; }
           }
         } else if (keywordMatched) {
-          // Kalit so'z mos keldi → shablon
           const tmpl = this.pickRandom(auto.replyTemplates || []);
           if (tmpl) reply = tmpl.replace('{name}', commenterName).replace('{comment}', commentText);
         }
@@ -276,23 +262,19 @@ export class WebhookService {
         }
       }
 
-      // DM yuborish
       if (auto.dmEnabled && commenterId) {
         let dm: string | null = null;
         let usedAgent = false;
 
-        // AI ishlatish: 'any' trigger + agent, YOKI keyword mos kelmadi + agent
         const useDmAi = !!auto.dmAgentId && (auto.triggerType === 'any' || !keywordMatched);
         if (useDmAi) {
-          dm = await this.generateAiReply(auto.dmAgentId!, telegram_id, commenterName, commentText);
+          dm = await this.generateAiReply(auto.dmAgentId!, botAccountId, commenterName, commentText);
           usedAgent = true;
-          // AI muvaffaqiyatsiz bo'lsa → shablon bilan fallback
           if (!dm) {
             const tmpl = this.pickRandom(auto.dmTemplates || []);
             if (tmpl) { dm = tmpl.replace('{name}', commenterName).replace('{comment}', commentText); usedAgent = false; }
           }
         } else if (keywordMatched) {
-          // Kalit so'z mos keldi → shablon
           const tmpl = this.pickRandom(auto.dmTemplates || []);
           if (tmpl) dm = tmpl.replace('{name}', commenterName).replace('{comment}', commentText);
         }
@@ -321,7 +303,6 @@ export class WebhookService {
       if (repliedOrDmed && mediaId && commenterId) {
         await this.rateLimit.recordReply(commenterId, 'comment', 24, mediaId);
       }
-
     }
   }
 }

@@ -1,16 +1,18 @@
 import { Controller, Get, Post, Query, Body, Req, Res, HttpCode, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 import type { Request, Response } from 'express';
 import * as crypto from 'crypto';
-import { WebhookService } from './webhook.service';
+import { WEBHOOK_QUEUE } from '../queue/queue.module';
 
 @Controller('webhook')
 export class WebhookController {
   private readonly logger = new Logger(WebhookController.name);
 
   constructor(
-    private readonly webhookService: WebhookService,
     private readonly config: ConfigService,
+    @InjectQueue(WEBHOOK_QUEUE) private readonly webhookQueue: Queue,
   ) {}
 
   @Get()
@@ -30,7 +32,7 @@ export class WebhookController {
 
   @Post()
   @HttpCode(200)
-  receive(@Req() req: Request & { rawBody?: Buffer }, @Body() body: any, @Res() res: Response) {
+  async receive(@Req() req: Request & { rawBody?: Buffer }, @Body() body: any, @Res() res: Response) {
     const appSecret = this.config.get<string>('INSTAGRAM_APP_SECRET');
     if (appSecret) {
       const sigHeader = req.headers['x-hub-signature-256'] as string | undefined;
@@ -55,15 +57,19 @@ export class WebhookController {
       }
     }
 
+    // Darhol 200 qaytaramiz — Meta 5 soniyadan keyin timeout qiladi
     res.sendStatus(200);
 
-    setImmediate(() => {
-      const entries = Array.isArray(body.entry) ? body.entry : [body];
-      for (const entry of entries) {
-        this.webhookService.handleEntry(entry).catch((err) => {
-          this.logger.error(`Webhook event xatosi: ${err.message}`);
-        });
-      }
-    });
+    // Har bir entry ni navbatga qo'yamiz
+    const entries = Array.isArray(body.entry) ? body.entry : [body];
+    for (const entry of entries) {
+      await this.webhookQueue.add('process', { entry }, {
+        attempts: 3,
+        backoff: { type: 'exponential', delay: 3000 },
+        removeOnComplete: { count: 1000 },
+        removeOnFail: { count: 500 },
+      });
+    }
+    this.logger.log('Navbatga qo`shildi: ' + entries.length + ' ta entry');
   }
 }
