@@ -428,7 +428,7 @@ export default function InboxPage() {
                     <Send size={16} />
                   </button>
                 </div>
-                       
+
               </div>
             </div>
           </>
