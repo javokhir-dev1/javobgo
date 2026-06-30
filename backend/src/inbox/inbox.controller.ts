@@ -65,10 +65,10 @@ export class InboxController {
   async sendMessage(
     @Req() req: Request,
     @Param('igsid') igsid: string,
-    @Body() body: { text: string },
+    @Body() body: { text: string; buttons?: { title: string; url: string }[] },
   ) {
     const { creds } = await this.getCreds(req);
-    return this.inbox.sendMessage(creds, igsid, body.text);
+    return this.inbox.sendMessage(creds, igsid, body.text, body.buttons);
   }
 
   @Post('sync')
