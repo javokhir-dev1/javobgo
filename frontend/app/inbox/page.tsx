@@ -2,8 +2,9 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { MessageCircle, Send, Search, X, RefreshCw, Zap, Plus, Trash2 } from 'lucide-react';
-import { getConversations, getInboxMessages, sendInboxMessage, getInboxEventsUrl, syncInbox } from '@/lib/api';
+import { MessageCircle, Send, Search, X, RefreshCw, Zap, Plus, Trash2, MoreVertical, Pencil } from 'lucide-react';
+import { getConversations, getInboxMessages, sendInboxMessage, getInboxEventsUrl, syncInbox, deleteConversation } from '@/lib/api';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useInstagramStatus } from '@/context/InstagramContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { Avatar } from '@/components/ui/Avatar';
@@ -28,6 +29,8 @@ export default function InboxPage() {
   const [buttons, setButtons]             = useState<{ title: string; url: string }[]>([]);
   const [profileModal, setProfileModal]   = useState<Conversation | null>(null);
   const [showMobileDmSettings, setShowMobileDmSettings] = useState(false);
+  const [menuOpen, setMenuOpen] = useState<number | null>(null);
+  const [confirmDeleteConv, setConfirmDeleteConv] = useState<number | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef  = useRef<HTMLTextAreaElement>(null);
 
@@ -219,9 +222,25 @@ export default function InboxPage() {
 
   const totalUnread = conversations.reduce((s, c) => s + (c.unreadCount || 0), 0);
 
+  const handleDeleteConv = async () => {
+    if (!confirmDeleteConv) return;
+    await deleteConversation(confirmDeleteConv).catch(() => {});
+    setConversations(prev => prev.filter(c => c.id !== confirmDeleteConv));
+    if (selected?.id === confirmDeleteConv) setSelected(null);
+    setConfirmDeleteConv(null);
+  };
+
   return (
-    
     <div className="h-full flex overflow-x-hidden bg-surface-container-low">
+      <ConfirmDialog
+        open={!!confirmDeleteConv}
+        title="Suhbatni o'chirish"
+        message="Bu suhbat va uning barcha xabarlari o'chirib yuboriladi."
+        confirmLabel="O'chirish"
+        cancelLabel="Bekor qilish"
+        onConfirm={handleDeleteConv}
+        onCancel={() => setConfirmDeleteConv(null)}
+      />
       {profileModal && (
         <ProfileModal
           igsid={profileModal.participantIgsid}
@@ -285,37 +304,67 @@ export default function InboxPage() {
             filtered.map(conv => {
               const isActive = selected?.id === conv.id;
               return (
-                <button
+                <div
                   key={conv.id}
-                  onClick={() => openConversation(conv)}
-                  className={`w-full flex items-center gap-3 px-3 py-3 transition-colors text-left border-b border-outline-variant/10 ${
+                  className={`relative w-full flex items-center gap-3 px-3 py-3 transition-colors text-left border-b border-outline-variant/10 group ${
                     isActive
                       ? 'bg-primary/8 border-l-2 border-l-primary'
                       : 'hover:bg-surface-container-low border-l-2 border-l-transparent'
                   }`}
                 >
-                  <div className="relative flex-shrink-0" onClick={e => { e.stopPropagation(); setProfileModal(conv); }}>
-                    <Avatar username={conv.participantUsername || conv.participantIgsid} profilePic={conv.participantProfilePic} />
-                    {(conv.unreadCount || 0) > 0 && (
-                      <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-primary text-white text-[10px] font-bold flex items-center justify-center">
-                        {conv.unreadCount > 9 ? '9+' : conv.unreadCount}
-                      </span>
+                  <button className="flex-1 flex items-center gap-3 min-w-0 text-left" onClick={() => openConversation(conv)}>
+                    <div className="relative flex-shrink-0" onClick={e => { e.stopPropagation(); setProfileModal(conv); }}>
+                      <Avatar username={conv.participantUsername || conv.participantIgsid} profilePic={conv.participantProfilePic} />
+                      {(conv.unreadCount || 0) > 0 && (
+                        <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-primary text-white text-[10px] font-bold flex items-center justify-center">
+                          {conv.unreadCount > 9 ? '9+' : conv.unreadCount}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-baseline justify-between gap-1">
+                        <span className={`text-[14px] truncate ${conv.unreadCount ? 'font-semibold text-on-surface' : 'font-medium text-on-surface'}`}>
+                          @{conv.participantUsername || conv.participantIgsid}
+                        </span>
+                        <span className="text-[11px] text-on-surface-variant flex-shrink-0">
+                          {formatTime(conv.lastMessageTimestampMs ? new Date(Number(conv.lastMessageTimestampMs)).toISOString() : conv.lastMessageAt || conv.updatedAt, t)}
+                        </span>
+                      </div>
+                      <p className={`text-[12px] truncate mt-0.5 ${conv.unreadCount ? 'text-on-surface' : 'text-on-surface-variant'}`}>
+                        {conv.lastMessage || t('inbox.chat.noMessageText')}
+                      </p>
+                    </div>
+                  </button>
+
+                  {/* 3-nuqta menyu */}
+                  <div className="relative flex-shrink-0">
+                    <button
+                      onClick={e => { e.stopPropagation(); setMenuOpen(menuOpen === conv.id ? null : conv.id); }}
+                      className="w-7 h-7 rounded-full flex items-center justify-center text-on-surface-variant opacity-0 group-hover:opacity-100 hover:bg-surface-container-high transition-all"
+                    >
+                      <MoreVertical size={15} />
+                    </button>
+                    {menuOpen === conv.id && (
+                      <>
+                        <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(null)} />
+                        <div className="absolute right-0 top-8 z-50 bg-surface-container-lowest border border-outline-variant/30 rounded-xl shadow-xl overflow-hidden w-40">
+                          <button
+                            onClick={e => { e.stopPropagation(); setMenuOpen(null); setProfileModal(conv); }}
+                            className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-on-surface hover:bg-surface-container transition-colors"
+                          >
+                            <Pencil size={14} className="text-on-surface-variant" /> Tahrirlash
+                          </button>
+                          <button
+                            onClick={e => { e.stopPropagation(); setMenuOpen(null); setConfirmDeleteConv(conv.id); }}
+                            className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-error hover:bg-error/8 transition-colors"
+                          >
+                            <Trash2 size={14} /> O'chirish
+                          </button>
+                        </div>
+                      </>
                     )}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-baseline justify-between gap-1">
-                      <span className={`text-[14px] truncate ${conv.unreadCount ? 'font-semibold text-on-surface' : 'font-medium text-on-surface'}`}>
-                        @{conv.participantUsername || conv.participantIgsid}
-                      </span>
-                      <span className="text-[11px] text-on-surface-variant flex-shrink-0">
-                        {formatTime(conv.lastMessageTimestampMs ? new Date(Number(conv.lastMessageTimestampMs)).toISOString() : conv.lastMessageAt || conv.updatedAt, t)}
-                      </span>
-                    </div>
-                    <p className={`text-[12px] truncate mt-0.5 ${conv.unreadCount ? 'text-on-surface' : 'text-on-surface-variant'}`}>
-                      {conv.lastMessage || t('inbox.chat.noMessageText')}
-                    </p>
-                  </div>
-                </button>
+                </div>
               );
             })
           )}

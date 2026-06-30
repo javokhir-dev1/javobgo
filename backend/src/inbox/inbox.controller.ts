@@ -1,5 +1,5 @@
 import {
-  Controller, Get, Post, Param, Body, Req, Sse,
+  Controller, Get, Post, Delete, Param, Body, Req, Sse,
   MessageEvent, HttpCode, UnauthorizedException, NotFoundException,
 } from '@nestjs/common';
 import { Observable, map } from 'rxjs';
@@ -53,6 +53,12 @@ export class InboxController {
   async getConversations(@Req() req: Request) {
     const { ig_account_id } = await this.getCreds(req);
     return this.inbox.getConversations(ig_account_id);
+  }
+
+  @Delete('conversations/:id')
+  async deleteConversation(@Req() req: Request, @Param('id') id: string) {
+    const { ig_account_id } = await this.getCreds(req);
+    return this.inbox.deleteConversation(Number(id), ig_account_id);
   }
 
   @Get('conversations/:id/messages')
