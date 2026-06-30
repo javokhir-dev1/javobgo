@@ -7,6 +7,7 @@ import { getAgents, createAgent, updateAgent, deleteAgent, getAgentDocuments, up
 import { useInstagramStatus } from '@/context/InstagramContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { AgentAvatar } from '@/components/ui/AgentAvatar';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 
 interface Agent {
   id: number;
@@ -61,6 +62,7 @@ export default function AgentsPage() {
   const [editAgent, setEditAgent] = useState<Agent | null>(null);
   const [saving, setSaving]       = useState(false);
   const [form, setForm]           = useState({ name: '', description: '', systemPrompt: '', emoji: 'dicebear:bottts:Felix' });
+  const [confirmDelete, setConfirmDelete] = useState<Agent | null>(null);
   const promptRef                 = useRef<HTMLTextAreaElement>(null);
   const fileInputRef              = useRef<HTMLInputElement>(null);
 
@@ -180,10 +182,15 @@ export default function AgentsPage() {
     }
   };
 
-  const handleDelete = async (id: number, e: React.MouseEvent) => {
+  const handleDelete = (agent: Agent, e: React.MouseEvent) => {
     e.preventDefault();
-    if (!confirm(t('agents.confirmDelete'))) return;
-    await deleteAgent(id);
+    setConfirmDelete(agent);
+  };
+
+  const confirmDoDelete = async () => {
+    if (!confirmDelete) return;
+    await deleteAgent(confirmDelete.id);
+    setConfirmDelete(null);
     load();
   };
 
@@ -192,6 +199,15 @@ export default function AgentsPage() {
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
+      <ConfirmDialog
+        open={!!confirmDelete}
+        title="Agentni o'chirish"
+        message={`"${confirmDelete?.name}" agenti va uning barcha ma'lumotlari o'chirib yuboriladi.`}
+        confirmLabel="O'chirish"
+        cancelLabel="Bekor qilish"
+        onConfirm={confirmDoDelete}
+        onCancel={() => setConfirmDelete(null)}
+      />
       <div className="flex-1 overflow-y-auto p-4 md:p-8">
         <div className="max-w-5xl mx-auto space-y-6">
 
@@ -243,7 +259,7 @@ export default function AgentsPage() {
                         className="p-2 rounded-xl bg-surface hover:bg-surface-variant border border-outline-variant/30 text-on-surface-variant hover:text-primary transition-all shadow-sm">
                         <Pencil size={15} />
                       </button>
-                      <button onClick={e => handleDelete(agent.id, e)}
+                      <button onClick={e => handleDelete(agent, e)}
                         className="p-1.5 rounded-lg text-outline-variant hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors">
                         <Trash2 size={15} />
                       </button>

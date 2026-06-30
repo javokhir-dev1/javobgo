@@ -59,6 +59,11 @@ export class InboxService {
     });
   }
 
+  async deleteConversation(conversationId: number, ig_account_id: string): Promise<{ success: boolean }> {
+    await this.convRepo.delete({ id: conversationId, instagram_account_id: ig_account_id });
+    return { success: true };
+  }
+
   async getMessages(conversationId: number): Promise<InboxMessage[]> {
     await this.convRepo.update({ id: conversationId }, { unreadCount: 0 });
     return this.msgRepo.find({

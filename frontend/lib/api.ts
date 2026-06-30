@@ -123,6 +123,7 @@ export const clearAgentMessages = (id: number) => api.delete(`/api/agents/${id}/
 
 // Inbox
 export const getConversations = () => api.get('/api/inbox/conversations').then(r => r.data);
+export const deleteConversation = (id: number) => api.delete(`/api/inbox/conversations/${id}`).then(r => r.data);
 export const getInboxMessages = (conversationId: number) =>
   api.get(`/api/inbox/conversations/${conversationId}/messages`).then(r => r.data);
 export const sendInboxMessage = (igsid: string, text: string, buttons?: { title: string; url: string }[]) =>
