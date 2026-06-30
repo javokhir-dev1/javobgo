@@ -90,6 +90,7 @@ export class WebhookService {
       accountId: account.instagram_account_id,
     };
 
+    // DM: eski Messenger formatida (entry.messaging[])
     if (entry.messaging?.length) {
       for (const event of entry.messaging) {
         await this.handleIncomingDM(creds, account.instagram_account_id, telegram_id, event);
@@ -99,6 +100,16 @@ export class WebhookService {
       for (const change of entry.changes) {
         if (change.field === 'comments') {
           await this.handleComment(creds, account.instagram_account_id, telegram_id, change.value);
+        }
+        // DM: yangi changes formatida (entry.changes[].field === 'messages')
+        if (change.field === 'messages' && change.value) {
+          const v = change.value;
+          const event = {
+            sender:    { id: v.sender?.id ?? v.from?.id },
+            recipient: { id: v.recipient?.id },
+            message:   { text: v.message?.text ?? v.text, is_echo: v.message?.is_echo },
+          };
+          await this.handleIncomingDM(creds, account.instagram_account_id, telegram_id, event);
         }
       }
     }
