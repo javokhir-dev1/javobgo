@@ -136,6 +136,7 @@ export default function AutomationDetailPage() {
     setSaving(true);
     try {
       await updateAutomation(form.id, form);
+      setAuto({ ...form });
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } finally {
