@@ -42,12 +42,15 @@ export class InstagramService {
         attachment: {
           type: 'template',
           payload: {
-            template_type: 'cta_url',
-            payload: {
-              url: buttonUrl,
-              button_title: buttonTitle,
-            },
+            template_type: 'button',
             text,
+            buttons: [
+              {
+                type: 'web_url',
+                url: buttonUrl,
+                title: buttonTitle,
+              },
+            ],
           },
         },
       },
