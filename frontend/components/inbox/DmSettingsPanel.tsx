@@ -50,7 +50,8 @@ export function DmSettingsPanel({ width, onClose }: Props) {
   } | null>(null);
 
   useEffect(() => {
-    Promise.all([getSettings(), getDmMessages(), getAgents()]).then(([s, msgs, ags]) => {
+    Promise.all([getSettings(), getDmMessages(), getAgents()]).then(([res, msgs, ags]) => {
+      const s = res?.settings ?? res;
       const en  = s.dmAutoReplyEnabled ?? false;
       const aid = s.dmMode === 'ai' ? (s.dmAgentId ?? null) : null;
       const raw: DmMessageItem[] = Array.isArray(msgs?.messages) && msgs.messages.length
