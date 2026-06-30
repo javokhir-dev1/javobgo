@@ -360,6 +360,48 @@ export function AutomationForm({
                         </div>
                       )}
                     </div>
+
+                    {/* URL Tugmalar */}
+                    <div className="pt-2 border-t border-outline-variant/20 mt-2">
+                      <p className="text-xs font-medium text-on-surface mb-1">🔗 URL Tugmalar <span className="text-on-surface-variant font-normal">(barcha javoblar tagida)</span></p>
+                      <p className="text-xs text-on-surface-variant mb-2">Shablon va agent javoblari yuborilgandan so'ng, quyidagi tugmalar ham DM ga qo'shilib yuboriladi.</p>
+                      {(form.dmButtons || []).map((btn, i) => (
+                        <div key={i} className="flex gap-2 mb-2">
+                          <input
+                            value={btn.title}
+                            onChange={e => {
+                              const arr = [...(form.dmButtons || [])];
+                              arr[i] = { ...arr[i], title: e.target.value };
+                              up({ dmButtons: arr });
+                            }}
+                            placeholder="Tugma nomi"
+                            className="w-28 px-2 py-1.5 rounded-lg bg-surface-variant text-on-surface text-xs outline-none focus:ring-2 ring-primary/40"
+                          />
+                          <input
+                            value={btn.url}
+                            onChange={e => {
+                              const arr = [...(form.dmButtons || [])];
+                              arr[i] = { ...arr[i], url: e.target.value };
+                              up({ dmButtons: arr });
+                            }}
+                            placeholder="https://..."
+                            className="flex-1 px-2 py-1.5 rounded-lg bg-surface-variant text-on-surface text-xs outline-none focus:ring-2 ring-primary/40"
+                          />
+                          <button
+                            onClick={() => up({ dmButtons: (form.dmButtons || []).filter((_, j) => j !== i) })}
+                            className="text-on-surface-variant hover:text-error p-1"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      ))}
+                      <button
+                        onClick={() => up({ dmButtons: [...(form.dmButtons || []), { title: '', url: '' }] })}
+                        className="flex items-center gap-1 text-xs text-primary hover:underline"
+                      >
+                        <Plus size={12} /> Tugma qo'shish
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>

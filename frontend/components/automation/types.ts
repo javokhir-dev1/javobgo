@@ -1,3 +1,8 @@
+export interface DmButton {
+  title: string;
+  url: string;
+}
+
 export interface Automation {
   id: number;
   name: string;
@@ -7,6 +12,7 @@ export interface Automation {
   replyTemplates: string[];
   dmEnabled: boolean;
   dmTemplates: string[];
+  dmButtons: DmButton[];
   postScope: 'all' | 'specific';
   postIds: string[];
   postData: { id: string; caption?: string; thumbnail?: string }[];
@@ -22,6 +28,7 @@ export interface FormState {
   replyTemplates: string[];
   dmEnabled: boolean;
   dmTemplates: string[];
+  dmButtons: DmButton[];
   postScope: 'all' | 'specific';
   postIds: string[];
   postData: { id: string; caption?: string; thumbnail?: string }[];
@@ -37,6 +44,7 @@ export const EMPTY_FORM: FormState = {
   replyTemplates: [''],
   dmEnabled: false,
   dmTemplates: [''],
+  dmButtons: [],
   postScope: 'all',
   postIds: [],
   postData: [],
