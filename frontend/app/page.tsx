@@ -60,19 +60,19 @@ export default function DashboardPage() {
       label: t('dashboard.statComments'),
       value: stats?.commentReplies ?? null,
       icon: MessageSquare,
-      iconBg: 'bg-[#ebebfc] text-[#7C3AED]',
+      iconBg: 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300',
     },
     {
       label: t('dashboard.statDMs'),
       value: stats?.dmUsers ?? null,
       icon: Mail,
-      iconBg: 'bg-[#f3ebfc] text-[#8B5CF6]',
+      iconBg: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
     },
     {
       label: t('dashboard.statActiveRules'),
       value: activeRules,
       icon: Zap,
-      iconBg: 'bg-amber-50 text-amber-600 dark:bg-amber-950/20 dark:text-amber-400',
+      iconBg: 'bg-amber-100 text-amber-600 dark:bg-amber-950/30 dark:text-amber-400',
     },
   ];
 
@@ -175,7 +175,7 @@ export default function DashboardPage() {
                 {quickActions.map(({ href, icon: Icon, label, desc }) => (
                   <Link key={href} href={href}
                     className="flex items-center gap-3 p-3.5 sm:p-3 rounded-xl active:bg-surface-container hover:bg-surface-container-low transition-colors group">
-                    <div className="w-10 h-10 sm:w-9 sm:h-9 shrink-0 rounded-lg bg-primary-fixed flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors duration-200">
+                    <div className="w-10 h-10 sm:w-9 sm:h-9 shrink-0 rounded-lg bg-primary-fixed flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-on-primary transition-colors duration-200">
                       <Icon size={18} strokeWidth={2} />
                     </div>
                     <div className="flex-1 min-w-0">
