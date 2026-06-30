@@ -56,6 +56,34 @@ export class InstagramService {
     return res.data;
   }
 
+  async sendDMButtons(
+    creds: IgCredentials,
+    recipientId: string,
+    buttons: { title: string; url: string }[],
+  ) {
+    const res = await axios.post(`${BASE_URL}/${creds.accountId}/messages`, {
+      recipient: { id: recipientId },
+      message: {
+        attachment: {
+          type: 'template',
+          payload: {
+            template_type: 'generic',
+            elements: [{
+              title: 'Havolalar',
+              buttons: buttons.slice(0, 3).map(b => ({
+                type: 'web_url',
+                url: b.url,
+                title: b.title,
+              })),
+            }],
+          },
+        },
+      },
+      access_token: creds.token,
+    });
+    return res.data;
+  }
+
   async getAccountInfo(creds: IgCredentials) {
     const res = await axios.get(`${BASE_URL}/${creds.accountId}`, {
       params: {

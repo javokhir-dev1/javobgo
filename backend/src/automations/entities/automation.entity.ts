@@ -56,6 +56,10 @@ export class Automation {
   @Column({ nullable: true, default: null })
   dmAgentId: number | null;
 
+  // DM global tugmalar (barcha shablonlar va agent javoblari tagida)
+  @Column({ type: 'simple-json', default: '[]' })
+  dmButtons: { title: string; url: string }[];
+
   @CreateDateColumn()
   createdAt: Date;
 }

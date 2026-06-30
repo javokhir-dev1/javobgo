@@ -281,7 +281,7 @@ export class WebhookService {
       }
 
       if (auto.dmEnabled && commenterId) {
-        let dmItem: DmItem | null = null;
+        let dmText: string | null = null;
         let usedAgent = false;
 
         const useDmAi = !!auto.dmAgentId && (auto.triggerType === 'any' || !keywordMatched);
@@ -289,43 +289,30 @@ export class WebhookService {
           const aiText = await this.generateAiReply(auto.dmAgentId!, botAccountId, commenterName, commentText);
           usedAgent = !!aiText;
           if (aiText) {
-            dmItem = { text: aiText };
+            dmText = aiText;
           } else {
             const tmpl = this.pickRandomDmItem(auto.dmTemplates || []);
-            if (tmpl) {
-              dmItem = {
-                text: tmpl.text.replace('{name}', commenterName).replace('{comment}', commentText),
-                buttonText: tmpl.buttonText,
-                buttonUrl: tmpl.buttonUrl,
-              };
-            }
+            if (tmpl) dmText = tmpl.text.replace('{name}', commenterName).replace('{comment}', commentText);
           }
         } else if (keywordMatched) {
           const tmpl = this.pickRandomDmItem(auto.dmTemplates || []);
-          if (tmpl) {
-            dmItem = {
-              text: tmpl.text.replace('{name}', commenterName).replace('{comment}', commentText),
-              buttonText: tmpl.buttonText,
-              buttonUrl: tmpl.buttonUrl,
-            };
-          }
+          if (tmpl) dmText = tmpl.text.replace('{name}', commenterName).replace('{comment}', commentText);
         }
 
-        if (dmItem) {
+        if (dmText) {
           try {
-            if (dmItem.buttonText && dmItem.buttonUrl) {
-              await this.instagram.sendDMWithButton(
-                creds, commenterId, dmItem.text, dmItem.buttonText, dmItem.buttonUrl
-              );
-            } else {
-              await this.instagram.sendDM(creds, commenterId, dmItem.text);
+            await this.instagram.sendDM(creds, commenterId, dmText);
+            // Global DM tugmalar (barcha javoblar tagida)
+            const dmButtons = (auto as any).dmButtons as { title: string; url: string }[] | undefined;
+            if (dmButtons?.length) {
+              await this.instagram.sendDMButtons(creds, commenterId, dmButtons);
             }
             repliedOrDmed = true;
             await this.logs.create({
               telegram_id, instagram_account_id: botAccountId,
               type: 'success',
               action: usedAgent ? 'AI Kommentdan DM' : 'Kommentdan DM',
-              message: dmItem.text.substring(0, 100), user: commenterName,
+              message: dmText.substring(0, 100), user: commenterName,
               userMessage: commentText?.substring(0, 200),
             });
           } catch (err) {
