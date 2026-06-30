@@ -163,10 +163,12 @@ export class WebhookService {
 
     try {
       if (s.dmMode === 'ai' && s.dmAgentId) {
+        this.logger.log(`[DM Debug] AI rejim: agentId=${s.dmAgentId}`);
         const convs = await this.inboxService.getConversations(botAccountId);
         const conv  = convs.find(c => c.participantIgsid === senderId);
         const senderName = conv?.participantUsername || senderId;
         const reply = await this.generateAiReply(s.dmAgentId, botAccountId, senderName, userMessage);
+        this.logger.log(`[DM Debug] AI reply: ${reply ? reply.substring(0, 50) : 'NULL'}`);
         if (!reply) return;
         if (firstGlobalBtn) {
           await this.instagram.sendDMWithButton(creds, senderId, reply, firstGlobalBtn.title, firstGlobalBtn.url);
@@ -180,7 +182,9 @@ export class WebhookService {
           userMessage: userMessage.substring(0, 200),
         });
       } else {
+        this.logger.log(`[DM Debug] Template rejim: msgData olinyapti`);
         const msgData = await this.dmMessages.getNextMessageData(telegram_id, botAccountId);
+        this.logger.log(`[DM Debug] msgData: ${msgData ? msgData.text.substring(0, 50) : 'NULL - shablon yoq'}`);
         if (!msgData) return;
         const btnTitle = firstGlobalBtn?.title || msgData.buttonText;
         const btnUrl   = firstGlobalBtn?.url   || msgData.buttonUrl;
