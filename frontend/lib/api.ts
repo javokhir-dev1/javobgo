@@ -113,8 +113,8 @@ export const clearAgentMessages = (id: number) => api.delete(`/api/agents/${id}/
 export const getConversations = () => api.get('/api/inbox/conversations').then(r => r.data);
 export const getInboxMessages = (conversationId: number) =>
   api.get(`/api/inbox/conversations/${conversationId}/messages`).then(r => r.data);
-export const sendInboxMessage = (igsid: string, text: string) =>
-  api.post(`/api/inbox/conversations/${igsid}/send`, { text }).then(r => r.data);
+export const sendInboxMessage = (igsid: string, text: string, buttons?: { title: string; url: string }[]) =>
+  api.post(`/api/inbox/conversations/${igsid}/send`, { text, buttons }).then(r => r.data);
 export const syncInbox = () => api.post('/api/inbox/sync').then(r => r.data);
 export const getInboxUserInfo = (igsid: string) => api.get(`/api/inbox/user/${igsid}`).then(r => r.data);
 export const resetInbox = () => api.post('/api/inbox/reset').then(r => r.data);

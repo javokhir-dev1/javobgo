@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { MessageCircle, Send, Search, X, RefreshCw, Zap } from 'lucide-react';
+import { MessageCircle, Send, Search, X, RefreshCw, Zap, Plus, Trash2 } from 'lucide-react';
 import { getConversations, getInboxMessages, sendInboxMessage, getInboxEventsUrl, syncInbox } from '@/lib/api';
 import { useInstagramStatus } from '@/context/InstagramContext';
 import { useLanguage } from '@/context/LanguageContext';
@@ -25,6 +25,7 @@ export default function InboxPage() {
   const [sending, setSending]             = useState(false);
   const [loadingMsgs, setLoadingMsgs]     = useState(false);
   const [syncing, setSyncing]             = useState(false);
+  const [buttons, setButtons]             = useState<{ title: string; url: string }[]>([]);
   const [profileModal, setProfileModal]   = useState<Conversation | null>(null);
   const [showMobileDmSettings, setShowMobileDmSettings] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -166,15 +167,20 @@ export default function InboxPage() {
   const send = async () => {
     if (!selected || !input.trim() || sending) return;
     const text = input.trim();
+    const validButtons = buttons.filter(b => b.title.trim() && b.url.trim());
     setInput('');
     setSending(true);
+
+    const displayText = validButtons.length
+      ? text + '\n' + validButtons.map(b => `[${b.title}]`).join(' ')
+      : text;
 
     const tempMsg: InboxMessage = {
       id: Date.now(),
       conversationId: selected.id,
       participantIgsid: selected.participantIgsid,
       direction: 'out',
-      messageText: text,
+      messageText: displayText,
       igCreatedAt: new Date().toISOString(),
       timestampMs: Date.now().toString(),
       createdAt: new Date().toISOString(),
@@ -183,7 +189,7 @@ export default function InboxPage() {
     setMessages(prev => [...prev, tempMsg]);
 
     try {
-      const savedMsg = await sendInboxMessage(selected.participantIgsid, text);
+      const savedMsg = await sendInboxMessage(selected.participantIgsid, text, validButtons.length ? validButtons : undefined);
       if (savedMsg?.id) {
         setMessages(prev => prev.map(m => m.id === tempMsg.id ? { ...m, ...savedMsg } : m));
       }
@@ -193,6 +199,7 @@ export default function InboxPage() {
           : c
         )
       );
+      if (validButtons.length) { setButtons([]); setShowButtons(false); }
     } catch {
       setMessages(prev => prev.filter(m => m.id !== tempMsg.id));
       setInput(text);
@@ -392,33 +399,71 @@ export default function InboxPage() {
 
             {/* Input */}
             <div className="shrink-0 px-5 py-3 border-t border-outline-variant/30 bg-surface-container">
-              <div className="max-w-2xl mx-auto flex items-end gap-2">
-                <div className="flex-1 flex items-end rounded-2xl border border-outline-variant/40 bg-surface-container-low px-4 py-2 focus-within:border-primary/40 transition-colors">
-                  <textarea
-                    ref={inputRef}
-                    value={input}
-                    rows={1}
-                    onChange={e => {
-                      setInput(e.target.value);
-                      e.target.style.height = 'auto';
-                      e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
-                    }}
-                    onKeyDown={handleKey}
-                    placeholder={t('inbox.chat.placeholder')}
-                    disabled={sending}
-                    className="flex-1 bg-transparent text-[14px] text-on-surface placeholder:text-on-surface-variant/50 outline-none resize-none leading-6 py-1 disabled:opacity-50"
-                    style={{ maxHeight: '120px' }}
-                  />
+              <div className="max-w-2xl mx-auto space-y-2">
+
+                {/* Xabar matni */}
+                <div className="flex items-end gap-2">
+                  <div className="flex-1 flex items-end rounded-2xl border border-outline-variant/40 bg-surface-container-low px-4 py-2 focus-within:border-primary/40 transition-colors">
+                    <textarea
+                      ref={inputRef}
+                      value={input}
+                      rows={1}
+                      onChange={e => {
+                        setInput(e.target.value);
+                        e.target.style.height = 'auto';
+                        e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
+                      }}
+                      onKeyDown={handleKey}
+                      placeholder={t('inbox.chat.placeholder')}
+                      disabled={sending}
+                      className="flex-1 bg-transparent text-[14px] text-on-surface placeholder:text-on-surface-variant/50 outline-none resize-none leading-6 py-1 disabled:opacity-50"
+                      style={{ maxHeight: '120px' }}
+                    />
+                  </div>
+                  <button
+                    onClick={send}
+                    disabled={sending || !input.trim()}
+                    className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white hover:bg-primary/90 transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
+                  >
+                    <Send size={16} />
+                  </button>
                 </div>
-                <button
-                  onClick={send}
-                  disabled={sending || !input.trim()}
-                  className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white hover:bg-primary/90 transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
-                >
-                  <Send size={16} />
-                </button>
+
+                {/* URL Tugmalar */}
+                <div className="px-1">
+                  <p className="text-[11px] font-medium text-on-surface-variant mb-1.5">
+                    🔗 URL Tugmalar <span className="font-normal">(ixtiyoriy)</span>
+                  </p>
+                  {buttons.map((btn, i) => (
+                    <div key={i} className="flex gap-2 mb-1.5">
+                      <input
+                        value={btn.title}
+                        onChange={e => { const a = [...buttons]; a[i] = { ...a[i], title: e.target.value }; setButtons(a); }}
+                        placeholder="Tugma nomi"
+                        className="w-28 px-2 py-1.5 rounded-lg bg-surface-container-low text-on-surface text-[12px] outline-none border border-outline-variant/30 focus:border-primary/40"
+                      />
+                      <input
+                        value={btn.url}
+                        onChange={e => { const a = [...buttons]; a[i] = { ...a[i], url: e.target.value }; setButtons(a); }}
+                        placeholder="https://..."
+                        className="flex-1 px-2 py-1.5 rounded-lg bg-surface-container-low text-on-surface text-[12px] outline-none border border-outline-variant/30 focus:border-primary/40"
+                      />
+                      <button onClick={() => setButtons(buttons.filter((_, j) => j !== i))} className="text-on-surface-variant hover:text-error p-1">
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  ))}
+                  {buttons.length < 3 && (
+                    <button
+                      onClick={() => setButtons([...buttons, { title: '', url: '' }])}
+                      className="flex items-center gap-1 text-[11px] text-primary hover:underline"
+                    >
+                      <Plus size={11} /> Tugma qo'shish
+                    </button>
+                  )}
+                </div>
+
               </div>
-              <p className="hidden md:block text-center mt-1.5 text-[11px] text-on-surface-variant/40">{t('inbox.chat.sendHint')}</p>
             </div>
           </>
         ) : (

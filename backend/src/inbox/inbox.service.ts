@@ -188,10 +188,17 @@ export class InboxService {
     creds: IgCredentials,
     participantIgsid: string,
     text: string,
+    buttons?: { title: string; url: string }[],
   ): Promise<InboxMessage> {
     const ig_account_id = creds.accountId;
 
-    const igRes = await this.instagram.sendDM(creds, participantIgsid, text);
+    const validButtons = (buttons || []).filter(b => b.title?.trim() && b.url?.trim());
+    let igRes: any;
+    if (validButtons.length) {
+      igRes = await this.instagram.sendDMButtons(creds, participantIgsid, text, validButtons);
+    } else {
+      igRes = await this.instagram.sendDM(creds, participantIgsid, text);
+    }
     const igMessageId: string | null = igRes?.message_id || null;
 
     let conv = await this.convRepo.findOne({
