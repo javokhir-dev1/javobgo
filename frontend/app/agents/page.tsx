@@ -220,7 +220,8 @@ export default function AgentsPage() {
               <p className="text-[12px] sm:text-[15px] text-on-surface-variant truncate">{t('agents.subtitle')}</p>
             </div>
             <button onClick={openCreate}
-              className="shrink-0 flex items-center gap-1.5 sm:gap-2 px-3 py-2 sm:px-5 sm:py-2.5 bg-primary text-on-primary text-[13px] sm:text-[14px] font-semibold rounded-xl hover:bg-primary/90 transition-colors">
+              className="shrink-0 flex items-center gap-1.5 sm:gap-2 px-3 py-2 sm:px-5 sm:py-2.5 text-white text-[13px] sm:text-[14px] font-semibold rounded-xl hover:opacity-90 transition-all"
+              style={{ background: 'linear-gradient(135deg, #7C3AED, #8B5CF6)' }}>
               <Plus size={16} className="sm:w-[18px] sm:h-[18px]" /> <span>{t('agents.newBtn')}</span>
             </button>
           </header>
@@ -241,7 +242,8 @@ export default function AgentsPage() {
               <p className="text-[16px] font-medium mb-1">{t('agents.emptyTitle')}</p>
               <p className="text-[14px] opacity-60 mb-6">{t('agents.emptyDesc')}</p>
               <button onClick={openCreate}
-                className="flex items-center gap-2 px-5 py-2.5 bg-primary text-on-primary text-[14px] font-semibold rounded-xl hover:bg-primary/90 transition-colors">
+                className="flex items-center gap-2 px-5 py-2.5 text-white text-[14px] font-semibold rounded-xl hover:opacity-90 transition-all"
+                style={{ background: 'linear-gradient(135deg, #7C3AED, #8B5CF6)' }}>
                 <Plus size={17} /> {t('agents.createBtn')}
               </button>
             </div>
@@ -447,7 +449,8 @@ export default function AgentsPage() {
                 {t('agents.form.cancel')}
               </button>
               <button onClick={handleSave} disabled={isBusy || !form.name.trim() || !form.systemPrompt.trim()}
-                className="flex-1 px-4 py-2.5 rounded-xl bg-primary text-on-primary text-[14px] font-semibold hover:bg-primary/90 disabled:opacity-50 transition-colors flex items-center justify-center gap-2">
+                className="flex-1 px-4 py-2.5 rounded-xl text-white text-[14px] font-semibold hover:opacity-90 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+                style={{ background: 'linear-gradient(135deg, #7C3AED, #8B5CF6)' }}>
                 {isBusy && <Loader2 size={14} className="animate-spin" />}
                 {isBusy
                   ? (uploading ? 'Yuklanmoqda...' : t('agents.form.saving'))
