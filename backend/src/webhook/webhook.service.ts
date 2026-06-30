@@ -313,19 +313,17 @@ export class WebhookService {
 
         if (dmText) {
           try {
-            await this.instagram.sendDM(creds, commenterId, dmText);
-            // Global DM tugmalar — har biri alohida cta_url xabar sifatida
+            // URL tugmalarni matnga qo'shamiz (Instagram DM'da havolalar bosiladigan link bo'ladi)
             const dmButtons = (auto as any).dmButtons as { title: string; url: string }[] | undefined;
+            let finalText = dmText;
             if (dmButtons?.length) {
-              for (const btn of dmButtons) {
-                try {
-                  await this.instagram.sendDMWithButton(creds, commenterId, btn.title, btn.title, btn.url);
-                  this.logger.log(`✅ Tugma yuborildi: "${btn.title}" → ${btn.url}`);
-                } catch (btnErr: any) {
-                  this.logger.error(`❌ Tugma yuborishda xato: ${btnErr.response?.data?.error?.message || btnErr.message}`);
-                }
-              }
+              const links = dmButtons
+                .filter(b => b.title?.trim() || b.url?.trim())
+                .map(b => b.title?.trim() ? `${b.title}: ${b.url}` : b.url)
+                .join('\n');
+              if (links) finalText = dmText + '\n\n' + links;
             }
+            await this.instagram.sendDM(creds, commenterId, finalText);
             repliedOrDmed = true;
             this.logger.log(`✅ DM yuborildi: @${commenterName} → "${dmText.substring(0, 60)}"`);
             await this.logs.create({
