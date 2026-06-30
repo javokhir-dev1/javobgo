@@ -274,6 +274,7 @@ export class WebhookService {
           try {
             await this.instagram.replyToComment(creds, commentId, reply);
             repliedOrDmed = true;
+            this.logger.log(`✅ Komment javob: @${commenterName} → "${reply.substring(0, 60)}"`);
             await this.logs.create({
               telegram_id, instagram_account_id: botAccountId,
               type: 'success',
@@ -313,12 +314,15 @@ export class WebhookService {
         if (dmText) {
           try {
             await this.instagram.sendDM(creds, commenterId, dmText);
-            // Global DM tugmalar (barcha javoblar tagida)
+            // Global DM tugmalar — har biri alohida cta_url xabar sifatida
             const dmButtons = (auto as any).dmButtons as { title: string; url: string }[] | undefined;
             if (dmButtons?.length) {
-              await this.instagram.sendDMButtons(creds, commenterId, dmButtons);
+              for (const btn of dmButtons) {
+                await this.instagram.sendDMWithButton(creds, commenterId, btn.title, btn.title, btn.url);
+              }
             }
             repliedOrDmed = true;
+            this.logger.log(`✅ DM yuborildi: @${commenterName} → "${dmText.substring(0, 60)}"`);
             await this.logs.create({
               telegram_id, instagram_account_id: botAccountId,
               type: 'success',
