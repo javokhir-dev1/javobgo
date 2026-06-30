@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { BullModule } from '@nestjs/bullmq';
 import { WebhookModule } from './webhook/webhook.module';
 import { SettingsModule } from './settings/settings.module';
 import { DmMessagesModule } from './dm-messages/dm-messages.module';
@@ -16,7 +15,6 @@ import { AuthModule } from './auth/auth.module';
 import { InstagramAccountsModule } from './instagram-accounts/instagram-accounts.module';
 import { AdminModule } from './admin/admin.module';
 import { TasksModule } from './tasks/tasks.module';
-import { QueueModule } from './queue/queue.module';
 import { InstagramAccount } from './instagram-accounts/instagram-account.entity';
 import { Agent } from './agents/entities/agent.entity';
 import { ChatMessage } from './agents/entities/chat-message.entity';
@@ -37,18 +35,6 @@ import { ApiQuotaConfig } from './admin/entities/api-quota-config.entity';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
-
-    BullModule.forRootAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        connection: {
-          host: config.get('REDIS_HOST', 'localhost'),
-          port: config.get<number>('REDIS_PORT', 6379),
-          password: config.get('REDIS_PASSWORD', undefined),
-        },
-      }),
-    }),
 
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
@@ -84,7 +70,6 @@ import { ApiQuotaConfig } from './admin/entities/api-quota-config.entity';
     LogsModule,
     AdminModule,
     TasksModule,
-    QueueModule,
   ],
 })
 export class AppModule {}
