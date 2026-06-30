@@ -188,6 +188,7 @@ export class WebhookService {
         if (!msgData) return;
         const btnTitle = firstGlobalBtn?.title || msgData.buttonText;
         const btnUrl   = firstGlobalBtn?.url   || msgData.buttonUrl;
+        this.logger.log(`[DM Debug] btn: title=${btnTitle} url=${btnUrl}`);
         if (btnTitle && btnUrl) {
           await this.instagram.sendDMWithButton(creds, senderId, msgData.text, btnTitle, btnUrl);
         } else {
@@ -201,6 +202,7 @@ export class WebhookService {
         });
       }
     } catch (err) {
+      this.logger.error(`[DM Avtoreply xato] ${err.message}`, err.stack);
       await this.logs.create({
         telegram_id, instagram_account_id: botAccountId,
         type: 'error', action: 'DM Avtoreply',
