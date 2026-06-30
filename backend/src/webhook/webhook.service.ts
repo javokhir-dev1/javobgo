@@ -313,17 +313,14 @@ export class WebhookService {
 
         if (dmText) {
           try {
-            // URL tugmalarni matnga qo'shamiz (Instagram DM'da havolalar bosiladigan link bo'ladi)
             const dmButtons = (auto as any).dmButtons as { title: string; url: string }[] | undefined;
-            let finalText = dmText;
-            if (dmButtons?.length) {
-              const links = dmButtons
-                .filter(b => b.title?.trim() || b.url?.trim())
-                .map(b => b.title?.trim() ? `${b.title}: ${b.url}` : b.url)
-                .join('\n');
-              if (links) finalText = dmText + '\n\n' + links;
+            const validButtons = (dmButtons || []).filter(b => b.title?.trim() && b.url?.trim());
+            if (validButtons.length) {
+              // Matn + tugmalar bitta template xabar sifatida
+              await this.instagram.sendDMButtons(creds, commenterId, dmText, validButtons);
+            } else {
+              await this.instagram.sendDM(creds, commenterId, dmText);
             }
-            await this.instagram.sendDM(creds, commenterId, finalText);
             repliedOrDmed = true;
             this.logger.log(`✅ DM yuborildi: @${commenterName} → "${dmText.substring(0, 60)}"`);
             await this.logs.create({
