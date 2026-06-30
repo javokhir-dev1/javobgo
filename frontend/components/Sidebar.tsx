@@ -72,7 +72,6 @@ export default function Sidebar() {
     return () => window.removeEventListener('message', handler);
   }, []);
 
-  // Dropdown tashqarisini bosish — yopish
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
@@ -94,8 +93,7 @@ export default function Sidebar() {
       const w = 600, h = 700;
       const left = window.screenX + (window.outerWidth - w) / 2;
       const top  = window.screenY + (window.outerHeight - h) / 2;
-      const popup = window.open(url, 'ig_oauth', `width=${w},height=${h},left=${left},top=${top},toolbar=no,menubar=no,scrollbars=yes`);
-      popupRef.current = popup;
+      window.open(url, 'ig_oauth', `width=${w},height=${h},left=${left},top=${top},toolbar=no,menubar=no,scrollbars=yes`);
     } catch {
       setConnecting(false);
     }
@@ -140,13 +138,9 @@ export default function Sidebar() {
                   @{selectedAccount.instagram_username}
                 </span>
               </div>
-              <ChevronDown
-                size={16}
-                className={`text-on-surface-variant flex-shrink-0 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`}
-              />
+              <ChevronDown size={16} className={`text-on-surface-variant flex-shrink-0 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
             </button>
 
-            {/* Dropdown */}
             {dropdownOpen && (
               <div className="absolute left-3 right-3 top-full mt-1.5 bg-surface-container rounded-xl border border-outline-variant/40 shadow-lg overflow-hidden z-50">
                 {accounts.map(acc => (
@@ -164,9 +158,7 @@ export default function Sidebar() {
                     {acc.is_selected && <Check size={14} className="text-primary flex-shrink-0" />}
                   </button>
                 ))}
-
                 <div className="border-t border-outline-variant/30 mx-2" />
-
                 <button
                   onClick={openOAuth}
                   disabled={connecting}
@@ -202,11 +194,12 @@ export default function Sidebar() {
 
       {/* Nav */}
       <nav className="flex-1 flex flex-col gap-0.5 px-2 overflow-y-auto">
-        {navItemKeys.map(item => <NavLink key={item.href} href={item.href} icon={item.icon} label={t(item.labelKey)} pathname={pathname} />)}
+        {navItemKeys.map(item => (
+          <NavLink key={item.href} href={item.href} icon={item.icon} label={t(item.labelKey)} pathname={pathname} />
+        ))}
       </nav>
 
-
-
+      {/* Theme toggle */}
       <div className="px-2 mb-2">
         <button
           onClick={toggleTheme}
@@ -240,9 +233,7 @@ export default function Sidebar() {
               {user?.username ? `@${user.username}` : t('sidebar.telegramUser')}
             </p>
           </div>
-          <div
-            className="w-8 h-8 flex items-center justify-center rounded-lg text-on-surface-variant transition-colors flex-shrink-0"
-          >
+          <div className="w-8 h-8 flex items-center justify-center rounded-lg text-on-surface-variant transition-colors flex-shrink-0">
             <User size={18} />
           </div>
         </Link>
@@ -259,8 +250,8 @@ export default function Sidebar() {
           Maxfiylik siyosati
         </Link>
         <p className="text-[10px] text-on-surface-variant/40 leading-snug">
-          &copy; {new Date().getFullYear()} Barcha huquqlar himoyalangan.{" "}
-          Xizmatlar &laquo;ZO&apos;R PLAY&raquo; MCHJ tomonidan ko&apos;rsatiladi.
+          © {new Date().getFullYear()} Barcha huquqlar himoyalangan.
+          Xizmatlar «ZO'R PLAY» MCHJ tomonidan ko'rsatiladi.
         </p>
       </div>
     </aside>

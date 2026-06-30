@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { Bot, Zap, Shield, AlertTriangle, Loader2, Send } from 'lucide-react';
+import { Bot, Zap, Shield, AlertTriangle, Loader2 } from 'lucide-react';
 import { verifyAuthTokenAction } from '../actions/auth';
 import { getSettings } from '@/lib/api';
 
@@ -20,19 +20,14 @@ function LoginContent() {
       return;
     }
 
-    const isTgWebApp = window.location.hash.includes('tgWebAppData') || 
+    const isTgWebApp = window.location.hash.includes('tgWebAppData') ||
                        !!(window as any).Telegram?.WebApp?.initData;
 
-    if (isTgWebApp) {
-      setIsLoading(true);
-    }
+    if (isTgWebApp) setIsLoading(true);
 
     const checkTgInitData = () => {
       const tgInitData = (window as any).Telegram?.WebApp?.initData;
-      if (tgInitData) {
-        submitInitData(tgInitData);
-        return true;
-      }
+      if (tgInitData) { submitInitData(tgInitData); return true; }
       return false;
     };
 
@@ -41,27 +36,22 @@ function LoginContent() {
     if (isTgWebApp) {
       const timer = setTimeout(() => {
         if (!checkTgInitData()) {
-          getSettings()
-            .then(() => router.replace('/'))
-            .catch(() => setIsLoading(false));
+          getSettings().then(() => router.replace('/')).catch(() => setIsLoading(false));
         }
       }, 500);
       return () => clearTimeout(timer);
     } else {
-      getSettings()
-        .then(() => router.replace('/'))
-        .catch(() => setIsLoading(false));
+      getSettings().then(() => router.replace('/')).catch(() => setIsLoading(false));
     }
   }, [router, searchParams]);
 
   const submitInitData = async (initData: string) => {
-    setIsLoading(true);
-    setError('');
+    setIsLoading(true); setError('');
     try {
       const res = await fetch('/auth/telegram-webapp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ initData })
+        body: JSON.stringify({ initData }),
       });
       if (!res.ok) {
         setError("Avtorizatsiyadan o'tib bo'lmadi. Telegram orqali qayta kiring.");
@@ -76,14 +66,12 @@ function LoginContent() {
   };
 
   const submitToken = async (token: string) => {
-    setIsLoading(true);
-    setError('');
+    setIsLoading(true); setError('');
     try {
       const result = await verifyAuthTokenAction(token);
-
       if (!result.ok) {
         if (result.error === 'invalid_or_expired_token') {
-          setError("Ushbu tugma ishlatib bo'lingan. Iltimos botga qaytib qaytadan /start bosing.");
+          setError("Ushbu tugma ishlatib bo'lingan. Iltimos botga qaytib /start bosing.");
         } else if (result.error === 'too_many_requests') {
           setError("Juda ko'p urinish. Biroz kuting.");
         } else if (result.error === 'backend_unreachable') {
@@ -94,7 +82,6 @@ function LoginContent() {
         setIsLoading(false);
         return;
       }
-
       router.push('/');
     } catch {
       setError("Xatolik yuz berdi. Iltimos qayta urinib ko'ring.");
@@ -152,7 +139,7 @@ function LoginContent() {
         </div>
       </div>
 
-      {/* Right Panel — Auth Container */}
+      {/* Right Panel */}
       <div className="flex-1 flex flex-col items-center justify-center p-6 md:p-12 relative">
         {/* Mobile Header */}
         <div className="lg:hidden absolute top-6 left-6 flex items-center gap-2">
@@ -167,11 +154,13 @@ function LoginContent() {
 
         {/* Footer */}
         <div className="absolute bottom-4 left-0 right-0 text-center px-4">
-          <Link href="/privacy-policy" target="_blank" rel="noopener noreferrer" className="text-[11px] text-on-surface-variant/50 hover:text-on-surface-variant transition-colors">
+          <Link href="/privacy-policy" target="_blank" rel="noopener noreferrer"
+            className="text-[11px] text-on-surface-variant/50 hover:text-on-surface-variant transition-colors">
             Maxfiylik siyosati
           </Link>
           <p className="text-[11px] text-on-surface-variant/40 mt-0.5">
-            © {new Date().getFullYear()} Barcha huquqlar himoyalangan. Xizmatlar «ZO'R PLAY» MCHJ tomonidan ko'rsatiladi.
+            © {new Date().getFullYear()} Barcha huquqlar himoyalangan.
+            Xizmatlar «ZO'R PLAY» MCHJ tomonidan ko'rsatiladi.
           </p>
         </div>
 
@@ -192,7 +181,7 @@ function LoginContent() {
               <div className="mb-10">
                 <h1 className="text-[32px] font-extrabold text-on-surface tracking-tight mb-3">Xush kelibsiz</h1>
                 <p className="text-[15px] text-on-surface-variant">
-                  Platformaga kirish uchun rasmiy Telegram botimizdan foydalaning yoki Telegram orqali kiring.
+                  Platformaga kirish uchun rasmiy Telegram botimizdan foydalaning.
                 </p>
               </div>
 
@@ -207,9 +196,11 @@ function LoginContent() {
                 href={process.env.NEXT_PUBLIC_BOT_URL || 'https://t.me/javobgobot'}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-2xl bg-primary text-on-primary font-bold text-[16px] transition-all hover:bg-primary/90 hover:scale-[1.02] shadow-[0_8px_30px_-4px_rgba(139,92,246,0.3)]"
+                className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-2xl bg-primary text-on-primary font-bold text-[16px] hover:opacity-90 transition-opacity shadow-lg"
               >
-                <Send className="w-5 h-5" />
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.16 13.947l-2.963-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.991.612z"/>
+                </svg>
                 Telegram orqali kirish
               </a>
             </>
@@ -222,7 +213,11 @@ function LoginContent() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center"><Loader2 className="w-10 h-10 animate-spin text-primary" /></div>}>
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="w-10 h-10 text-primary animate-spin" />
+      </div>
+    }>
       <LoginContent />
     </Suspense>
   );

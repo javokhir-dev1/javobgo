@@ -5,7 +5,6 @@ const PUBLIC_PATHS = ['/login', '/auth/', '/api/', '/privacy-policy'];
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // Public yo'llarni o'tkazib yubor
   if (PUBLIC_PATHS.some(p => pathname.startsWith(p))) {
     return NextResponse.next();
   }
@@ -22,5 +21,5 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|uploads).*)'],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|uploads|icons|manifest.json).*)'],
 };

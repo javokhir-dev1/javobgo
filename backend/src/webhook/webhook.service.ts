@@ -13,6 +13,8 @@ import { AdminService } from '../admin/admin.service';
 const MIN_DELAY_MS = 5_000;
 const MAX_DELAY_MS = 10_000;
 
+type DmItem = { text: string; buttonText?: string; buttonUrl?: string };
+
 @Injectable()
 export class WebhookService {
   private readonly logger = new Logger(WebhookService.name);
@@ -36,6 +38,18 @@ export class WebhookService {
     return valid[Math.floor(Math.random() * valid.length)];
   }
 
+  private pickRandomDmItem(templates: any[]): DmItem | null {
+    const valid = templates.filter(t => (typeof t === 'string' ? t : t?.text)?.trim());
+    if (!valid.length) return null;
+    const item = valid[Math.floor(Math.random() * valid.length)];
+    if (typeof item === 'string') return { text: item };
+    return {
+      text: item.text,
+      buttonText: item.buttonText || undefined,
+      buttonUrl: item.buttonUrl || undefined,
+    };
+  }
+
   private async generateAiReply(
     agentId: number,
     instagram_account_id: string,
@@ -53,7 +67,7 @@ export class WebhookService {
           this.logger.error('AI javob xatosi (agentId=' + agentId + '): ' + err.message);
           return null;
         }
-        this.logger.warn('AI xatosi (agentId=' + agentId + '), urinish ' + attempt + '/' + retries + ': ' + err.message);
+        this.logger.warn('AI xatosi, urinish ' + attempt + '/' + retries + ': ' + err.message);
         await new Promise(resolve => setTimeout(resolve, attempt * 2000));
       }
     }
@@ -267,31 +281,51 @@ export class WebhookService {
       }
 
       if (auto.dmEnabled && commenterId) {
-        let dm: string | null = null;
+        let dmItem: DmItem | null = null;
         let usedAgent = false;
 
         const useDmAi = !!auto.dmAgentId && (auto.triggerType === 'any' || !keywordMatched);
         if (useDmAi) {
-          dm = await this.generateAiReply(auto.dmAgentId!, botAccountId, commenterName, commentText);
-          usedAgent = true;
-          if (!dm) {
-            const tmpl = this.pickRandom(auto.dmTemplates || []);
-            if (tmpl) { dm = tmpl.replace('{name}', commenterName).replace('{comment}', commentText); usedAgent = false; }
+          const aiText = await this.generateAiReply(auto.dmAgentId!, botAccountId, commenterName, commentText);
+          usedAgent = !!aiText;
+          if (aiText) {
+            dmItem = { text: aiText };
+          } else {
+            const tmpl = this.pickRandomDmItem(auto.dmTemplates || []);
+            if (tmpl) {
+              dmItem = {
+                text: tmpl.text.replace('{name}', commenterName).replace('{comment}', commentText),
+                buttonText: tmpl.buttonText,
+                buttonUrl: tmpl.buttonUrl,
+              };
+            }
           }
         } else if (keywordMatched) {
-          const tmpl = this.pickRandom(auto.dmTemplates || []);
-          if (tmpl) dm = tmpl.replace('{name}', commenterName).replace('{comment}', commentText);
+          const tmpl = this.pickRandomDmItem(auto.dmTemplates || []);
+          if (tmpl) {
+            dmItem = {
+              text: tmpl.text.replace('{name}', commenterName).replace('{comment}', commentText),
+              buttonText: tmpl.buttonText,
+              buttonUrl: tmpl.buttonUrl,
+            };
+          }
         }
 
-        if (dm) {
+        if (dmItem) {
           try {
-            await this.instagram.sendDM(creds, commenterId, dm);
+            if (dmItem.buttonText && dmItem.buttonUrl) {
+              await this.instagram.sendDMWithButton(
+                creds, commenterId, dmItem.text, dmItem.buttonText, dmItem.buttonUrl
+              );
+            } else {
+              await this.instagram.sendDM(creds, commenterId, dmItem.text);
+            }
             repliedOrDmed = true;
             await this.logs.create({
               telegram_id, instagram_account_id: botAccountId,
               type: 'success',
               action: usedAgent ? 'AI Kommentdan DM' : 'Kommentdan DM',
-              message: dm.substring(0, 100), user: commenterName,
+              message: dmItem.text.substring(0, 100), user: commenterName,
               userMessage: commentText?.substring(0, 200),
             });
           } catch (err) {

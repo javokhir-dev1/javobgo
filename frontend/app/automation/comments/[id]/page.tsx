@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
   ArrowLeft, Zap, MessageSquare, Send, ToggleLeft, ToggleRight,
-  Trash2, Globe, Hash, CheckCircle, Save, Plus,
+  Trash2, Globe, Hash, CheckCircle, Save, Plus, Link2,
 } from 'lucide-react';
 import { getAutomation, updateAutomation, toggleAutomation, deleteAutomation, getInstagramPosts, getAgents } from '@/lib/api';
 import { useLanguage } from '@/context/LanguageContext';
@@ -20,6 +20,12 @@ function AgentAvatar({ value, className = 'w-6 h-6' }: { value: string; classNam
   return <span className="text-base leading-none">{value}</span>;
 }
 
+interface DmTemplateItem {
+  text: string;
+  buttonText?: string;
+  buttonUrl?: string;
+}
+
 interface Automation {
   id: number;
   name: string;
@@ -28,13 +34,21 @@ interface Automation {
   replyEnabled: boolean;
   replyTemplates: string[];
   dmEnabled: boolean;
-  dmTemplates: string[];
+  dmTemplates: DmTemplateItem[];
   postScope: 'all' | 'specific';
   postIds: string[];
   postData: { id: string; caption?: string; thumbnail?: string }[];
   isActive: boolean;
   replyAgentId: number | null;
   dmAgentId: number | null;
+}
+
+function normalizeDmTemplates(raw: any[]): DmTemplateItem[] {
+  return raw.map(item =>
+    typeof item === 'string'
+      ? { text: item }
+      : { text: item.text || '', buttonText: item.buttonText ?? undefined, buttonUrl: item.buttonUrl ?? undefined }
+  );
 }
 
 export default function AutomationDetailPage() {
@@ -53,8 +67,9 @@ export default function AutomationDetailPage() {
 
   useEffect(() => {
     getAutomation(Number(id)).then(data => {
-      setAuto(data);
-      setForm(data);
+      const normalized = { ...data, dmTemplates: normalizeDmTemplates(data.dmTemplates || []) };
+      setAuto(normalized);
+      setForm(normalized);
     });
     getInstagramPosts().then(p => setPosts(p?.posts || p?.data || [])).catch(() => setPosts([]));
     getAgents().then(setAgents).catch(() => setAgents([]));
@@ -86,11 +101,27 @@ export default function AutomationDetailPage() {
     }
   };
 
+  const updateDmTemplate = (i: number, field: keyof DmTemplateItem, val: string) => {
+    const arr = [...form.dmTemplates];
+    arr[i] = { ...arr[i], [field]: val };
+    update({ dmTemplates: arr });
+  };
+
+  const toggleDmButton = (i: number) => {
+    const arr = [...form.dmTemplates];
+    if (arr[i].buttonText !== undefined) {
+      const { buttonText: _, buttonUrl: __, ...rest } = arr[i];
+      arr[i] = rest;
+    } else {
+      arr[i] = { ...arr[i], buttonText: '', buttonUrl: '' };
+    }
+    update({ dmTemplates: arr });
+  };
+
   const save = async () => {
     setSaveError(null);
-
     const validReplyTemplates = (form.replyTemplates || []).filter(t => t?.trim());
-    const validDmTemplates    = (form.dmTemplates    || []).filter(t => t?.trim());
+    const validDmTemplates    = (form.dmTemplates    || []).filter(t => t?.text?.trim());
 
     if (form.replyEnabled && !form.replyAgentId && validReplyTemplates.length < 3) {
       setSaveError('Izohga javob: AI agentsiz kamida 3 ta shablon kiritilishi shart');
@@ -100,7 +131,6 @@ export default function AutomationDetailPage() {
       setSaveError('DM yuborish: AI agentsiz kamida 3 ta shablon kiritilishi shart');
       return;
     }
-
     setSaving(true);
     try {
       await updateAutomation(form.id, form);
@@ -306,7 +336,6 @@ export default function AutomationDetailPage() {
                     <Plus size={12} /> {t('automation.form.addTemplate')}
                   </button>
                 </div>
-
                 {/* AI Agent toggle */}
                 <div className="pt-2 border-t border-outline-variant/20 mt-2">
                   <button
@@ -406,26 +435,54 @@ export default function AutomationDetailPage() {
                     {t('automation.form.templateVars3')}
                   </p>
                   {form.dmTemplates.map((tmpl, i) => (
-                    <div key={i} className="flex gap-2 mb-2">
-                      <textarea
-                        value={tmpl}
-                        onChange={e => {
-                          const arr = [...form.dmTemplates];
-                          arr[i] = e.target.value;
-                          update({ dmTemplates: arr });
-                        }}
-                        rows={2}
-                        placeholder={`${t('automation.form.templateDmPlaceholder')} ${i + 1}...`}
-                        className="flex-1 px-3 py-2 rounded-lg bg-surface-variant text-on-surface text-xs outline-none focus:ring-2 ring-primary/40 resize-none"
-                      />
-                      {form.dmTemplates.length > 1 && (
-                        <button onClick={() => update({ dmTemplates: form.dmTemplates.filter((_, j) => j !== i) })} className="text-on-surface-variant hover:text-error p-1">
-                          <Trash2 size={14} />
-                        </button>
+                    <div key={i} className="mb-2 border border-outline-variant/30 rounded-xl bg-surface-variant overflow-hidden">
+                      <div className="flex gap-2 items-start px-3 py-2.5">
+                        <textarea
+                          value={tmpl.text}
+                          onChange={e => updateDmTemplate(i, 'text', e.target.value)}
+                          rows={2}
+                          placeholder={`${t('automation.form.templateDmPlaceholder')} ${i + 1}...`}
+                          className="flex-1 bg-transparent text-on-surface text-xs outline-none resize-none leading-relaxed"
+                        />
+                        <div className="flex gap-1 flex-shrink-0 mt-0.5">
+                          <button
+                            onClick={() => toggleDmButton(i)}
+                            title={tmpl.buttonText !== undefined ? 'URL tugmani olib tashlash' : 'URL tugma qo\'shish'}
+                            className={`w-5 h-5 flex items-center justify-center rounded transition-colors ${
+                              tmpl.buttonText !== undefined
+                                ? 'text-primary bg-primary/10'
+                                : 'text-on-surface-variant hover:text-primary hover:bg-primary/10'
+                            }`}>
+                            <Link2 size={11} />
+                          </button>
+                          {form.dmTemplates.length > 1 && (
+                            <button onClick={() => update({ dmTemplates: form.dmTemplates.filter((_, j) => j !== i) })} className="text-on-surface-variant hover:text-error w-5 h-5 flex items-center justify-center rounded">
+                              <Trash2 size={11} />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      {tmpl.buttonText !== undefined && (
+                        <div className="border-t border-dashed border-outline-variant/20 px-3 py-2 flex gap-2">
+                          <input
+                            type="text"
+                            value={tmpl.buttonText || ''}
+                            onChange={e => updateDmTemplate(i, 'buttonText', e.target.value)}
+                            placeholder="Tugma matni"
+                            className="flex-1 text-[11px] bg-white border border-outline-variant/30 rounded-lg px-2 py-1.5 outline-none focus:border-primary/40"
+                          />
+                          <input
+                            type="url"
+                            value={tmpl.buttonUrl || ''}
+                            onChange={e => updateDmTemplate(i, 'buttonUrl', e.target.value)}
+                            placeholder="https://..."
+                            className="flex-1 text-[11px] bg-white border border-outline-variant/30 rounded-lg px-2 py-1.5 outline-none focus:border-primary/40"
+                          />
+                        </div>
                       )}
                     </div>
                   ))}
-                  <button onClick={() => update({ dmTemplates: [...form.dmTemplates, ''] })} className="flex items-center gap-1 text-xs text-primary hover:underline">
+                  <button onClick={() => update({ dmTemplates: [...form.dmTemplates, { text: '' }] })} className="flex items-center gap-1 text-xs text-primary hover:underline">
                     <Plus size={12} /> {t('automation.form.addTemplate')}
                   </button>
                 </div>
@@ -562,7 +619,7 @@ export default function AutomationDetailPage() {
           </div>
         )}
       </div>
-      </div>{/* /overflow-y-auto */}
+      </div>
 
       {/* Delete dialog */}
       {confirmDelete && (

@@ -150,3 +150,4 @@ export const adminExportRequests  = (telegramId?: string, igAccountId?: string) 
 
 export const adminGetAutomations  = () => api.get('/api/admin/automations').then(r => r.data);
 export const adminGetAgents       = () => api.get('/api/admin/agents').then(r => r.data);
+
