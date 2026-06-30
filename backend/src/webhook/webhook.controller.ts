@@ -6,7 +6,7 @@ import type { Request, Response } from 'express';
 import * as crypto from 'crypto';
 import { WEBHOOK_QUEUE } from '../queue/queue.module';
 
-@Controller('webhook')
+@Controller('api/webhook')
 export class WebhookController {
   private readonly logger = new Logger(WebhookController.name);
 
