@@ -59,6 +59,7 @@ export class InstagramService {
   async sendDMButtons(
     creds: IgCredentials,
     recipientId: string,
+    text: string,
     buttons: { title: string; url: string }[],
   ) {
     const res = await axios.post(`${BASE_URL}/${creds.accountId}/messages`, {
@@ -67,15 +68,13 @@ export class InstagramService {
         attachment: {
           type: 'template',
           payload: {
-            template_type: 'generic',
-            elements: [{
-              title: 'Havolalar',
-              buttons: buttons.slice(0, 3).map(b => ({
-                type: 'web_url',
-                url: b.url,
-                title: b.title,
-              })),
-            }],
+            template_type: 'button',
+            text,
+            buttons: buttons.slice(0, 3).map(b => ({
+              type: 'web_url',
+              url: b.url,
+              title: b.title,
+            })),
           },
         },
       },
