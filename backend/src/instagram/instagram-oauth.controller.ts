@@ -151,26 +151,6 @@ export class InstagramOAuthController {
         token_expires_at: tokenExpiresAt,
       });
 
-      // Webhook eventlarni qabul qilish uchun akkauntni subscribe qilamiz
-      try {
-        await axios.post(
-          `https://graph.facebook.com/v21.0/${finalIgId}/subscribed_apps`,
-          null,
-          {
-            params: {
-              subscribed_fields: 'messages,comments',
-              access_token: longToken,
-            },
-          },
-        );
-        this.logger.log(`[OAuth] Webhook subscription muvaffaqiyatli: ${finalIgId}`);
-      } catch (err: any) {
-        this.logger.warn(
-          `[OAuth] Webhook subscription xato (ilovani ishlatish davom etadi): ` +
-          (err.response?.data?.error?.message || err.message),
-        );
-      }
-
       return res.send(this.html({ success: true, instagram_username: igUsername, instagram_account_id: finalIgId }));
 
     } catch (err: any) {
