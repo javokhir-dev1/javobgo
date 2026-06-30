@@ -36,10 +36,16 @@ async function bootstrap() {
     .split(',')
     .map(o => o.trim())
     .filter(Boolean);
+
+  // Electron / desktop app originlari har doim ruxsat etiladi
+  const electronOrigins = ['app://localhost', 'file://'];
+
   app.enableCors({
     origin: (origin, callback) => {
-      // Origin yo'q bo'lsa (server-to-server, curl) — ruxsat emas credentials bilan
-      if (!origin) return callback(null, false);
+      // Origin yo'q bo'lsa (server-to-server, curl) — ruxsat
+      if (!origin) return callback(null, true);
+      // Electron desktop app
+      if (electronOrigins.some(e => origin.startsWith(e))) return callback(null, true);
       if (rawOrigins.includes(origin)) return callback(null, true);
       return callback(new Error(`CORS: ruxsat etilmagan origin: ${origin}`), false);
     },
