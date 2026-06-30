@@ -18,4 +18,7 @@ export class Settings {
 
   @Column({ nullable: true })
   dmAgentId: number;
+
+  @Column({ type: 'simple-json', nullable: true })
+  dmButtons: { title: string; url: string }[];
 }

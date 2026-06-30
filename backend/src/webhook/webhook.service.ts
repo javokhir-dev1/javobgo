@@ -156,6 +156,9 @@ export class WebhookService {
 
     const userMessage = event.message.text;
 
+    const globalButtons = Array.isArray((s as any).dmButtons) ? (s as any).dmButtons as { title: string; url: string }[] : [];
+    const firstGlobalBtn = globalButtons.find(b => b.title?.trim() && b.url?.trim());
+
     try {
       if (s.dmMode === 'ai' && s.dmAgentId) {
         const convs = await this.inboxService.getConversations(botAccountId);
@@ -163,7 +166,11 @@ export class WebhookService {
         const senderName = conv?.participantUsername || senderId;
         const reply = await this.generateAiReply(s.dmAgentId, botAccountId, senderName, userMessage);
         if (!reply) return;
-        await this.inboxService.sendMessage(creds, senderId, reply);
+        if (firstGlobalBtn) {
+          await this.instagram.sendDMWithButton(creds, senderId, reply, firstGlobalBtn.title, firstGlobalBtn.url);
+        } else {
+          await this.inboxService.sendMessage(creds, senderId, reply);
+        }
         await this.logs.create({
           telegram_id, instagram_account_id: botAccountId,
           type: 'success', action: 'DM Avtoreply (AI)',
@@ -173,8 +180,10 @@ export class WebhookService {
       } else {
         const msgData = await this.dmMessages.getNextMessageData(telegram_id, botAccountId);
         if (!msgData) return;
-        if (msgData.buttonText && msgData.buttonUrl) {
-          await this.instagram.sendDMWithButton(creds, senderId, msgData.text, msgData.buttonText, msgData.buttonUrl);
+        const btnTitle = firstGlobalBtn?.title || msgData.buttonText;
+        const btnUrl   = firstGlobalBtn?.url   || msgData.buttonUrl;
+        if (btnTitle && btnUrl) {
+          await this.instagram.sendDMWithButton(creds, senderId, msgData.text, btnTitle, btnUrl);
         } else {
           await this.inboxService.sendMessage(creds, senderId, msgData.text);
         }
