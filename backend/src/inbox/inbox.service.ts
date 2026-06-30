@@ -67,7 +67,7 @@ export class InboxService {
   async updateConversation(
     conversationId: number,
     ig_account_id: string,
-    dto: { customLabel?: string; note?: string },
+    dto: { participantName?: string; participantUsername?: string },
   ): Promise<Conversation> {
     await this.convRepo.update({ id: conversationId, instagram_account_id: ig_account_id }, dto);
     return this.convRepo.findOne({ where: { id: conversationId } });
