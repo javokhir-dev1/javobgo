@@ -202,7 +202,10 @@ export class AgentsService {
     const systemInstruction = await this.buildSystemPrompt(id, agent.systemPrompt);
     const response = await this.ai.models.generateContent({
       model: 'gemini-2.5-flash',
-      config: { systemInstruction },
+      config: {
+        systemInstruction,
+        thinkingConfig: { thinkingBudget: 0 },
+      },
       contents: messages.map(m => ({ role: m.role, parts: [{ text: m.text }] })),
     });
     return response.text ?? '';
@@ -215,7 +218,10 @@ export class AgentsService {
     const lastMessage = messages[messages.length - 1].text;
     const chat = this.ai.chats.create({
       model: 'gemini-2.5-flash',
-      config: { systemInstruction },
+      config: {
+        systemInstruction,
+        thinkingConfig: { thinkingBudget: 0 },
+      },
       history,
     });
     const stream = await chat.sendMessageStream({ message: lastMessage });
