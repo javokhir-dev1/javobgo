@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { BullModule } from '@nestjs/bullmq';
+import { QueueModule } from './queue/queue.module';
 import { WebhookModule } from './webhook/webhook.module';
 import { SettingsModule } from './settings/settings.module';
 import { DmMessagesModule } from './dm-messages/dm-messages.module';
@@ -36,6 +38,18 @@ import { ApiQuotaConfig } from './admin/entities/api-quota-config.entity';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+
+    BullModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        connection: {
+          host: config.get('REDIS_HOST', 'localhost'),
+          port: config.get<number>('REDIS_PORT', 6379),
+        },
+      }),
+    }),
+
+    QueueModule,
 
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
