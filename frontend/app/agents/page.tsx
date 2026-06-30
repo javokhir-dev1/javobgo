@@ -65,7 +65,8 @@ export default function AgentsPage() {
   const fileInputRef              = useRef<HTMLInputElement>(null);
 
   // Serverda saqlangan hujjatlar (edit rejimi)
-  const [savedDocs, setSavedDocs]     = useState<DocItem[]>([]);
+  const [savedDocs, setSavedDocs]       = useState<DocItem[]>([]);
+  const [docsLoading, setDocsLoading]   = useState(false);
   // Hali yuklanmagan fayllar (har ikki rejimda ham)
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
   const [uploading, setUploading]       = useState(false);
@@ -101,11 +102,16 @@ export default function AgentsPage() {
     e.preventDefault();
     setEditAgent(agent);
     setForm({ name: agent.name, description: agent.description, systemPrompt: agent.systemPrompt, emoji: agent.emoji });
+    setSavedDocs([]);
     setPendingFiles([]);
     setDocError('');
     setShowModal(true);
     setTimeout(autoResize, 50);
-    getAgentDocuments(agent.id).then(setSavedDocs).catch(() => setSavedDocs([]));
+    setDocsLoading(true);
+    getAgentDocuments(agent.id)
+      .then(d => setSavedDocs(Array.isArray(d) ? d : []))
+      .catch(() => setSavedDocs([]))
+      .finally(() => setDocsLoading(false));
   };
 
   const closeModal = () => {
@@ -357,7 +363,11 @@ export default function AgentsPage() {
 
                 {docError && <p className="text-[12px] text-error mb-2">{docError}</p>}
 
-                {totalDocs === 0 ? (
+                {docsLoading ? (
+                  <div className="flex items-center gap-2 py-3 text-[12px] text-on-surface-variant/60">
+                    <Loader2 size={13} className="animate-spin" /> Hujjatlar yuklanmoqda...
+                  </div>
+                ) : totalDocs === 0 ? (
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
@@ -369,7 +379,7 @@ export default function AgentsPage() {
                   <div className="space-y-1.5">
                     {/* Serverda saqlangan hujjatlar */}
                     {savedDocs.map(doc => (
-                      <div key={`saved-${doc.id}`} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-container border border-outline-variant/20 group">
+                      <div key={`saved-${doc.id}`} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-container border border-outline-variant/20">
                         <File size={13} className={`shrink-0 ${fileColor(doc.fileType)}`} />
                         <div className="flex-1 min-w-0">
                           <p className="text-[12px] font-medium text-on-surface truncate">{doc.originalName}</p>
@@ -377,7 +387,7 @@ export default function AgentsPage() {
                         </div>
                         <button
                           onClick={() => removeSaved(doc.id)}
-                          className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-on-surface-variant opacity-0 group-hover:opacity-100 hover:text-error hover:bg-error/10 transition-all"
+                          className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-on-surface-variant hover:text-error hover:bg-error/10 transition-all"
                         >
                           <X size={12} />
                         </button>
@@ -386,7 +396,7 @@ export default function AgentsPage() {
 
                     {/* Hali yuklanmagan fayllar */}
                     {pendingFiles.map(({ key, file }) => (
-                      <div key={key} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-container border border-outline-variant/20 border-dashed group">
+                      <div key={key} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-container border border-dashed border-outline-variant/30">
                         <File size={13} className={`shrink-0 ${fileColor(fileExt(file.name))}`} />
                         <div className="flex-1 min-w-0">
                           <p className="text-[12px] font-medium text-on-surface truncate">{file.name}</p>
@@ -394,7 +404,7 @@ export default function AgentsPage() {
                         </div>
                         <button
                           onClick={() => removePending(key)}
-                          className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-on-surface-variant opacity-0 group-hover:opacity-100 hover:text-error hover:bg-error/10 transition-all"
+                          className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-on-surface-variant hover:text-error hover:bg-error/10 transition-all"
                         >
                           <X size={12} />
                         </button>
