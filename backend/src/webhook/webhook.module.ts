@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { WebhookController } from './webhook.controller';
 import { WebhookService } from './webhook.service';
-import { WebhookProcessor } from '../queue/webhook.processor';
 import { SettingsModule } from '../settings/settings.module';
 import { DmMessagesModule } from '../dm-messages/dm-messages.module';
 import { LogsModule } from '../logs/logs.module';
@@ -19,7 +18,7 @@ import { AdminModule } from '../admin/admin.module';
     AdminModule,
   ],
   controllers: [WebhookController],
-  providers: [WebhookService, WebhookProcessor],
+  providers: [WebhookService],
   exports: [WebhookService],
 })
 export class WebhookModule {}
