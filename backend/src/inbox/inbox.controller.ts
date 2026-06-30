@@ -59,7 +59,7 @@ export class InboxController {
   async updateConversation(
     @Req() req: Request,
     @Param('id') id: string,
-    @Body() body: { customLabel?: string; note?: string },
+    @Body() body: { participantName?: string; participantUsername?: string },
   ) {
     const { ig_account_id } = await this.getCreds(req);
     return this.inbox.updateConversation(Number(id), ig_account_id, body);
