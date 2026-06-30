@@ -26,6 +26,11 @@ export class TasksService implements OnModuleInit, OnModuleDestroy {
     // Muddati yaqin IG tokenlarni har kecha soat 04:00 da yangilash
     this.scheduleDaily(4, 0, () => this.refreshExpiringTokens());
     this.logger.log('Kunlik cron job lar ishga tushdi');
+
+    // Startup: barcha akkauntlar uchun webhook subscription ta'minlash
+    setTimeout(() => this.subscribeAllWebhooks().catch(err =>
+      this.logger.error('Webhook subscription xato: ' + err.message)
+    ), 5000);
   }
 
   onModuleDestroy() {
@@ -102,6 +107,31 @@ export class TasksService implements OnModuleInit, OnModuleDestroy {
         await this.notifyTelegramUser(acc);
       }
     }
+  }
+
+  /** Barcha aktiv IG akkauntlarni webhook fieldlariga subscribe qilish */
+  async subscribeAllWebhooks(): Promise<void> {
+    const accounts = await this.igRepo.find({ where: { is_active: true } });
+    this.logger.log(`Webhook subscription: ${accounts.length} ta akkount tekshirilmoqda...`);
+    let ok = 0, fail = 0;
+    for (const acc of accounts) {
+      if (!acc.access_token || !acc.instagram_account_id) continue;
+      try {
+        await axios.post(
+          `https://graph.facebook.com/v21.0/${acc.instagram_account_id}/subscribed_apps`,
+          null,
+          { params: { subscribed_fields: 'messages,comments', access_token: acc.access_token } },
+        );
+        ok++;
+      } catch (err: any) {
+        this.logger.warn(
+          `Webhook sub xato @${acc.instagram_username}: ` +
+          (err.response?.data?.error?.message || err.message),
+        );
+        fail++;
+      }
+    }
+    this.logger.log(`Webhook subscription: ${ok} muvaffaqiyatli, ${fail} xato`);
   }
 
   private async notifyTelegramUser(acc: InstagramAccount): Promise<void> {
