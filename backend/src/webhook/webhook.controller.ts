@@ -1,15 +1,17 @@
 import { Controller, Get, Post, Query, Body, Req, Res, HttpCode, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 import type { Request, Response } from 'express';
 import * as crypto from 'crypto';
-import { WebhookService } from './webhook.service';
+import { WEBHOOK_QUEUE } from '../queue/queue.module';
 
 @Controller('api/webhook')
 export class WebhookController {
   private readonly logger = new Logger(WebhookController.name);
 
   constructor(
-    private readonly webhookService: WebhookService,
+    @InjectQueue(WEBHOOK_QUEUE) private readonly queue: Queue,
     private readonly config: ConfigService,
   ) {}
 
@@ -57,13 +59,16 @@ export class WebhookController {
 
     res.sendStatus(200);
 
-    setImmediate(() => {
-      const entries = Array.isArray(body.entry) ? body.entry : [body];
-      for (const entry of entries) {
-        this.webhookService.handleEntry(entry).catch((err) => {
-          this.logger.error(`Webhook entry xatosi: ${err.message}`);
-        });
-      }
-    });
+    const entries = Array.isArray(body.entry) ? body.entry : [body];
+    for (const entry of entries) {
+      this.queue.add('handle-entry', { entry }, {
+        attempts: 5,
+        backoff: { type: 'fixed', delay: 5_000 },
+        removeOnComplete: 100,
+        removeOnFail: 50,
+      }).catch((err) => {
+        this.logger.error(`Queue ga qo'shishda xato: ${err.message}`);
+      });
+    }
   }
 }
