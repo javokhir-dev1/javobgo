@@ -318,7 +318,12 @@ export class WebhookService {
             const dmButtons = (auto as any).dmButtons as { title: string; url: string }[] | undefined;
             if (dmButtons?.length) {
               for (const btn of dmButtons) {
-                await this.instagram.sendDMWithButton(creds, commenterId, btn.title, btn.title, btn.url);
+                try {
+                  await this.instagram.sendDMWithButton(creds, commenterId, btn.title, btn.title, btn.url);
+                  this.logger.log(`✅ Tugma yuborildi: "${btn.title}" → ${btn.url}`);
+                } catch (btnErr: any) {
+                  this.logger.error(`❌ Tugma yuborishda xato: ${btnErr.response?.data?.error?.message || btnErr.message}`);
+                }
               }
             }
             repliedOrDmed = true;
