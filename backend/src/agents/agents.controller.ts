@@ -1,4 +1,8 @@
-import { Controller, Get, Post, Patch, Delete, Param, Body, Req, Res } from '@nestjs/common';
+import {
+  Controller, Get, Post, Patch, Delete, Param, Body, Req, Res,
+  UseInterceptors, UploadedFile, BadRequestException,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { Request, Response } from 'express';
 import { JwtService } from '@nestjs/jwt';
 import { AgentsService } from './agents.service';
@@ -6,6 +10,17 @@ import { CreateAgentDto } from './dto/create-agent.dto';
 import { extractTelegramId } from '../auth/extract-telegram-id';
 import { extractActiveIgId } from '../auth/extract-active-ig-id';
 import { InstagramAccountsService } from '../instagram-accounts/instagram-accounts.service';
+
+const ALLOWED_MIMES = [
+  'application/pdf',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  'text/plain',
+  'text/csv',
+  'text/markdown',
+];
 
 @Controller('api/agents')
 export class AgentsController {
@@ -43,6 +58,8 @@ export class AgentsController {
     return this.service.remove(+id, await this.igId(req));
   }
 
+  // ─── Messages ────────────────────────────────────────────────────────────────
+
   @Get(':id/messages')
   async getMessages(@Req() req: Request, @Param('id') id: string) {
     return this.service.getMessages(+id, await this.igId(req));
@@ -62,6 +79,44 @@ export class AgentsController {
   async clearMessages(@Req() req: Request, @Param('id') id: string) {
     return this.service.clearMessages(+id, await this.igId(req));
   }
+
+  // ─── Documents ───────────────────────────────────────────────────────────────
+
+  @Get(':id/documents')
+  async getDocuments(@Req() req: Request, @Param('id') id: string) {
+    return this.service.getDocuments(+id, await this.igId(req));
+  }
+
+  @Post(':id/documents')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: undefined, // memoryStorage (buffer)
+      limits: { fileSize: 20 * 1024 * 1024 }, // 20 MB
+    }),
+  )
+  async uploadDocument(
+    @Req() req: Request,
+    @Param('id') id: string,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    if (!file) throw new BadRequestException('Fayl yuklanmadi');
+    const ext = file.originalname.split('.').pop()?.toLowerCase() ?? '';
+    const allowed = ALLOWED_MIMES.includes(file.mimetype) ||
+      ['pdf', 'docx', 'xlsx', 'xls', 'pptx', 'txt', 'csv', 'md'].includes(ext);
+    if (!allowed) throw new BadRequestException('Bu fayl turi qo\'llab-quvvatlanmaydi');
+    return this.service.uploadDocument(+id, await this.igId(req), file);
+  }
+
+  @Delete(':id/documents/:docId')
+  async deleteDocument(
+    @Req() req: Request,
+    @Param('id') id: string,
+    @Param('docId') docId: string,
+  ) {
+    return this.service.deleteDocument(+id, +docId, await this.igId(req));
+  }
+
+  // ─── Chat ────────────────────────────────────────────────────────────────────
 
   @Post(':id/chat')
   async chat(

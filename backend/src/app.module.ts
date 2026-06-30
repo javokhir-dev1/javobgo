@@ -18,6 +18,7 @@ import { TasksModule } from './tasks/tasks.module';
 import { InstagramAccount } from './instagram-accounts/instagram-account.entity';
 import { Agent } from './agents/entities/agent.entity';
 import { ChatMessage } from './agents/entities/chat-message.entity';
+import { AgentDocument } from './agents/entities/agent-document.entity';
 import { Automation } from './automations/entities/automation.entity';
 import { Settings } from './settings/entities/settings.entity';
 import { DmMessage } from './dm-messages/entities/dm-message.entity';
@@ -47,7 +48,7 @@ import { ApiQuotaConfig } from './admin/entities/api-quota-config.entity';
         database: config.get('DB_DATABASE', 'instabot'),
         entities: [
           Settings, DmMessage, DmCounter, Log, RateLimit, CommentRule,
-          Agent, ChatMessage, Automation, Conversation, InboxMessage,
+          Agent, ChatMessage, AgentDocument, Automation, Conversation, InboxMessage,
           TelegramUser, AuthToken, InstagramAccount, RequestLog, ApiQuotaConfig,
         ],
         synchronize: process.env.NODE_ENV !== 'production',

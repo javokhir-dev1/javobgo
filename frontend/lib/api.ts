@@ -103,6 +103,18 @@ export const toggleCommentRule = (id: number) => api.patch(`/api/comment-rules/$
 export const getGlobalRule = () =>
   getCommentRules().then(d => (d.rules || []).find((r: any) => r.postId === '__global__') || null);
 
+// Agent documents
+export const getAgentDocuments = (id: number) => api.get(`/api/agents/${id}/documents`).then(r => r.data);
+export const uploadAgentDocument = (id: number, file: File) => {
+  const form = new FormData();
+  form.append('file', file);
+  return api.post(`/api/agents/${id}/documents`, form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  }).then(r => r.data);
+};
+export const deleteAgentDocument = (agentId: number, docId: number) =>
+  api.delete(`/api/agents/${agentId}/documents/${docId}`).then(r => r.data);
+
 // Agent chat history
 export const getAgentMessages = (id: number) => api.get(`/api/agents/${id}/messages`).then(r => r.data);
 export const saveAgentMessage = (id: number, role: string, text: string) =>
