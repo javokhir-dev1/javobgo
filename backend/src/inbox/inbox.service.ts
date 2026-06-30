@@ -189,6 +189,7 @@ export class InboxService {
     participantIgsid: string,
     text: string,
     buttons?: { title: string; url: string }[],
+    emitSse: boolean = false,
   ): Promise<InboxMessage> {
     const ig_account_id = creds.accountId;
 
@@ -234,8 +235,9 @@ export class InboxService {
     });
 
     const saved = await this.msgRepo.save(msg);
-    // SSE emit qilinmaydi — frontend optimistic UI orqali allaqachon xabarni ko'rsatadi.
-    // Instagram echo webhook kelganda handleIncomingDM deduplication qiladi.
+    if (emitSse) {
+      this.emit(ig_account_id, 'new_message', { conversation: conv, message: saved });
+    }
     return saved;
   }
 
