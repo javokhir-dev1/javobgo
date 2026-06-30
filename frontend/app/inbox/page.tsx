@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { MessageCircle, Send, Search, X, RefreshCw, Zap, Plus, Trash2, MoreVertical, Pencil } from 'lucide-react';
 import { getConversations, getInboxMessages, sendInboxMessage, getInboxEventsUrl, syncInbox, deleteConversation } from '@/lib/api';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { EditConversationModal } from '@/components/inbox/EditConversationModal';
 import { useInstagramStatus } from '@/context/InstagramContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { Avatar } from '@/components/ui/Avatar';
@@ -31,6 +32,7 @@ export default function InboxPage() {
   const [showMobileDmSettings, setShowMobileDmSettings] = useState(false);
   const [menuOpen, setMenuOpen] = useState<number | null>(null);
   const [confirmDeleteConv, setConfirmDeleteConv] = useState<number | null>(null);
+  const [editConv, setEditConv] = useState<import('@/components/inbox/types').Conversation | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef  = useRef<HTMLTextAreaElement>(null);
 
@@ -232,6 +234,16 @@ export default function InboxPage() {
 
   return (
     <div className="h-full flex overflow-x-hidden bg-surface-container-low">
+      {editConv && (
+        <EditConversationModal
+          conv={editConv}
+          onClose={() => setEditConv(null)}
+          onSaved={updated => {
+            setConversations(prev => prev.map(c => c.id === updated.id ? { ...c, ...updated } : c));
+            if (selected?.id === updated.id) setSelected(s => s ? { ...s, ...updated } : s);
+          }}
+        />
+      )}
       <ConfirmDialog
         open={!!confirmDeleteConv}
         title="Suhbatni o'chirish"
@@ -340,7 +352,7 @@ export default function InboxPage() {
                   <div className="relative flex-shrink-0">
                     <button
                       onClick={e => { e.stopPropagation(); setMenuOpen(menuOpen === conv.id ? null : conv.id); }}
-                      className="w-7 h-7 rounded-full flex items-center justify-center text-on-surface-variant opacity-0 group-hover:opacity-100 hover:bg-surface-container-high transition-all"
+                      className="w-7 h-7 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-all"
                     >
                       <MoreVertical size={15} />
                     </button>
@@ -349,7 +361,7 @@ export default function InboxPage() {
                         <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(null)} />
                         <div className="absolute right-0 top-8 z-50 bg-surface-container-lowest border border-outline-variant/30 rounded-xl shadow-xl overflow-hidden w-40">
                           <button
-                            onClick={e => { e.stopPropagation(); setMenuOpen(null); setProfileModal(conv); }}
+                            onClick={e => { e.stopPropagation(); setMenuOpen(null); setEditConv(conv); }}
                             className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-on-surface hover:bg-surface-container transition-colors"
                           >
                             <Pencil size={14} className="text-on-surface-variant" /> Tahrirlash
@@ -508,3 +520,4 @@ export default function InboxPage() {
     </div>
   );
 }
+                                  

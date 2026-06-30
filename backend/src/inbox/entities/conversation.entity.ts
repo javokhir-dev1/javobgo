@@ -39,6 +39,12 @@ export class Conversation {
   @Column({ default: 0 })
   unreadCount: number;
 
+  @Column({ nullable: true })
+  customLabel: string;
+
+  @Column({ type: 'text', nullable: true })
+  note: string;
+
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
 

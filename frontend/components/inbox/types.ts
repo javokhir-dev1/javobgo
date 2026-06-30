@@ -10,6 +10,8 @@ export interface Conversation {
   lastMessageTimestampMs: string | null;
   unreadCount: number;
   updatedAt: string;
+  customLabel?: string | null;
+  note?: string | null;
 }
 
 export interface InboxMessage {
