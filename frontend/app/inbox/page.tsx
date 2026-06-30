@@ -199,7 +199,7 @@ export default function InboxPage() {
           : c
         )
       );
-      if (validButtons.length) { setButtons([]); setShowButtons(false); }
+      if (validButtons.length) { setButtons([]); }
     } catch {
       setMessages(prev => prev.filter(m => m.id !== tempMsg.id));
       setInput(text);
@@ -428,3 +428,34 @@ export default function InboxPage() {
                     <Send size={16} />
                   </button>
                 </div>
+                       
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="flex-1 flex flex-col items-center justify-center text-on-surface-variant gap-2">
+            <MessageCircle size={56} className="opacity-15" />
+            <p className="text-[16px] font-medium">{t('inbox.chat.selectPrompt')}</p>
+            <p className="text-[13px] opacity-60">{t('inbox.chat.selectDesc')}</p>
+          </div>
+        )}
+      </div>
+
+      {/* O'rta va O'ng o'rtasidagi Resizer */}
+      <div
+        onMouseDown={startRightResize}
+        className="hidden md:block w-1 cursor-col-resize bg-outline-variant/20 hover:bg-primary active:bg-primary transition-colors shrink-0 z-10"
+      />
+
+      {/* ── DM Sozlamalari paneli ── */}
+      <div className="hidden md:flex">
+        <DmSettingsPanel width={rightWidth} />
+      </div>
+
+      {/* Mobile DM Settings Overlay */}
+      {showMobileDmSettings && (
+        <DmSettingsPanel width="100%" onClose={() => setShowMobileDmSettings(false)} />
+      )}
+    </div>
+  );
+}
