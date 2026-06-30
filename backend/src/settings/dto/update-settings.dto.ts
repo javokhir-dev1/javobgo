@@ -1,4 +1,4 @@
-import { IsBoolean, IsOptional, IsString, IsNumber, IsIn } from 'class-validator';
+import { IsBoolean, IsOptional, IsString, IsNumber, IsIn, IsArray } from 'class-validator';
 
 export class UpdateSettingsDto {
   @IsOptional() @IsBoolean()
@@ -9,4 +9,7 @@ export class UpdateSettingsDto {
 
   @IsOptional() @IsNumber()
   dmAgentId?: number;
+
+  @IsOptional() @IsArray()
+  dmButtons?: { title: string; url: string }[];
 }
