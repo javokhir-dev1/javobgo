@@ -136,6 +136,7 @@ export class WebhookService {
     if (isEcho || senderId === botAccountId) return;
 
     const s = await this.settings.get(botAccountId);
+    this.logger.log(`[DM Debug] dmAutoReplyEnabled=${s.dmAutoReplyEnabled} dmMode=${s.dmMode} dmAgentId=${s.dmAgentId}`);
     if (!s.dmAutoReplyEnabled) return;
 
     const canReply = await this.adminService.checkBotReplyLimit(botAccountId);
@@ -147,6 +148,7 @@ export class WebhookService {
     const adminCfg = await this.adminService.getConfig();
     const dmLimit = adminCfg.dmLimit ?? 10;
     const incomingCount = await this.inboxService.getIncomingMessageCount(botAccountId, senderId);
+    this.logger.log(`[DM Debug] incomingCount=${incomingCount} dmLimit=${dmLimit}`);
     if (incomingCount > dmLimit) {
       this.logger.log('DM limit: ' + senderId + ' ' + incomingCount + ' xabar yubordi');
       return;
