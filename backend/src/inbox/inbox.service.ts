@@ -64,6 +64,15 @@ export class InboxService {
     return { success: true };
   }
 
+  async updateConversation(
+    conversationId: number,
+    ig_account_id: string,
+    dto: { customLabel?: string; note?: string },
+  ): Promise<Conversation> {
+    await this.convRepo.update({ id: conversationId, instagram_account_id: ig_account_id }, dto);
+    return this.convRepo.findOne({ where: { id: conversationId } });
+  }
+
   async getMessages(conversationId: number): Promise<InboxMessage[]> {
     await this.convRepo.update({ id: conversationId }, { unreadCount: 0 });
     return this.msgRepo.find({
