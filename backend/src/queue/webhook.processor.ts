@@ -27,6 +27,13 @@ export class WebhookProcessor extends WorkerHost {
     const limitResult = await this.adminService.checkBotReplyLimitWithDelay(igAccountId);
 
     if (!limitResult.allowed) {
+      // Tuzatib bo'lmaydigan holat (akkaunt yo'q yoki bloklangan) — qayta urinmaymiz, tashlab yuboramiz
+      if (limitResult.drop) {
+        this.logger.warn(
+          `Webhook tashlab yuborildi: ${igAccountId} (akkaunt topilmadi yoki bloklangan)`,
+        );
+        return;
+      }
       const delayMs = limitResult.delayMs ?? 60_000;
       this.logger.warn(
         `Rate limit: ${igAccountId} — ${Math.round(delayMs / 1000)}s dan keyin qayta uriniladi`,

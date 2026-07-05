@@ -363,8 +363,8 @@ export function AutomationForm({
 
                     {/* URL Tugmalar */}
                     <div className="pt-2 border-t border-outline-variant/20 mt-2">
-                      <p className="text-xs font-medium text-on-surface mb-1">🔗 URL Tugmalar <span className="text-on-surface-variant font-normal">(barcha javoblar tagida)</span></p>
-                      <p className="text-xs text-on-surface-variant mb-2">Shablon va agent javoblari yuborilgandan so'ng, quyidagi tugmalar ham DM ga qo'shilib yuboriladi.</p>
+                      <p className="text-xs font-medium text-on-surface mb-1">🔗 {t('automation.form.urlButtonsTitle')} <span className="text-on-surface-variant font-normal">{t('automation.form.urlButtonsNote')}</span></p>
+                      <p className="text-xs text-on-surface-variant mb-2">{t('automation.form.urlButtonsDesc')}</p>
                       {(form.dmButtons || []).map((btn, i) => (
                         <div key={i} className="flex gap-2 mb-2">
                           <input
@@ -374,7 +374,7 @@ export function AutomationForm({
                               arr[i] = { ...arr[i], title: e.target.value };
                               up({ dmButtons: arr });
                             }}
-                            placeholder="Tugma nomi"
+                            placeholder={t('automation.form.buttonNamePlaceholder')}
                             className="w-28 px-2 py-1.5 rounded-lg bg-surface-variant text-on-surface text-xs outline-none focus:ring-2 ring-primary/40"
                           />
                           <input
@@ -399,7 +399,7 @@ export function AutomationForm({
                         onClick={() => up({ dmButtons: [...(form.dmButtons || []), { title: '', url: '' }] })}
                         className="flex items-center gap-1 text-xs text-primary hover:underline"
                       >
-                        <Plus size={12} /> Tugma qo'shish
+                        <Plus size={12} /> {t('automation.form.addButton')}
                       </button>
                     </div>
                   </div>

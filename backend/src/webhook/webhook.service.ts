@@ -341,10 +341,14 @@ export class WebhookService {
               userMessage: commentText?.substring(0, 200),
             });
           } catch (err) {
+            const igError = err.response?.data
+              ? JSON.stringify(err.response.data)
+              : err.message;
+            this.logger.error(`[Kommentdan DM xato] status=${err.response?.status} body=${igError}`);
             await this.logs.create({
               telegram_id, instagram_account_id: botAccountId,
               type: 'error', action: 'Kommentdan DM',
-              message: err.message, user: commenterName,
+              message: igError.substring(0, 300), user: commenterName,
             });
           }
         }
