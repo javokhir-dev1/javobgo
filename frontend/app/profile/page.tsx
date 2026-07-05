@@ -445,24 +445,21 @@ export default function SettingsPage() {
                   <div className="flex items-start gap-3">
                     <AlertCircle size={18} className="text-error mt-0.5 flex-shrink-0" />
                     <div className="flex-1">
-                      <h3 className="text-[15px] font-semibold text-on-surface">Hisobni o&apos;chirish</h3>
+                      <h3 className="text-[15px] font-semibold text-on-surface">{t('settings.deleteAccountTitle')}</h3>
                       <p className="text-[13px] text-on-surface-variant mt-1 leading-relaxed">
-                        Hisobingiz va barcha ma&apos;lumotlaringiz (Instagram ulanishlari, agentlar,
-                        avtomatsiyalar, xabarlar va loglar) o&apos;chiriladi. So&apos;rovdan keyin{' '}
-                        <b>90 kun</b> ichida qayta kirsangiz — o&apos;chirish bekor qilinadi.
-                        90 kundan so&apos;ng butunlay va qaytarib bo&apos;lmas tarzda o&apos;chadi.
+                        {t('settings.deleteAccountDesc')}
                       </p>
                       {!deletePanelOpen ? (
                         <button
                           onClick={() => setDeletePanelOpen(true)}
                           className="mt-3 px-4 py-2 rounded-xl border border-error/50 text-error text-[13px] font-medium hover:bg-error/10 transition-colors"
                         >
-                          Hisobni o&apos;chirish
+                          {t('settings.deleteAccountBtn')}
                         </button>
                       ) : (
                         <div className="mt-3 space-y-2">
                           <label className="text-[12px] text-on-surface-variant block">
-                            Tasdiqlash uchun <b>DELETE</b> deb yozing:
+                            {t('settings.deleteAccountPrompt')}
                           </label>
                           <input
                             value={deleteText}
@@ -475,14 +472,14 @@ export default function SettingsPage() {
                               onClick={() => { setDeletePanelOpen(false); setDeleteText(''); }}
                               className="flex-1 px-4 py-2 rounded-xl border border-outline-variant/50 text-[13px] font-medium text-on-surface-variant hover:bg-surface-container transition-colors"
                             >
-                              Bekor qilish
+                              {t('general.cancel')}
                             </button>
                             <button
                               disabled={deleteText.trim() !== 'DELETE' || deleting}
                               onClick={handleDeleteAccount}
                               className="flex-1 px-4 py-2 rounded-xl bg-error text-white text-[13px] font-semibold hover:bg-error/90 transition-colors disabled:opacity-40"
                             >
-                              {deleting ? 'O’chirilmoqda…' : 'Butunlay o’chirish'}
+                              {deleting ? t('settings.deleting') : t('settings.deleteAccountConfirm')}
                             </button>
                           </div>
                         </div>
