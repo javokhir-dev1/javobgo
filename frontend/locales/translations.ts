@@ -194,6 +194,17 @@ const uz: TranslationDictionary = {
   'agents.chat.startChat': 'Suhbatni boshlang',
   'agents.chat.placeholder': 'Xabar yozing...',
   'agents.chat.sendHint': 'Enter — yuborish',
+  'agents.delete.title': 'Agentni o\'chirish',
+  'agents.delete.desc': '"{name}" agenti va uning barcha ma\'lumotlari o\'chirib yuboriladi.',
+  'agents.delete.confirmBtn': 'O\'chirish',
+  'agents.delete.cancelBtn': 'Bekor qilish',
+  'agents.docs.title': 'Bilim bazasi',
+  'agents.docs.empty': 'Hujjatlar yo\'q',
+  'agents.docs.info': 'Yuklangan hujjatlar AI ga bilim bazasi sifatida uzatiladi — agent shu ma\'lumotlar asosida aniqroq javob beradi.',
+  'inbox.chat.edit': 'Tahrirlash',
+  'inbox.chat.delete': 'O\'chirish',
+  'automation.form.turnOn': 'Yoqish',
+  'automation.form.turnOff': 'O\'chirish',
 };
 
 const en: TranslationDictionary = {
@@ -388,6 +399,17 @@ const en: TranslationDictionary = {
   'agents.chat.startChat': 'Start conversation',
   'agents.chat.placeholder': 'Type a message...',
   'agents.chat.sendHint': 'Enter to send',
+  'agents.delete.title': 'Delete Agent',
+  'agents.delete.desc': '"{name}" agent and all its data will be deleted.',
+  'agents.delete.confirmBtn': 'Delete',
+  'agents.delete.cancelBtn': 'Cancel',
+  'agents.docs.title': 'Knowledge Base',
+  'agents.docs.empty': 'No documents',
+  'agents.docs.info': 'Uploaded documents are passed to the AI as a knowledge base — the agent will answer more accurately based on this data.',
+  'inbox.chat.edit': 'Edit',
+  'inbox.chat.delete': 'Delete',
+  'automation.form.turnOn': 'Turn On',
+  'automation.form.turnOff': 'Turn Off',
 };
 
 const ru: TranslationDictionary = {
@@ -582,6 +604,17 @@ const ru: TranslationDictionary = {
   'agents.chat.startChat': 'Начните беседу',
   'agents.chat.placeholder': 'Введите сообщение...',
   'agents.chat.sendHint': 'Enter для отправки',
+  'agents.delete.title': 'Удалить агента',
+  'agents.delete.desc': 'Агент "{name}" и все его данные будут удалены.',
+  'agents.delete.confirmBtn': 'Удалить',
+  'agents.delete.cancelBtn': 'Отмена',
+  'agents.docs.title': 'База знаний',
+  'agents.docs.empty': 'Нет документов',
+  'agents.docs.info': 'Загруженные документы передаются ИИ как база знаний — агент будет отвечать точнее на основе этих данных.',
+  'inbox.chat.edit': 'Редактировать',
+  'inbox.chat.delete': 'Удалить',
+  'automation.form.turnOn': 'Включить',
+  'automation.form.turnOff': 'Выключить',
 };
 
 export const translations: Record<Language, TranslationDictionary> = {

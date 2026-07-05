@@ -364,13 +364,13 @@ export default function InboxPage() {
                             onClick={e => { e.stopPropagation(); setMenuOpen(null); setEditConv(conv); }}
                             className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-on-surface hover:bg-surface-container transition-colors"
                           >
-                            <Pencil size={14} className="text-on-surface-variant" /> Tahrirlash
+                            <Pencil size={14} className="text-on-surface-variant" /> {t('inbox.chat.edit')}
                           </button>
                           <button
                             onClick={e => { e.stopPropagation(); setMenuOpen(null); setConfirmDeleteConv(conv.id); }}
                             className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-error hover:bg-error/8 transition-colors"
                           >
-                            <Trash2 size={14} /> O'chirish
+                            <Trash2 size={14} /> {t('inbox.chat.delete')}
                           </button>
                         </div>
                       </>
