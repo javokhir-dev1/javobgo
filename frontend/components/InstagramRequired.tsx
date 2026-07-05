@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import { useInstagram } from '@/context/InstagramContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { Loader2, Instagram, AlertTriangle, ShieldCheck } from 'lucide-react';
 
 export default function InstagramRequired({ children }: { children: React.ReactNode }) {
   const { connected, refresh } = useInstagram();
+  const { t } = useLanguage();
   const [connecting, setConnecting] = useState(false);
   const [error, setError] = useState('');
 
@@ -62,7 +64,7 @@ export default function InstagramRequired({ children }: { children: React.ReactN
     return (
       <div className="min-h-screen w-full flex flex-col items-center justify-center bg-background">
         <Loader2 className="w-10 h-10 animate-spin text-primary" />
-        <p className="mt-4 text-on-surface-variant animate-pulse">Yuklanmoqda...</p>
+        <p className="mt-4 text-on-surface-variant animate-pulse">{t('settings.waiting')}</p>
       </div>
     );
   }
@@ -78,11 +80,11 @@ export default function InstagramRequired({ children }: { children: React.ReactN
             </div>
             
             <h2 className="text-[24px] font-extrabold text-on-surface mb-3">
-              Instagram'ni ulang
+              {t('instagram.connectTitle')}
             </h2>
             
             <p className="text-[15px] leading-relaxed text-on-surface-variant mb-8">
-              JavobGo xizmatlaridan foydalanish uchun davom etishdan oldin Instagram biznes yoki kreator hisobingizni ulashingiz kerak.
+              {t('instagram.connectDesc')}
             </p>
 
             {error && (
@@ -100,19 +102,19 @@ export default function InstagramRequired({ children }: { children: React.ReactN
               {connecting ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  Kutilmoqda...
+                  {t('settings.waiting')}
                 </>
               ) : (
                 <>
                   <Instagram className="w-5 h-5" />
-                  Hisobni ulash
+                  {t('instagram.connectBtn')}
                 </>
               )}
             </button>
 
             <div className="mt-6 flex items-center justify-center gap-2 text-[12px] font-medium text-on-surface-variant/70">
               <ShieldCheck className="w-4 h-4" />
-              <span>Ma'lumotlaringiz xavfsizligi kafolatlangan</span>
+              <span>{t('instagram.secure')}</span>
             </div>
           </div>
         </div>

@@ -105,7 +105,7 @@ bot.command('start', async (ctx: Context) => {
     await setTokenMessageId(token, sentMsg.message_id);
 
     // Asosiy tugmalarni ko'rsatish
-    await ctx.reply("💬", getMainKeyboard(lang));
+    await ctx.reply(t(lang, 'main_menu'), getMainKeyboard(lang));
     return;
   }
 
@@ -195,7 +195,7 @@ bot.on('contact', async (ctx: Context) => {
     );
     await setTokenMessageId(token, sentMsg.message_id);
 
-    await ctx.reply("💬", getMainKeyboard(lang));
+    await ctx.reply(t(lang, 'main_menu'), getMainKeyboard(lang));
 
   } catch (err: any) {
     console.error('Contact xatosi:', err.message);

@@ -121,7 +121,7 @@ bot.command('start', async (ctx) => {
         });
         await (0, db_1.setTokenMessageId)(token, sentMsg.message_id);
         // Asosiy tugmalarni ko'rsatish
-        await ctx.reply("💬", getMainKeyboard(lang));
+        await ctx.reply((0, i18n_1.t)(lang, 'main_menu'), getMainKeyboard(lang));
         return;
     }
     // Not registered - ask for language
@@ -190,7 +190,7 @@ bot.on('contact', async (ctx) => {
             },
         });
         await (0, db_1.setTokenMessageId)(token, sentMsg.message_id);
-        await ctx.reply("💬", getMainKeyboard(lang));
+        await ctx.reply((0, i18n_1.t)(lang, 'main_menu'), getMainKeyboard(lang));
     }
     catch (err) {
         console.error('Contact xatosi:', err.message);
