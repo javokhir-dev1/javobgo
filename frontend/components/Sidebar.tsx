@@ -247,11 +247,10 @@ export default function Sidebar() {
           rel="noopener noreferrer"
           className="block text-[10px] text-on-surface-variant/50 hover:text-on-surface-variant transition-colors mb-1"
         >
-          Maxfiylik siyosati
+          {t('nav.privacy')}
         </Link>
         <p className="text-[10px] text-on-surface-variant/40 leading-snug">
-          © {new Date().getFullYear()} Barcha huquqlar himoyalangan.
-          Xizmatlar «ZO'R PLAY» MCHJ tomonidan ko'rsatiladi.
+          {t('nav.copyright')}
         </p>
       </div>
     </aside>
