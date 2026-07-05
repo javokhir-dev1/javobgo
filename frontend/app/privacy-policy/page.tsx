@@ -196,6 +196,16 @@ export default function PrivacyPolicyPage() {
             <div className="bg-surface-container rounded-lg p-4 mt-3">
               <p className="text-on-surface font-medium">&laquo;ZO&apos;R PLAY&raquo; MCHJ</p>
               <p className="text-on-surface-variant text-sm mt-1">O&apos;zbekiston Respublikasi</p>
+              <p className="text-on-surface-variant text-sm mt-2">
+                Email:{' '}
+                <a href="mailto:javokhir.dev1@gmail.com" className="text-primary hover:underline">
+                  javokhir.dev1@gmail.com
+                </a>
+              </p>
+              <p className="text-on-surface-variant text-sm mt-1">
+                Telegram bot orqali:{' '}
+                <code className="text-primary">/murojaat</code>
+              </p>
             </div>
           </section>
 
