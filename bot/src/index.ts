@@ -85,6 +85,7 @@ bot.command('start', async (ctx: Context) => {
       },
     );
     await setTokenMessageId(token, sentMsg.message_id);
+    await ctx.reply("Biz bilan bog'lanish uchun pastdagi tugmadan foydalaning 👇", mainKeyboard);
     return;
   }
 
@@ -138,6 +139,7 @@ bot.on('contact', async (ctx: Context) => {
       },
     );
     await setTokenMessageId(token, sentMsg.message_id);
+    await ctx.reply("Biz bilan bog'lanish uchun pastdagi tugmadan foydalaning 👇", mainKeyboard);
   } catch (err: any) {
     console.error('Contact xatosi:', err.message);
     await ctx.reply("Xatolik yuz berdi. Iltimos qayta urinib ko'ring.", {
@@ -164,7 +166,11 @@ bot.command('help', async (ctx: Context) => {
 // Murojaat kutilayotgan foydalanuvchilar (in-memory)
 const pendingSupport = new Map<number, 'general' | 'data_deletion'>();
 
-bot.command('murojaat', async (ctx: Context) => {
+// Ro'yxatdan o'tgan foydalanuvchilar uchun doimiy pastki tugma
+const MUROJAAT_BTN = '✍️ Murojaat';
+const mainKeyboard = Markup.keyboard([[MUROJAAT_BTN]]).resize();
+
+async function askMurojaat(ctx: Context) {
   const from = ctx.from;
   if (!from) return;
   pendingSupport.set(from.id, 'general');
@@ -173,7 +179,9 @@ bot.command('murojaat', async (ctx: Context) => {
     `Savolingiz, taklifingiz yoki ma'lumotlaringizni o'chirish so'rovini shu yerga yozib yuboring — admin ko'rib chiqadi.\n\n` +
     `Bekor qilish: /help`,
   );
-});
+}
+
+bot.command('murojaat', (ctx) => askMurojaat(ctx));
 
 async function forwardToAdmins(requestId: number, fromName: string, telegramId: string, message: string) {
   const adminIds = await getAdminTelegramIds();
@@ -224,6 +232,12 @@ bot.action(/^resolve:(\d+)$/, async (ctx) => {
 bot.on('message', async (ctx: Context) => {
   const from = ctx.from;
   const text = (ctx.message as any)?.text as string | undefined;
+
+  // Pastki "Murojaat" tugmasi bosilganda
+  if (from && text === MUROJAAT_BTN) {
+    await askMurojaat(ctx);
+    return;
+  }
 
   if (from && text && pendingSupport.has(from.id)) {
     pendingSupport.delete(from.id);
