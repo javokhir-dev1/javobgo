@@ -133,6 +133,7 @@ function DocumentsPanel({ agentId, onClose }: { agentId: number; onClose: () => 
   const [uploading, setUploading] = useState(false);
   const [error, setError]         = useState('');
   const inputRef                  = useRef<HTMLInputElement>(null);
+  const { t }                     = useLanguage();
 
   const load = useCallback(() => {
     getAgentDocuments(agentId).then(setDocs).catch(() => {});

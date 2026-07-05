@@ -10,6 +10,7 @@ import {
 import { useInstagram, useInstagramRefresh } from '@/context/InstagramContext';
 import { useTheme } from '@/components/ThemeProvider';
 import { useLanguage } from '@/context/LanguageContext';
+import { Avatar } from '@/components/ui/Avatar';
 
 const navItemKeys = [
   { href: '/',           icon: LayoutDashboard, labelKey: 'nav.dashboard' },
@@ -131,9 +132,7 @@ export default function Sidebar() {
               className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl border border-outline-variant/50 bg-surface-container-low hover:bg-surface-container transition-colors text-left group"
             >
               <div className="flex items-center gap-3 overflow-hidden">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-[#f09433] via-[#e6683c] to-[#bc1888] flex items-center justify-center text-white flex-shrink-0">
-                  <IgIcon />
-                </div>
+                <Avatar username={selectedAccount.instagram_username} profilePic={selectedAccount.profile_picture_url} size={32} />
                 <span className="text-[14px] font-medium text-on-surface truncate group-hover:text-primary transition-colors">
                   @{selectedAccount.instagram_username}
                 </span>
@@ -149,9 +148,7 @@ export default function Sidebar() {
                     onClick={() => handleSelect(acc.instagram_account_id)}
                     className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-surface-container-high transition-colors text-left"
                   >
-                    <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-[#f09433] via-[#e6683c] to-[#bc1888] flex items-center justify-center text-white flex-shrink-0">
-                      <IgIcon size={13} />
-                    </div>
+                    <Avatar username={acc.instagram_username} profilePic={acc.profile_picture_url} size={28} />
                     <span className="text-[13px] font-medium text-on-surface truncate flex-1">
                       @{acc.instagram_username}
                     </span>

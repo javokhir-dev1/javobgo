@@ -41,6 +41,7 @@ export class InstagramAccountsController {
     return accounts.map(a => ({
       instagram_account_id: a.instagram_account_id,
       instagram_username: a.instagram_username,
+      profile_picture_url: a.profile_picture_url ?? null,
       is_selected: a.is_selected,
     }));
   }
@@ -57,6 +58,7 @@ export class InstagramAccountsController {
       connected: true,
       instagram_account_id: account.instagram_account_id,
       instagram_username: account.instagram_username,
+      profile_picture_url: account.profile_picture_url ?? null,
       is_selected: account.is_selected,
       app_id: account.app_id,
       has_app_secret: !!account.app_secret,
@@ -121,6 +123,7 @@ export class InstagramAccountsController {
     const account = await this.service.upsertByIgId(telegram_id, igInfo.id, {
       access_token: body.access_token,
       instagram_username: igInfo.username,
+      profile_picture_url: igInfo.profile_picture_url ?? null,
       app_id: body.app_id || null,
       app_secret: body.app_secret || null,
       is_active: true,
@@ -130,6 +133,7 @@ export class InstagramAccountsController {
       connected: true,
       instagram_account_id: account.instagram_account_id,
       instagram_username: account.instagram_username,
+      profile_picture_url: account.profile_picture_url ?? null,
     };
   }
 }

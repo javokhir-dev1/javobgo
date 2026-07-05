@@ -89,7 +89,7 @@ export class InstagramService {
   async getAccountInfo(creds: IgCredentials) {
     const res = await axios.get(`${BASE_URL}/${creds.accountId}`, {
       params: {
-        fields: 'id,username,followers_count,media_count',
+        fields: 'id,username,profile_picture_url,followers_count,media_count',
         access_token: creds.token,
       },
     });

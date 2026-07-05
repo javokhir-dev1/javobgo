@@ -128,11 +128,12 @@ export class InstagramAccountsService {
   async fetchMe(access_token: string): Promise<{
     id: string;
     username: string;
+    profile_picture_url?: string;
     followers_count?: number;
     media_count?: number;
   }> {
     const res = await axios.get(`${BASE_URL}/me`, {
-      params: { fields: 'id,username,followers_count,media_count', access_token },
+      params: { fields: 'id,username,profile_picture_url,followers_count,media_count', access_token },
     });
     return res.data;
   }
