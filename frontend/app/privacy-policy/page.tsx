@@ -7,7 +7,7 @@ export const metadata: Metadata = {
 };
 
 export default function PrivacyPolicyPage() {
-  const lastUpdated = "2025-01-01";
+  const lastUpdated = "2026-07-05";
 
   return (
     <div className="min-h-screen bg-background text-on-surface">
@@ -51,7 +51,10 @@ export default function PrivacyPolicyPage() {
               <div className="bg-surface-container rounded-lg p-4">
                 <h3 className="font-medium text-on-surface mb-1">Telegram orqali avtorizatsiya</h3>
                 <p className="text-on-surface-variant text-sm">
-                  Telegram foydalanuvchi ID, ism va username. Parol yoki maxfiy ma&apos;lumotlar saqlanmaydi.
+                  Telegram foydalanuvchi ID, ism, username, telefon raqami va profil rasmi (avatar).
+                  Telefon raqami ro&apos;yxatdan o&apos;tishni tasdiqlash uchun, profil rasmi esa
+                  platformada ko&apos;rsatish uchun ishlatiladi. Parol yoki boshqa maxfiy
+                  ma&apos;lumotlar saqlanmaydi.
                 </p>
               </div>
               <div className="bg-surface-container rounded-lg p-4">
@@ -123,10 +126,11 @@ export default function PrivacyPolicyPage() {
           <section>
             <h2 className="text-xl font-semibold mb-3">5. Ma&apos;lumotlarni saqlash va xavfsizlik</h2>
             <p className="text-on-surface-variant leading-relaxed">
-              Barcha ma&apos;lumotlar xavfsiz server muhitida shifrlangan holda saqlanadi.
-              Instagram kirish tokenlari shifrlanib bazada saqlanadi va faqat API so&apos;rovlari uchun
-              ishlatiladi. Biz ma&apos;lumotlarni uchinchi shaxslarga sotmaymiz, ijaraga bermaymiz yoki
-              tijorat maqsadlarida almashmaymiz.
+              Ma&apos;lumotlar cheklangan kirishli xavfsiz server muhitida saqlanadi. Instagram
+              kirish tokenlari va ilova maxfiy kalitlari (app secret) bazada AES-256 algoritmi
+              bilan shifrlangan holda saqlanadi va faqat sizning nomingizdan API so&apos;rovlari
+              yuborish uchun ishlatiladi. Biz ma&apos;lumotlarni uchinchi shaxslarga sotmaymiz,
+              ijaraga bermaymiz yoki tijorat maqsadlarida almashmaymiz.
             </p>
           </section>
 

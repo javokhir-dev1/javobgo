@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
@@ -7,6 +7,8 @@ import { Agent } from './entities/agent.entity';
 import { ChatMessage } from './entities/chat-message.entity';
 import { AgentDocument } from './entities/agent-document.entity';
 import { CreateAgentDto } from './dto/create-agent.dto';
+import { Settings } from '../settings/entities/settings.entity';
+import { Automation } from '../automations/entities/automation.entity';
 
 interface MsgInput {
   role: 'user' | 'model';
@@ -24,6 +26,10 @@ export class AgentsService {
     private msgRepo: Repository<ChatMessage>,
     @InjectRepository(AgentDocument)
     private docRepo: Repository<AgentDocument>,
+    @InjectRepository(Settings)
+    private settingsRepo: Repository<Settings>,
+    @InjectRepository(Automation)
+    private automationRepo: Repository<Automation>,
     private config: ConfigService,
   ) {
     this.ai = new GoogleGenAI({ apiKey: this.config.get('GEMINI_API_KEY') });
@@ -54,6 +60,30 @@ export class AgentsService {
 
   async remove(id: number, instagram_account_id: string) {
     const agent = await this.findOne(id, instagram_account_id);
+
+    // DM settings da ishlatilayaptimi?
+    const usedInSettings = await this.settingsRepo.findOne({
+      where: { instagram_account_id, dmAgentId: id } as any,
+    });
+    if (usedInSettings) {
+      throw new BadRequestException(
+        'Bu agent DM avtoreply da ishlatilmoqda. Avval Settings → DM da agentni o`chirib, keyin qayta urinib ko`ring.',
+      );
+    }
+
+    // Automation da ishlatilayaptimi?
+    const usedInAutomation = await this.automationRepo.findOne({
+      where: [
+        { instagram_account_id, replyAgentId: id },
+        { instagram_account_id, dmAgentId: id },
+      ],
+    });
+    if (usedInAutomation) {
+      throw new BadRequestException(
+        `Bu agent "${usedInAutomation.name ?? 'Automation'}" avtomatsiyasida ishlatilmoqda. Avval u yerdan agentni olib tashlang.`,
+      );
+    }
+
     return this.repo.remove(agent);
   }
 

@@ -102,7 +102,16 @@ export class InstagramAccountsService {
   }
 
   async disconnectAccount(telegram_id: string, instagram_account_id: string): Promise<void> {
-    await this.repo.delete({ telegram_id, instagram_account_id });
+    // Bog'liq barcha ma'lumotlarni tozalaymiz
+    await this.dataSource.transaction(async (manager) => {
+      await manager.delete('automations',  { instagram_account_id });
+      await manager.delete('settings',     { instagram_account_id });
+      await manager.delete('dm_messages',  { instagram_account_id });
+      await manager.delete('rate_limits',  { instagram_account_id });
+      await manager.delete('agents',       { instagram_account_id });
+      await manager.delete('instagram_accounts', { telegram_id, instagram_account_id });
+    });
+
     const remaining = await this.repo.findOne({ where: { telegram_id, is_active: true } });
     if (remaining) {
       await this.repo.update({ id: remaining.id }, { is_selected: true });

@@ -5,7 +5,7 @@ import { WebhookService } from '../webhook/webhook.service';
 import { AdminService } from '../admin/admin.service';
 import { WEBHOOK_QUEUE } from './queue.module';
 
-@Processor(WEBHOOK_QUEUE, { concurrency: 3 })
+@Processor(WEBHOOK_QUEUE, { concurrency: 1 })
 export class WebhookProcessor extends WorkerHost {
   private readonly logger = new Logger(WebhookProcessor.name);
 

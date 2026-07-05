@@ -352,6 +352,7 @@ export class WebhookService {
 
       if (repliedOrDmed && commenterId) {
         await this.rateLimit.recordReply(commenterId, 'comment', 24, mediaId);
+        break; // Bir commentga faqat bitta automation javob beradi
       }
     }
   }

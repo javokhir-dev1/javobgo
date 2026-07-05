@@ -61,7 +61,13 @@ export class WebhookController {
 
     const entries = Array.isArray(body.entry) ? body.entry : [body];
     for (const entry of entries) {
+      // jobId = entry.id + birinchi o'zgarish vaqti → duplicate webhook kelsa ikkinchisi e'tiborga olinmaydi
+      const firstChange = entry.changes?.[0] ?? entry.messaging?.[0];
+      const ts = firstChange?.value?.timestamp ?? firstChange?.timestamp ?? Date.now();
+      const jobId = `${entry.id}-${ts}`;
+
       this.queue.add('handle-entry', { entry }, {
+        jobId,
         attempts: 5,
         backoff: { type: 'fixed', delay: 5_000 },
         removeOnComplete: 100,
