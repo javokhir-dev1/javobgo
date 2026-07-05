@@ -39,4 +39,12 @@ export class InstagramAccount {
   token_expires_at: Date | null;
 
   /** Ushbu akkaunt uchun maxsus soatlik limit (null = global limit ishlatiladi) */
-  @Column({ nullabl
+  @Column({ nullable: true, type: 'int' })
+  customRateLimit: number | null;
+
+  @CreateDateColumn()
+  created_at: Date;
+
+  @UpdateDateColumn()
+  updated_at: Date;
+}
