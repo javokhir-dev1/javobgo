@@ -85,7 +85,7 @@ bot.command('start', async (ctx: Context) => {
       },
     );
     await setTokenMessageId(token, sentMsg.message_id);
-    await ctx.reply("Biz bilan bog'lanish uchun pastdagi tugmadan foydalaning 👇", mainKeyboard);
+
     return;
   }
 
@@ -139,7 +139,7 @@ bot.on('contact', async (ctx: Context) => {
       },
     );
     await setTokenMessageId(token, sentMsg.message_id);
-    await ctx.reply("Biz bilan bog'lanish uchun pastdagi tugmadan foydalaning 👇", mainKeyboard);
+
   } catch (err: any) {
     console.error('Contact xatosi:', err.message);
     await ctx.reply("Xatolik yuz berdi. Iltimos qayta urinib ko'ring.", {

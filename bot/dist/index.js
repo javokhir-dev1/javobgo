@@ -54,7 +54,7 @@ function downloadFile(url, dest) {
     return new Promise((resolve, reject) => {
         const proto = url.startsWith('https') ? https : http;
         const file = fs.createWriteStream(dest);
-        proto.get(url, (res)  => {
+        proto.get(url, (res) => {
             if (res.statusCode !== 200) {
                 file.close();
                 fs.unlink(dest, () => { });
@@ -94,13 +94,9 @@ bot.command('start', async (ctx) => {
         return;
     const registered = await (0, db_1.isUserRegistered)(String(from.id)).catch(() => false);
     if (registered) {
-        const activeToken = await (0, db_1.getActiveAuthToken)(String(from.id));
-        let token = activeToken;
-        if (!token) {
-            token = await (0, db_1.createAuthToken)(String(from.id));
-        }
+        const token = await (0, db_1.createAuthToken)(String(from.id));
         const loginUrl = `${SITE_URL}/login?token=${token}`;
-        await ctx.replyWithMarkdown(`Salom, *${from.first_name}*!\n\nPlatformaga kirish uchun quyidagi tugmalardan birini tanlang:`, {
+        const sentMsg = await ctx.replyWithMarkdown(`Salom, *${from.first_name}*!\n\nPlatformaga kirish uchun quyidagi tugmalardan birini tanlang:`, {
             reply_markup: {
                 inline_keyboard: [[
                         { text: '🌐 Brauzerda ochish', url: loginUrl },
@@ -108,6 +104,7 @@ bot.command('start', async (ctx) => {
                     ]],
             },
         });
+        await (0, db_1.setTokenMessageId)(token, sentMsg.message_id);
         return;
     }
     await ctx.replyWithMarkdown(`*Xush kelibsiz, ${from.first_name}!* 👋\n\n` +
@@ -140,7 +137,7 @@ bot.on('contact', async (ctx) => {
         await (0, db_1.upsertTelegramUser)(telegramId, firstName, username, phone, avatarUrl);
         const token = await (0, db_1.createAuthToken)(telegramId);
         const loginUrl = `${SITE_URL}/login?token=${token}`;
-        await ctx.replyWithMarkdown(`✅ *Ro'yxatdan o'tdingiz!*\n\nPlatformaga kirish uchun quyidagi tugmalardan birini tanlang:`, {
+        const sentMsg = await ctx.replyWithMarkdown(`✅ *Ro'yxatdan o'tdingiz!*\n\nPlatformaga kirish uchun quyidagi tugmalardan birini tanlang:`, {
             reply_markup: {
                 inline_keyboard: [[
                         { text: '🌐 Brauzerda ochish', url: loginUrl },
@@ -148,6 +145,7 @@ bot.on('contact', async (ctx) => {
                     ]],
             },
         });
+        await (0, db_1.setTokenMessageId)(token, sentMsg.message_id);
     }
     catch (err) {
         console.error('Contact xatosi:', err.message);
@@ -159,11 +157,96 @@ bot.on('contact', async (ctx) => {
 // ─── /help ────────────────────────────────────────────────────────────────────
 bot.command('help', async (ctx) => {
     await ctx.replyWithMarkdown(`*Avto Komment Bot — yordam*\n\n` +
-        `🔹 /start — Ro'yxatdan o'tish yoki xush kelibsiz xabari\n` +
+        `🔹 /start — Ro'yxatdan o'tish yoki platformaga kirish\n` +
+        `🔹 /murojaat — Admin bilan bog'lanish yoki ma'lumot o'chirish so'rovi\n` +
         `🔹 /help  — Ushbu yordam xabari`);
 });
-// ─── Noma'lum xabarlar ────────────────────────────────────────────────────────
+// ─── /murojaat — admin bilan bog'lanish ─────────────────────────────────────────
+// Murojaat kutilayotgan foydalanuvchilar (in-memory)
+const pendingSupport = new Map();
+// Ro'yxatdan o'tgan foydalanuvchilar uchun doimiy pastki tugma
+const MUROJAAT_BTN = '✍️ Murojaat';
+const mainKeyboard = telegraf_1.Markup.keyboard([[MUROJAAT_BTN]]).resize();
+async function askMurojaat(ctx) {
+    const from = ctx.from;
+    if (!from)
+        return;
+    pendingSupport.set(from.id, 'general');
+    await ctx.replyWithMarkdown(`✍️ *Murojaatingizni yozing.*\n\n` +
+        `Savolingiz, taklifingiz yoki ma'lumotlaringizni o'chirish so'rovini shu yerga yozib yuboring — admin ko'rib chiqadi.\n\n` +
+        `Bekor qilish: /help`);
+}
+bot.command('murojaat', (ctx) => askMurojaat(ctx));
+async function forwardToAdmins(requestId, fromName, telegramId, message) {
+    const adminIds = await (0, db_1.getAdminTelegramIds)();
+    const text = `✉️ <b>Yangi murojaat #${requestId}</b>\n\n` +
+        `<b>Kimdan:</b> ${escapeHtml(fromName)}\n` +
+        `<b>Telegram ID:</b> <code>${telegramId}</code>\n\n` +
+        escapeHtml(message);
+    const keyboard = telegraf_1.Markup.inlineKeyboard([
+        telegraf_1.Markup.button.callback('✅ Hal qilindi', `resolve:${requestId}`),
+    ]);
+    for (const adminId of adminIds) {
+        try {
+            await bot.telegram.sendMessage(adminId, text, { parse_mode: 'HTML', ...keyboard });
+        }
+        catch (e) {
+            console.warn(`Adminga yuborilmadi (${adminId}):`, e.message);
+        }
+    }
+    return adminIds.length;
+}
+function escapeHtml(s) {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+// Admin "Hal qilindi" tugmasini bosganda
+bot.action(/^resolve:(\d+)$/, async (ctx) => {
+    const fromId = ctx.from?.id ? String(ctx.from.id) : '';
+    const admins = await (0, db_1.getAdminTelegramIds)();
+    if (!admins.includes(fromId)) {
+        await ctx.answerCbQuery("Ruxsat yo'q");
+        return;
+    }
+    const id = Number(ctx.match[1]);
+    try {
+        await (0, db_1.resolveSupportRequest)(id);
+        await ctx.answerCbQuery('Hal qilindi deb belgilandi ✅');
+        const original = ctx.callbackQuery.message?.text || '';
+        await ctx.editMessageText(`${original}\n\n✅ <b>Hal qilindi</b>`, { parse_mode: 'HTML' });
+    }
+    catch (e) {
+        await ctx.answerCbQuery('Xatolik yuz berdi');
+        console.error('resolve xato:', e.message);
+    }
+});
+// ─── Matnli xabarlar (murojaat yoki noma'lum buyruq) ────────────────────────────
 bot.on('message', async (ctx) => {
+    const from = ctx.from;
+    const text = ctx.message?.text;
+    // Pastki "Murojaat" tugmasi bosilganda
+    if (from && text === MUROJAAT_BTN) {
+        await askMurojaat(ctx);
+        return;
+    }
+    if (from && text && pendingSupport.has(from.id)) {
+        pendingSupport.delete(from.id);
+        const fromName = `${from.first_name || 'Foydalanuvchi'}${from.username ? ' (@' + from.username + ')' : ''}`;
+        try {
+            const requestId = await (0, db_1.createSupportRequest)(String(from.id), fromName, text, 'general');
+            const adminCount = await forwardToAdmins(requestId, fromName, String(from.id), text);
+            if (adminCount > 0) {
+                await ctx.reply('✅ Murojaatingiz adminga yuborildi. Tez orada javob beriladi.');
+            }
+            else {
+                await ctx.reply('✅ Murojaatingiz qabul qilindi.');
+            }
+        }
+        catch (e) {
+            console.error('Murojaat saqlashda xato:', e.message);
+            await ctx.reply("Xatolik yuz berdi. Iltimos keyinroq qayta urinib ko'ring.");
+        }
+        return;
+    }
     await ctx.reply("Buyruqni tushunmadim. /help yuboring.");
 });
 // ─── Start ────────────────────────────────────────────────────────────────────
