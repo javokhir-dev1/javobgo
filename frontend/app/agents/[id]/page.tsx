@@ -221,7 +221,7 @@ function DocumentsPanel({ agentId, onClose }: { agentId: number; onClose: () => 
           {docs.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-24 text-center opacity-50">
               <FileText size={24} className="text-on-surface-variant mb-1" />
-              <p className="text-[12px] text-on-surface-variant">Hujjatlar yo'q</p>
+              <p className="text-[12px] text-on-surface-variant">{t('agents.docs.empty')}</p>
             </div>
           ) : docs.map(doc => (
             <div key={doc.id} className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-surface-container-low border border-outline-variant/20 group">
@@ -242,7 +242,7 @@ function DocumentsPanel({ agentId, onClose }: { agentId: number; onClose: () => 
 
         <div className="px-4 py-3 border-t border-outline-variant/20 shrink-0">
           <p className="text-[11px] text-on-surface-variant/60 leading-relaxed">
-            Yuklangan hujjatlar AI ga bilim bazasi sifatida uzatiladi — agent shu ma'lumotlar asosida aniqroq javob beradi.
+            {t('agents.docs.info')}
           </p>
         </div>
       </div>

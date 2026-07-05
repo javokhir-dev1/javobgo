@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { X, Loader2 } from 'lucide-react';
 import { updateConversation } from '@/lib/api';
+import { useLanguage } from '@/context/LanguageContext';
 import { Avatar } from '@/components/ui/Avatar';
 import type { Conversation } from './types';
 
@@ -13,6 +14,7 @@ interface Props {
 }
 
 export function EditConversationModal({ conv, onClose, onSaved }: Props) {
+  const { t } = useLanguage();
   const [name, setName]         = useState(conv.participantName ?? '');
   const [username, setUsername] = useState(conv.participantUsername ?? '');
   const [saving, setSaving]     = useState(false);
@@ -45,7 +47,7 @@ export function EditConversationModal({ conv, onClose, onSaved }: Props) {
               profilePic={conv.participantProfilePic}
               size={36}
             />
-            <p className="text-[15px] font-semibold text-on-surface">Tahrirlash</p>
+            <p className="text-[15px] font-semibold text-on-surface">{t('inbox.chat.edit')}</p>
           </div>
           <button
             onClick={onClose}

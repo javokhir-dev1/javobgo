@@ -197,7 +197,7 @@ export default function AutomationDetailPage() {
         <div className="flex items-center gap-2 flex-shrink-0">
           <button onClick={handleToggle} className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border border-outline-variant/40 text-on-surface-variant hover:border-outline-variant transition-all">
             <Toggle on={form.isActive} size={32} />
-            {form.isActive ? "O'chirish" : 'Yoqish'}
+            {form.isActive ? t('automation.form.turnOff') : t('automation.form.turnOn')}
           </button>
           {hasChanges && (
             <button
