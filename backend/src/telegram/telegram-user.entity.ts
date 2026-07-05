@@ -23,6 +23,9 @@ export class TelegramUser {
   @Column({ type: 'varchar', default: 'user' })
   role: 'user' | 'admin';
 
+  @Column({ type: 'varchar', default: 'uz' })
+  language: string;
+
   /** Hisobni o'chirish so'ralgan vaqt (90 kunlik grace period boshlanishi). null = faol */
   @Column({ type: 'timestamp', nullable: true })
   deleted_at: Date | null;

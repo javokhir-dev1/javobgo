@@ -20,17 +20,37 @@ export async function upsertTelegramUser(
   username: string | null,
   phone?: string,
   avatarUrl?: string | null,
+  language?: string,
 ): Promise<void> {
   await pool.query(
-    `INSERT INTO telegram_users (telegram_id, first_name, username, phone_number, avatar_url)
-     VALUES ($1, $2, $3, $4, $5)
+    `INSERT INTO telegram_users (telegram_id, first_name, username, phone_number, avatar_url, language)
+     VALUES ($1, $2, $3, $4, $5, $6)
      ON CONFLICT (telegram_id)
      DO UPDATE SET
        first_name   = EXCLUDED.first_name,
        username     = EXCLUDED.username,
        phone_number = COALESCE(EXCLUDED.phone_number, telegram_users.phone_number),
-       avatar_url   = COALESCE(telegram_users.avatar_url, EXCLUDED.avatar_url)`,
-    [telegramId, firstName, username, phone ?? null, avatarUrl ?? null],
+       avatar_url   = COALESCE(telegram_users.avatar_url, EXCLUDED.avatar_url),
+       language     = COALESCE(EXCLUDED.language, telegram_users.language)`,
+    [telegramId, firstName, username, phone ?? null, avatarUrl ?? null, language ?? 'uz'],
+  );
+}
+
+export async function getUserLanguage(telegramId: string): Promise<string> {
+  const res = await pool.query(
+    `SELECT language FROM telegram_users WHERE telegram_id = $1`,
+    [telegramId]
+  );
+  if ((res.rowCount ?? 0) > 0 && res.rows[0].language) {
+    return res.rows[0].language;
+  }
+  return 'uz';
+}
+
+export async function updateUserLanguage(telegramId: string, language: string): Promise<void> {
+  await pool.query(
+    `UPDATE telegram_users SET language = $1 WHERE telegram_id = $2`,
+    [language, telegramId]
   );
 }
 

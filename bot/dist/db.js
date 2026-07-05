@@ -2,6 +2,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.pool = void 0;
 exports.upsertTelegramUser = upsertTelegramUser;
+exports.getUserLanguage = getUserLanguage;
+exports.updateUserLanguage = updateUserLanguage;
 exports.isUserRegistered = isUserRegistered;
 exports.getActiveAuthToken = getActiveAuthToken;
 exports.createAuthToken = createAuthToken;
@@ -22,15 +24,26 @@ exports.pool.on('error', (err) => {
     console.error('PostgreSQL ulanish xatosi:', err.message);
 });
 /** Foydalanuvchini qo'shish yoki yangilash */
-async function upsertTelegramUser(telegramId, firstName, username, phone, avatarUrl) {
-    await exports.pool.query(`INSERT INTO telegram_users (telegram_id, first_name, username, phone_number, avatar_url)
-     VALUES ($1, $2, $3, $4, $5)
+async function upsertTelegramUser(telegramId, firstName, username, phone, avatarUrl, language) {
+    await exports.pool.query(`INSERT INTO telegram_users (telegram_id, first_name, username, phone_number, avatar_url, language)
+     VALUES ($1, $2, $3, $4, $5, $6)
      ON CONFLICT (telegram_id)
      DO UPDATE SET
        first_name   = EXCLUDED.first_name,
        username     = EXCLUDED.username,
        phone_number = COALESCE(EXCLUDED.phone_number, telegram_users.phone_number),
-       avatar_url   = COALESCE(telegram_users.avatar_url, EXCLUDED.avatar_url)`, [telegramId, firstName, username, phone ?? null, avatarUrl ?? null]);
+       avatar_url   = COALESCE(telegram_users.avatar_url, EXCLUDED.avatar_url),
+       language     = COALESCE(EXCLUDED.language, telegram_users.language)`, [telegramId, firstName, username, phone ?? null, avatarUrl ?? null, language ?? 'uz']);
+}
+async function getUserLanguage(telegramId) {
+    const res = await exports.pool.query(`SELECT language FROM telegram_users WHERE telegram_id = $1`, [telegramId]);
+    if ((res.rowCount ?? 0) > 0 && res.rows[0].language) {
+        return res.rows[0].language;
+    }
+    return 'uz';
+}
+async function updateUserLanguage(telegramId, language) {
+    await exports.pool.query(`UPDATE telegram_users SET language = $1 WHERE telegram_id = $2`, [language, telegramId]);
 }
 /** Foydalanuvchi ro'yxatdan o'tganligini tekshirish */
 async function isUserRegistered(telegramId) {

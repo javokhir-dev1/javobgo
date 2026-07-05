@@ -155,9 +155,10 @@ export class AuthService {
     await this.telegramUserRepo.update({ telegram_id }, { avatar_url: avatarUrl });
   }
 
-  async updateProfile(telegram_id: string, data: { first_name?: string }): Promise<void> {
-    const update: Partial<{ first_name: string }> = {};
+  async updateProfile(telegram_id: string, data: { first_name?: string; language?: string }): Promise<void> {
+    const update: Partial<{ first_name: string; language: string }> = {};
     if (data.first_name?.trim()) update.first_name = data.first_name.trim();
+    if (data.language?.trim()) update.language = data.language.trim();
     if (Object.keys(update).length) {
       await this.telegramUserRepo.update({ telegram_id }, update);
     }

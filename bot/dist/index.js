@@ -41,6 +41,7 @@ const http = __importStar(require("http"));
 const crypto_1 = require("crypto");
 const telegraf_1 = require("telegraf");
 const db_1 = require("./db");
+const i18n_1 = require("./i18n");
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const SITE_URL = process.env.SITE_URL || 'http://localhost:3000';
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:4000';
@@ -49,6 +50,15 @@ const AVATARS_DIR = process.env.AVATARS_UPLOAD_DIR
 if (!BOT_TOKEN)
     throw new Error('TELEGRAM_BOT_TOKEN .env faylida topilmadi!');
 const bot = new telegraf_1.Telegraf(BOT_TOKEN);
+// Murojaat va til tanlash uchun vaqtinchalik xotira
+const pendingSupport = new Map();
+const pendingLanguage = new Map();
+// Doimiy tugmalarni tilga qarab shakllantirish uchun funksiya
+function getMainKeyboard(lang) {
+    return telegraf_1.Markup.keyboard([
+        [(0, i18n_1.t)(lang, 'support_btn'), (0, i18n_1.t)(lang, 'change_lang_btn')]
+    ]).resize();
+}
 // ─── Avatar yuklab olish ──────────────────────────────────────────────────────
 function downloadFile(url, dest) {
     return new Promise((resolve, reject) => {
@@ -97,28 +107,56 @@ bot.command('start', async (ctx) => {
         return askMurojaat(ctx);
     }
     const registered = await (0, db_1.isUserRegistered)(String(from.id)).catch(() => false);
+    const lang = registered ? await (0, db_1.getUserLanguage)(String(from.id)) : 'uz';
     if (registered) {
         const token = await (0, db_1.createAuthToken)(String(from.id));
         const loginUrl = `${SITE_URL}/login?token=${token}`;
-        const sentMsg = await ctx.replyWithMarkdown(`Salom, *${from.first_name}*!\n\nPlatformaga kirish uchun quyidagi tugmalardan birini tanlang:`, {
+        const sentMsg = await ctx.replyWithMarkdown((0, i18n_1.t)(lang, 'login_greeting', from.first_name), {
             reply_markup: {
                 inline_keyboard: [[
-                        { text: '🌐 Brauzerda ochish', url: loginUrl },
-                        { text: '📱 Web App orqali', web_app: { url: `${SITE_URL}/login` } },
+                        { text: (0, i18n_1.t)(lang, 'open_browser'), url: loginUrl },
+                        { text: (0, i18n_1.t)(lang, 'open_webapp'), web_app: { url: `${SITE_URL}/login` } },
                     ]],
             },
         });
         await (0, db_1.setTokenMessageId)(token, sentMsg.message_id);
+        // Asosiy tugmalarni ko'rsatish
+        await ctx.reply("💬", getMainKeyboard(lang));
         return;
     }
-    await ctx.replyWithMarkdown(`*Xush kelibsiz, ${from.first_name}!* 👋\n\n` +
-        `Instagram avtomat bot tizimiga kirish uchun telefon raqamingizni ulashing:`, {
-        reply_markup: {
-            keyboard: [[{ text: '📱 Telefon raqamimni ulashish', request_contact: true }]],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-        },
-    });
+    // Not registered - ask for language
+    await ctx.reply((0, i18n_1.t)('uz', 'choose_language'), telegraf_1.Markup.inlineKeyboard([
+        [telegraf_1.Markup.button.callback("🇺🇿 O'zbekcha", "lang_uz")],
+        [telegraf_1.Markup.button.callback("🇷🇺 Русский", "lang_ru")],
+        [telegraf_1.Markup.button.callback("🇬🇧 English", "lang_en")]
+    ]));
+});
+// ─── Til tanlash ──────────────────────────────────────────────────────────────
+bot.action(/^lang_(uz|ru|en)$/, async (ctx) => {
+    const from = ctx.from;
+    if (!from)
+        return;
+    const lang = ctx.match[1];
+    // Save in temporary map (since they might not be registered yet)
+    pendingLanguage.set(from.id, lang);
+    await ctx.answerCbQuery();
+    await ctx.deleteMessage().catch(() => { });
+    const registered = await (0, db_1.isUserRegistered)(String(from.id)).catch(() => false);
+    if (registered) {
+        // Shunchaki til o'zgartirildi
+        await (0, db_1.updateUserLanguage)(String(from.id), lang);
+        await ctx.reply((0, i18n_1.t)(lang, 'language_updated'), getMainKeyboard(lang));
+    }
+    else {
+        // Yangi user uchun kontakt so'rash
+        await ctx.replyWithMarkdown((0, i18n_1.t)(lang, 'welcome', from.first_name), {
+            reply_markup: {
+                keyboard: [[{ text: (0, i18n_1.t)(lang, 'share_contact'), request_contact: true }]],
+                resize_keyboard: true,
+                one_time_keyboard: true,
+            },
+        });
+    }
 });
 // ─── Telefon raqami ───────────────────────────────────────────────────────────
 bot.on('contact', async (ctx) => {
@@ -126,8 +164,9 @@ bot.on('contact', async (ctx) => {
     const contact = ctx.message?.contact;
     if (!from || !contact)
         return;
+    const lang = pendingLanguage.get(from.id) || 'uz';
     if (contact.user_id && contact.user_id !== from.id) {
-        await ctx.reply("Iltimos, o'z telefon raqamingizni ulashing.", {
+        await ctx.reply((0, i18n_1.t)(lang, 'please_share_own_contact'), {
             reply_markup: { remove_keyboard: true },
         });
         return;
@@ -138,47 +177,44 @@ bot.on('contact', async (ctx) => {
     const phone = contact.phone_number;
     try {
         const avatarUrl = await fetchAndSaveAvatar(from.id);
-        await (0, db_1.upsertTelegramUser)(telegramId, firstName, username, phone, avatarUrl);
+        await (0, db_1.upsertTelegramUser)(telegramId, firstName, username, phone, avatarUrl, lang);
+        pendingLanguage.delete(from.id);
         const token = await (0, db_1.createAuthToken)(telegramId);
         const loginUrl = `${SITE_URL}/login?token=${token}`;
-        const sentMsg = await ctx.replyWithMarkdown(`✅ *Ro'yxatdan o'tdingiz!*\n\nPlatformaga kirish uchun quyidagi tugmalardan birini tanlang:`, {
+        const sentMsg = await ctx.replyWithMarkdown((0, i18n_1.t)(lang, 'registered_success'), {
             reply_markup: {
                 inline_keyboard: [[
-                        { text: '🌐 Brauzerda ochish', url: loginUrl },
-                        { text: '📱 Web App orqali', web_app: { url: `${SITE_URL}/login` } },
+                        { text: (0, i18n_1.t)(lang, 'open_browser'), url: loginUrl },
+                        { text: (0, i18n_1.t)(lang, 'open_webapp'), web_app: { url: `${SITE_URL}/login` } },
                     ]],
             },
         });
         await (0, db_1.setTokenMessageId)(token, sentMsg.message_id);
+        await ctx.reply("💬", getMainKeyboard(lang));
     }
     catch (err) {
         console.error('Contact xatosi:', err.message);
-        await ctx.reply("Xatolik yuz berdi. Iltimos qayta urinib ko'ring.", {
+        await ctx.reply((0, i18n_1.t)(lang, 'error_occurred'), {
             reply_markup: { remove_keyboard: true },
         });
     }
 });
 // ─── /help ────────────────────────────────────────────────────────────────────
 bot.command('help', async (ctx) => {
-    await ctx.replyWithMarkdown(`*Avto Komment Bot — yordam*\n\n` +
-        `🔹 /start — Ro'yxatdan o'tish yoki platformaga kirish\n` +
-        `🔹 /murojaat — Admin bilan bog'lanish yoki ma'lumot o'chirish so'rovi\n` +
-        `🔹 /help  — Ushbu yordam xabari`);
+    const from = ctx.from;
+    if (!from)
+        return;
+    const lang = await (0, db_1.getUserLanguage)(String(from.id)).catch(() => 'uz');
+    await ctx.replyWithMarkdown((0, i18n_1.t)(lang, 'help_text'), getMainKeyboard(lang));
 });
 // ─── /murojaat — admin bilan bog'lanish ─────────────────────────────────────────
-// Murojaat kutilayotgan foydalanuvchilar (in-memory)
-const pendingSupport = new Map();
-// Ro'yxatdan o'tgan foydalanuvchilar uchun doimiy pastki tugma
-const MUROJAAT_BTN = '✍️ Murojaat';
-const mainKeyboard = telegraf_1.Markup.keyboard([[MUROJAAT_BTN]]).resize();
 async function askMurojaat(ctx) {
     const from = ctx.from;
     if (!from)
         return;
+    const lang = await (0, db_1.getUserLanguage)(String(from.id)).catch(() => 'uz');
     pendingSupport.set(from.id, 'general');
-    await ctx.replyWithMarkdown(`✍️ *Murojaatingizni yozing.*\n\n` +
-        `Savolingiz, taklifingiz yoki ma'lumotlaringizni o'chirish so'rovini shu yerga yozib yuboring — admin ko'rib chiqadi.\n\n` +
-        `Bekor qilish: /help`);
+    await ctx.replyWithMarkdown((0, i18n_1.t)(lang, 'ask_support'));
 }
 bot.command('murojaat', (ctx) => askMurojaat(ctx));
 async function forwardToAdmins(requestId, fromName, telegramId, message) {
@@ -223,35 +259,55 @@ bot.action(/^resolve:(\d+)$/, async (ctx) => {
         console.error('resolve xato:', e.message);
     }
 });
-// ─── Matnli xabarlar (murojaat yoki noma'lum buyruq) ────────────────────────────
+// ─── Matnli xabarlar (murojaat, til almashtirish yoki noma'lum buyruq) ─────────
 bot.on('message', async (ctx) => {
     const from = ctx.from;
     const text = ctx.message?.text;
+    if (!from || !text)
+        return;
+    const lang = await (0, db_1.getUserLanguage)(String(from.id)).catch(() => 'uz');
     // Pastki "Murojaat" tugmasi bosilganda
-    if (from && text === MUROJAAT_BTN) {
+    if (text === (0, i18n_1.t)(lang, 'support_btn') || text === '✍️ Murojaat' || text === '✍️ Обращение' || text === '✍️ Support') {
         await askMurojaat(ctx);
         return;
     }
-    if (from && text && pendingSupport.has(from.id)) {
+    // Pastki "Tilni o'zgartirish" tugmasi bosilganda
+    if (text === (0, i18n_1.t)(lang, 'change_lang_btn') || text === "🌍 Tilni o'zgartirish" || text === "🌍 Изменить язык" || text === "🌍 Change Language") {
+        await ctx.reply((0, i18n_1.t)(lang, 'choose_language'), telegraf_1.Markup.inlineKeyboard([
+            [telegraf_1.Markup.button.callback("🇺🇿 O'zbekcha", "lang_uz")],
+            [telegraf_1.Markup.button.callback("🇷🇺 Русский", "lang_ru")],
+            [telegraf_1.Markup.button.callback("🇬🇧 English", "lang_en")]
+        ]));
+        return;
+    }
+    if (pendingSupport.has(from.id)) {
         pendingSupport.delete(from.id);
         const fromName = `${from.first_name || 'Foydalanuvchi'}${from.username ? ' (@' + from.username + ')' : ''}`;
         try {
             const requestId = await (0, db_1.createSupportRequest)(String(from.id), fromName, text, 'general');
             const adminCount = await forwardToAdmins(requestId, fromName, String(from.id), text);
             if (adminCount > 0) {
-                await ctx.reply('✅ Murojaatingiz adminga yuborildi. Tez orada javob beriladi.');
+                // Assume uz for admin notification reply is okay, or translate. We'll use user's lang for now.
+                // Actually it's better to just use user's lang.
+                await ctx.reply(lang === 'uz' ? '✅ Murojaatingiz adminga yuborildi. Tez orada javob beriladi.' :
+                    lang === 'ru' ? '✅ Ваше обращение отправлено админу. Скоро мы ответим.' :
+                        '✅ Your message has been sent to the admin. We will reply soon.');
             }
             else {
-                await ctx.reply('✅ Murojaatingiz qabul qilindi.');
+                await ctx.reply(lang === 'uz' ? '✅ Murojaatingiz qabul qilindi.' :
+                    lang === 'ru' ? '✅ Ваше обращение принято.' :
+                        '✅ Your message has been received.');
             }
         }
         catch (e) {
             console.error('Murojaat saqlashda xato:', e.message);
-            await ctx.reply("Xatolik yuz berdi. Iltimos keyinroq qayta urinib ko'ring.");
+            await ctx.reply((0, i18n_1.t)(lang, 'error_occurred'));
         }
         return;
     }
-    await ctx.reply("Buyruqni tushunmadim. /help yuboring.");
+    await ctx.reply(lang === 'uz' ? "Buyruqni tushunmadim. /help yuboring." :
+        lang === 'ru' ? "Неизвестная команда. Отправьте /help." :
+            "Command not understood. Send /help.");
 });
 // ─── Start ────────────────────────────────────────────────────────────────────
 async function main() {
