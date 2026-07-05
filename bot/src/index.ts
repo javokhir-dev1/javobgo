@@ -187,7 +187,7 @@ async function forwardToAdmins(requestId: number, fromName: string, telegramId: 
   const adminIds = await getAdminTelegramIds();
   const text =
     `✉️ <b>Yangi murojaat #${requestId}</b>\n\n` +
-    `<b>Kimdan:</b> ${escapeHtml(fromName)}\n` +
+    `<b>Kimdan:</b> <a href="tg://user?id=${telegramId}">${escapeHtml(fromName)}</a>\n` +
     `<b>Telegram ID:</b> <code>${telegramId}</code>\n\n` +
     escapeHtml(message);
   const keyboard = Markup.inlineKeyboard([
