@@ -54,7 +54,7 @@ function downloadFile(url, dest) {
     return new Promise((resolve, reject) => {
         const proto = url.startsWith('https') ? https : http;
         const file = fs.createWriteStream(dest);
-        proto.get(url, (res) => {
+        proto.get(url, (res)  => {
             if (res.statusCode !== 200) {
                 file.close();
                 fs.unlink(dest, () => { });

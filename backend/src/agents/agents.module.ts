@@ -7,9 +7,11 @@ import { AgentsService } from './agents.service';
 import { AgentsController } from './agents.controller';
 import { AuthModule } from '../auth/auth.module';
 import { InstagramAccountsModule } from '../instagram-accounts/instagram-accounts.module';
+import { Settings } from '../settings/entities/settings.entity';
+import { Automation } from '../automations/entities/automation.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Agent, ChatMessage, AgentDocument]), AuthModule, InstagramAccountsModule],
+  imports: [TypeOrmModule.forFeature([Agent, ChatMessage, AgentDocument, Settings, Automation]), AuthModule, InstagramAccountsModule],
   controllers: [AgentsController],
   providers: [AgentsService],
   exports: [AgentsService],
