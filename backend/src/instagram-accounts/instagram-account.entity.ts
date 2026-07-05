@@ -19,6 +19,10 @@ export class InstagramAccount {
   @Column({ nullable: true })
   instagram_username: string;
 
+  /** Instagram profil rasmi URL (CDN havolasi, vaqti-vaqti bilan yangilanadi) */
+  @Column({ nullable: true, type: 'text' })
+  profile_picture_url: string | null;
+
   @Column({ nullable: true, type: 'text', transformer: EncryptedTransformer })
   access_token: string;
 

@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
-  Instagram, Link2, Trash2, CheckCircle, AlertCircle, Loader2, ExternalLink, 
+  Link2, Trash2, CheckCircle, AlertCircle, Loader2, ExternalLink,
   Check, User, LogOut, Hash, Pencil, X, Camera, Sun, Moon, Globe
 } from 'lucide-react';
 import { useInstagram, useInstagramRefresh } from '@/context/InstagramContext';
@@ -11,6 +11,7 @@ import { disconnectInstagramAccount, requestAccountDeletion } from '@/lib/api';
 import { useTheme } from '@/components/ThemeProvider';
 import { useLanguage } from '@/context/LanguageContext';
 import { Language } from '@/locales/translations';
+import { Avatar } from '@/components/ui/Avatar';
 
 interface UserInfo {
   telegram_id: string;
@@ -368,9 +369,7 @@ export default function SettingsPage() {
                             : 'bg-surface-container-low border-outline-variant/40'
                         }`}
                       >
-                        <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#f09433] via-[#e6683c] to-[#bc1888] flex items-center justify-center flex-shrink-0">
-                          <Instagram size={20} className="text-white" />
-                        </div>
+                        <Avatar username={acc.instagram_username} profilePic={acc.profile_picture_url} size={44} />
 
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">

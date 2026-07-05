@@ -5,6 +5,7 @@ import { getInstagramAccounts, selectInstagramAccount } from '@/lib/api';
 export interface IgAccount {
   instagram_account_id: string;
   instagram_username: string;
+  profile_picture_url: string | null;
   is_selected: boolean;
 }
 

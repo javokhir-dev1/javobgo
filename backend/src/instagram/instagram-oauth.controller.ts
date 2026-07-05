@@ -129,12 +129,14 @@ export class InstagramOAuthController {
 
       let igUsername: string | null = null;
       let igUserIdFromMe: string | null = null;
+      let igProfilePic: string | null = null;
       try {
         const infoRes = await axios.get('https://graph.instagram.com/v25.0/me', {
-          params: { fields: 'user_id,username', access_token: longToken },
+          params: { fields: 'user_id,username,profile_picture_url', access_token: longToken },
         });
         igUsername     = infoRes.data.username || null;
         igUserIdFromMe = infoRes.data.user_id || igUserId;
+        igProfilePic   = infoRes.data.profile_picture_url || null;
         this.logger.log(`[OAuth] Username olindi: ${igUsername}`);
       } catch (err: any) {
         this.logger.error(`[OAuth] Username olishda xato: ${err.response?.data?.error?.message || err.message}`);
@@ -144,6 +146,7 @@ export class InstagramOAuthController {
       const finalIgId = igUserIdFromMe || igUserId;
       await this.igAccounts.upsertByIgId(telegramId, finalIgId, {
         instagram_username: igUsername,
+        profile_picture_url: igProfilePic,
         access_token: longToken,
         app_id: appId,
         app_secret: appSecret,

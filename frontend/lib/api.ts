@@ -27,7 +27,7 @@ export const updateSettings = (data: any) => api.patch('/api/settings', data).th
 
 // Instagram status
 export const getInstagramStatus   = () => api.get('/api/instagram/status').then(r => r.data);
-export const getInstagramAccounts = () => api.get('/api/instagram/accounts').then(r => r.data) as Promise<{ instagram_account_id: string; instagram_username: string; is_selected: boolean }[]>;
+export const getInstagramAccounts = () => api.get('/api/instagram/accounts').then(r => r.data) as Promise<{ instagram_account_id: string; instagram_username: string; profile_picture_url: string | null; is_selected: boolean }[]>;
 export const selectInstagramAccount    = (igId: string) => api.post(`/api/instagram/account/${igId}/select`).then(r => r.data);
 export const disconnectInstagramAccount = (igId: string) => api.delete(`/api/instagram/account/${igId}`).then(r => r.data);
 export const getInstagramPosts  = () => api.get('/api/instagram/posts').then(r => r.data);
