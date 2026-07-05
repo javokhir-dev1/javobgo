@@ -268,13 +268,14 @@ export class AdminService {
 
   async checkBotReplyLimitWithDelay(
     igAccountId: string,
-  ): Promise<{ allowed: boolean; delayMs?: number }> {
+  ): Promise<{ allowed: boolean; delayMs?: number; drop?: boolean }> {
     const cfg = await this.getConfig();
     const blocked: string[] = JSON.parse(cfg.blockedAccounts || '[]');
-    if (blocked.includes(igAccountId)) return { allowed: false, delayMs: 60_000 };
+    // Bloklangan yoki bazada yo'q akkaunt — qayta urinishning ma'nosi yo'q, jobni tashlab yuboramiz
+    if (blocked.includes(igAccountId)) return { allowed: false, drop: true };
 
     const ig = await this.igRepo.findOne({ where: { instagram_account_id: igAccountId } });
-    if (!ig) return { allowed: false, delayMs: 60_000 };
+    if (!ig) return { allowed: false, drop: true };
 
     const maxPerHour = ig.customRateLimit ?? cfg.maxRequestsPerHour;
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
