@@ -355,7 +355,7 @@ export default function AgentsPage() {
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-1.5">
-                    <Database size={14} className="text-primary" />
+                    <FileText size={14} className="text-primary" />
                     <span className="text-[13px] font-medium text-on-surface-variant">{t('agents.docs.title')}</span>
                     {totalDocs > 0 && (
                       <span className="text-[11px] bg-primary/10 text-primary rounded-full px-2 py-0.5 font-medium">{totalDocs}</span>
