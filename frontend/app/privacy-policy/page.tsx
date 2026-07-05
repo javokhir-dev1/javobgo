@@ -142,11 +142,22 @@ export default function PrivacyPolicyPage() {
             </p>
             <ul className="list-disc list-inside space-y-1 text-on-surface-variant text-sm pl-2">
               <li>Instagram akkauntingizni xizmatdan uzish</li>
-              <li>Saqlangan barcha ma&apos;lumotlaringizni o&apos;chirish so&apos;rovini yuborish</li>
+              <li>Hisobingizni va barcha ma&apos;lumotlaringizni o&apos;zingiz o&apos;chirish (Profil sahifasidagi &laquo;Hisobni o&apos;chirish&raquo; tugmasi orqali)</li>
               <li>Avtomatik javob berish xizmatini istalgan vaqtda o&apos;chirish</li>
             </ul>
             <p className="text-on-surface-variant text-sm mt-3">
-              Ma&apos;lumotlarni o&apos;chirish uchun admin bilan bog&apos;laning.
+              Ma&apos;lumotlarni o&apos;chirishning barcha usullari va muddatlari{' '}
+              <a href="/data-deletion" className="text-primary hover:underline">
+                Ma&apos;lumotlarni o&apos;chirish
+              </a>{' '}
+              sahifasida batafsil bayon etilgan. Qisqacha: o&apos;chirish so&apos;rovidan so&apos;ng
+              hisobingiz <strong className="text-on-surface">90 kun</strong> ichida tiklanishi mumkin,
+              shundan keyin butunlay o&apos;chiriladi. Qo&apos;shimcha yordam uchun Telegram bot orqali{' '}
+              <code className="text-primary">/murojaat</code> yuboring yoki{' '}
+              <a href="mailto:javokhir.dev1@gmail.com" className="text-primary hover:underline">
+                javokhir.dev1@gmail.com
+              </a>{' '}
+              manziliga yozing.
             </p>
           </section>
 

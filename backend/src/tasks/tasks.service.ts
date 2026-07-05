@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { LessThan, Repository } from 'typeorm';
 import { AuthToken } from '../auth/auth-token.entity';
 import { InstagramAccount } from '../instagram-accounts/instagram-account.entity';
+import { AccountDeletionService } from '../account/account-deletion.service';
 import axios from 'axios';
 
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
@@ -18,6 +19,7 @@ export class TasksService implements OnModuleInit, OnModuleDestroy {
     private tokenRepo: Repository<AuthToken>,
     @InjectRepository(InstagramAccount)
     private igRepo: Repository<InstagramAccount>,
+    private accountDeletion: AccountDeletionService,
   ) {}
 
   onModuleInit() {
@@ -25,6 +27,8 @@ export class TasksService implements OnModuleInit, OnModuleDestroy {
     this.scheduleDaily(3, 0, () => this.cleanExpiredAuthTokens());
     // Muddati yaqin IG tokenlarni har kecha soat 04:00 da yangilash
     this.scheduleDaily(4, 0, () => this.refreshExpiringTokens());
+    // Grace period (90 kun) tugagan hisoblarni har kecha soat 05:00 da butunlay o'chirish
+    this.scheduleDaily(5, 0, () => this.accountDeletion.purgeExpired());
     this.logger.log('Kunlik cron job lar ishga tushdi');
 
   }

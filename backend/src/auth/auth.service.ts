@@ -5,6 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { TelegramUser } from '../telegram/telegram-user.entity';
 import { AuthToken } from './auth-token.entity';
+import { InstagramAccount } from '../instagram-accounts/instagram-account.entity';
 
 const INIT_DATA_MAX_AGE_SEC = 300;
 
@@ -18,6 +19,8 @@ export class AuthService {
     private telegramUserRepo: Repository<TelegramUser>,
     @InjectRepository(AuthToken)
     private tokenRepo: Repository<AuthToken>,
+    @InjectRepository(InstagramAccount)
+    private igRepo: Repository<InstagramAccount>,
   ) {}
 
   async verifyAuthToken(token: string): Promise<{ jwt: string; user: TelegramUser } | null> {
@@ -52,6 +55,7 @@ export class AuthService {
 
     const user = await this.telegramUserRepo.findOne({ where: { telegram_id: authToken.telegram_id } });
     if (!user) return null;
+    await this.restoreIfPendingDeletion(user);
     const payload = {
       sub: user.telegram_id,
       telegram_id: user.telegram_id,
@@ -61,6 +65,17 @@ export class AuthService {
     };
     const jwt = this.jwtService.sign(payload, { expiresIn: '7d' });
     return { jwt, user };
+  }
+
+  /** Grace period ichida qayta kirilса — o'chirish so'rovini bekor qiladi */
+  private async restoreIfPendingDeletion(user: TelegramUser): Promise<void> {
+    if ((user as any).deleted_at) {
+      await this.telegramUserRepo.update({ telegram_id: user.telegram_id }, { deleted_at: null } as any);
+      // Botni qayta yoqamiz (o'chirish so'ralganda pauza qilingan edi)
+      await this.igRepo.update({ telegram_id: user.telegram_id }, { is_active: true });
+      (user as any).deleted_at = null;
+      this.logger.log(`O'chirish avtomatik bekor qilindi (login): ${user.telegram_id}`);
+    }
   }
 
   validateTelegramInitData(initData: string): any {
@@ -124,6 +139,7 @@ export class AuthService {
       });
       await this.telegramUserRepo.save(user);
     }
+    await this.restoreIfPendingDeletion(user);
     const payload = {
       sub: user.telegram_id,
       telegram_id: user.telegram_id,

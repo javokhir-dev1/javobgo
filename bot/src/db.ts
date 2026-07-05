@@ -88,3 +88,35 @@ export async function setTokenMessageId(token: string, messageId: number): Promi
     [messageId, token]
   );
 }
+
+/** Murojaat (support request) saqlash — yaratilgan yozuv id sini qaytaradi */
+export async function createSupportRequest(
+  telegramId: string,
+  fromName: string | null,
+  message: string,
+  type: 'general' | 'data_deletion' = 'general',
+): Promise<number> {
+  const res = await pool.query(
+    `INSERT INTO support_requests (telegram_id, from_name, message, type, status)
+     VALUES ($1, $2, $3, $4, 'new')
+     RETURNING id`,
+    [telegramId, fromName, message.slice(0, 4000), type],
+  );
+  return res.rows[0].id;
+}
+
+/** Admin (role='admin') foydalanuvchilarning telegram_id larini olish */
+export async function getAdminTelegramIds(): Promise<string[]> {
+  const res = await pool.query(
+    `SELECT telegram_id FROM telegram_users WHERE role = 'admin'`,
+  );
+  return res.rows.map((r) => String(r.telegram_id));
+}
+
+/** Murojaatni hal qilindi deb belgilash */
+export async function resolveSupportRequest(id: number): Promise<void> {
+  await pool.query(
+    `UPDATE support_requests SET status = 'resolved', resolved_at = NOW() WHERE id = $1`,
+    [id],
+  );
+}
