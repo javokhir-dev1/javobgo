@@ -5,6 +5,10 @@ exports.upsertTelegramUser = upsertTelegramUser;
 exports.isUserRegistered = isUserRegistered;
 exports.getActiveAuthToken = getActiveAuthToken;
 exports.createAuthToken = createAuthToken;
+exports.setTokenMessageId = setTokenMessageId;
+exports.createSupportRequest = createSupportRequest;
+exports.getAdminTelegramIds = getAdminTelegramIds;
+exports.resolveSupportRequest = resolveSupportRequest;
 const pg_1 = require("pg");
 const crypto_1 = require("crypto");
 exports.pool = new pg_1.Pool({
@@ -53,4 +57,24 @@ async function createAuthToken(telegramId) {
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 daqiqa
     await exports.pool.query(`INSERT INTO auth_tokens (telegram_id, token, is_used, expires_at) VALUES ($1, $2, false, $3)`, [telegramId, token, expiresAt]);
     return token;
+}
+/** Token qaysi xabarga biriktirilganligini saqlash (edit qilish uchun) */
+async function setTokenMessageId(token, messageId) {
+    await exports.pool.query(`UPDATE auth_tokens SET message_id = $1 WHERE token = $2`, [messageId, token]);
+}
+/** Murojaat (support request) saqlash — yaratilgan yozuv id sini qaytaradi */
+async function createSupportRequest(telegramId, fromName, message, type = 'general') {
+    const res = await exports.pool.query(`INSERT INTO support_requests (telegram_id, from_name, message, type, status)
+     VALUES ($1, $2, $3, $4, 'new')
+     RETURNING id`, [telegramId, fromName, message.slice(0, 4000), type]);
+    return res.rows[0].id;
+}
+/** Admin (role='admin') foydalanuvchilarning telegram_id larini olish */
+async function getAdminTelegramIds() {
+    const res = await exports.pool.query(`SELECT telegram_id FROM telegram_users WHERE role = 'admin'`);
+    return res.rows.map((r) => String(r.telegram_id));
+}
+/** Murojaatni hal qilindi deb belgilash */
+async function resolveSupportRequest(id) {
+    await exports.pool.query(`UPDATE support_requests SET status = 'resolved', resolved_at = NOW() WHERE id = $1`, [id]);
 }
