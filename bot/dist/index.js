@@ -92,6 +92,10 @@ bot.command('start', async (ctx) => {
     const from = ctx.from;
     if (!from)
         return;
+    const payload = ctx.payload || ctx.message?.text?.split(' ')[1];
+    if (payload === 'murojaat') {
+        return askMurojaat(ctx);
+    }
     const registered = await (0, db_1.isUserRegistered)(String(from.id)).catch(() => false);
     if (registered) {
         const token = await (0, db_1.createAuthToken)(String(from.id));
