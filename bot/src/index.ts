@@ -334,7 +334,7 @@ bot.on('message', async (ctx: Context) => {
 
 async function main() {
   await bot.launch({ dropPendingUpdates: true });
-  console.log('✅ Avto Komment Bot ishga tushdi');
+  console.log('✅ JavobGo boti ishga tushdi');
 }
 
 main().catch((err) => {
