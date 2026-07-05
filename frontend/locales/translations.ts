@@ -32,6 +32,12 @@ const uz: TranslationDictionary = {
   'settings.select': 'Tanlash',
   'settings.active': 'Aktiv',
   'settings.waiting': 'Kutilmoqda...',
+  'settings.deleteAccountTitle': 'Hisobni o\'chirish',
+  'settings.deleteAccountDesc': 'Hisobingiz va barcha ma\'lumotlaringiz (Instagram ulanishlari, agentlar, avtomatsiyalar, xabarlar va loglar) o\'chiriladi. So\'rovdan keyin 90 kun ichida qayta kirsangiz — o\'chirish bekor qilinadi. 90 kundan so\'ng butunlay va qaytarib bo\'lmas tarzda o\'chadi.',
+  'settings.deleteAccountBtn': 'Hisobni o\'chirish',
+  'settings.deleteAccountPrompt': 'Tasdiqlash uchun DELETE deb yozing:',
+  'settings.deleteAccountConfirm': 'Butunlay o\'chirish',
+  'settings.deleting': 'O\'chirilmoqda...',
 
   // Logs
   'logs.title': 'Loglar',
@@ -241,6 +247,12 @@ const en: TranslationDictionary = {
   'settings.select': 'Select',
   'settings.active': 'Active',
   'settings.waiting': 'Waiting...',
+  'settings.deleteAccountTitle': 'Delete Account',
+  'settings.deleteAccountDesc': 'Your account and all your data (Instagram connections, agents, automations, messages, and logs) will be deleted. If you log in again within 90 days after the request, the deletion will be canceled. After 90 days, it will be permanently and irreversibly deleted.',
+  'settings.deleteAccountBtn': 'Delete Account',
+  'settings.deleteAccountPrompt': 'Type DELETE to confirm:',
+  'settings.deleteAccountConfirm': 'Permanently delete',
+  'settings.deleting': 'Deleting...',
 
   // Logs
   'logs.title': 'Logs',
@@ -450,6 +462,12 @@ const ru: TranslationDictionary = {
   'settings.select': 'Выбрать',
   'settings.active': 'Активен',
   'settings.waiting': 'Ожидание...',
+  'settings.deleteAccountTitle': 'Удалить аккаунт',
+  'settings.deleteAccountDesc': 'Ваш аккаунт и все ваши данные (подключения Instagram, агенты, автоматизации, сообщения и логи) будут удалены. Если вы снова войдете в систему в течение 90 дней после запроса — удаление будет отменено. По истечении 90 дней он будет удален безвозвратно.',
+  'settings.deleteAccountBtn': 'Удалить аккаунт',
+  'settings.deleteAccountPrompt': 'Введите DELETE для подтверждения:',
+  'settings.deleteAccountConfirm': 'Удалить навсегда',
+  'settings.deleting': 'Удаление...',
 
   // Logs
   'logs.title': 'Логи',
