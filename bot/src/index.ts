@@ -68,6 +68,11 @@ bot.command('start', async (ctx: Context) => {
   const from = ctx.from;
   if (!from) return;
 
+  const payload = (ctx as any).payload || (ctx.message as any)?.text?.split(' ')[1];
+  if (payload === 'murojaat') {
+    return askMurojaat(ctx);
+  }
+
   const registered = await isUserRegistered(String(from.id)).catch(() => false);
 
   if (registered) {

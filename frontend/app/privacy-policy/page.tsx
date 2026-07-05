@@ -204,7 +204,14 @@ export default function PrivacyPolicyPage() {
               </p>
               <p className="text-on-surface-variant text-sm mt-1">
                 Telegram bot orqali:{' '}
-                <code className="text-primary">/murojaat</code>
+                <a 
+                  href={`${process.env.NEXT_PUBLIC_BOT_URL || 'https://t.me/javobgobot'}?start=murojaat`}
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="text-primary hover:underline font-mono"
+                >
+                  /murojaat
+                </a>
               </p>
             </div>
           </section>
