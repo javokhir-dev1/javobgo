@@ -180,7 +180,7 @@ bot.command('murojaat', (ctx) => askMurojaat(ctx));
 async function forwardToAdmins(requestId, fromName, telegramId, message) {
     const adminIds = await (0, db_1.getAdminTelegramIds)();
     const text = `✉️ <b>Yangi murojaat #${requestId}</b>\n\n` +
-        `<b>Kimdan:</b> ${escapeHtml(fromName)}\n` +
+        `<b>Kimdan:</b> <a href="tg://user?id=${telegramId}">${escapeHtml(fromName)}</a>\n` +
         `<b>Telegram ID:</b> <code>${telegramId}</code>\n\n` +
         escapeHtml(message);
     const keyboard = telegraf_1.Markup.inlineKeyboard([
