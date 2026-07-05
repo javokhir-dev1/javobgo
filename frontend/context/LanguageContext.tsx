@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Language, translations } from '@/locales/translations';
+import api from '@/lib/api';
 
 interface LanguageContextType {
   language: Language;
@@ -20,12 +21,30 @@ export const LanguageProvider = ({ children }: { children: React.ReactNode }) =>
     if (saved && ['uz', 'en', 'ru'].includes(saved)) {
       setLanguageState(saved);
     }
-    setMounted(true);
+    
+    // Fetch from backend to sync
+    api.get('/auth/me')
+      .then(res => {
+        const dbLang = res.data.language as Language;
+        if (dbLang && ['uz', 'en', 'ru'].includes(dbLang)) {
+          setLanguageState(dbLang);
+          localStorage.setItem('app_language', dbLang);
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        setMounted(true);
+      });
   }, []);
 
-  const setLanguage = (lang: Language) => {
+  const setLanguage = async (lang: Language) => {
     setLanguageState(lang);
     localStorage.setItem('app_language', lang);
+    try {
+      await api.patch('/auth/update-profile', { language: lang });
+    } catch (e) {
+      // Ignore API errors, local state is already updated
+    }
   };
 
   const t = (key: string): string => {

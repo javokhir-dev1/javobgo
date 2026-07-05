@@ -118,6 +118,7 @@ export class AuthController {
         username: result.user.username,
         created_at: result.user.created_at,
         avatar_url: result.user.avatar_url,
+        language: result.user.language,
       },
     });
   }
@@ -149,6 +150,7 @@ export class AuthController {
         username: result.user.username,
         created_at: result.user.created_at,
         avatar_url: result.user.avatar_url,
+        language: result.user.language,
       },
     });
   }
@@ -182,6 +184,7 @@ export class AuthController {
         username: result.user.username,
         created_at: result.user.created_at,
         avatar_url: result.user.avatar_url,
+        language: result.user.language,
       },
     });
   }
@@ -198,6 +201,7 @@ export class AuthController {
       first_name: user.first_name,
       username: user.username,
       avatar_url: user.avatar_url,
+      language: user.language,
     };
   }
 
@@ -252,7 +256,7 @@ export class AuthController {
   }
 
   @Patch('update-profile')
-  async updateProfile(@Req() req: Request, @Res() res: Response, @Body() body: { first_name?: string }) {
+  async updateProfile(@Req() req: Request, @Res() res: Response, @Body() body: { first_name?: string; language?: string }) {
     const token = parseCookieToken(req);
     if (!token) return res.status(401).json({ error: 'unauthorized' });
     let telegram_id: string;
@@ -262,7 +266,7 @@ export class AuthController {
     } catch {
       return res.status(401).json({ error: 'invalid_token' });
     }
-    await this.authService.updateProfile(telegram_id, { first_name: body.first_name });
+    await this.authService.updateProfile(telegram_id, { first_name: body.first_name, language: body.language });
     const user = await this.authService.findUserByTelegramId(telegram_id);
     return res.json({
       ok: true,
@@ -271,6 +275,7 @@ export class AuthController {
         first_name: user?.first_name,
         username: user?.username,
         avatar_url: user?.avatar_url,
+        language: user?.language,
       },
     });
   }
