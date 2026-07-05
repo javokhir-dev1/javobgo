@@ -16,6 +16,7 @@ export const translations = {
     ask_support: "✍️ *Murojaatingizni yozing.*\n\nSavolingiz, taklifingiz yoki ma'lumotlaringizni o'chirish so'rovini shu yerga yozib yuboring — admin ko'rib chiqadi.\n\nBekor qilish: /help",
     choose_language: "🇺🇿 Tilni tanlang\n🇷🇺 Выберите язык\n🇬🇧 Choose a language",
     language_updated: "✅ Til o'zgartirildi!",
+    main_menu: "👇 Pastdagi menyu orqali admin bilan bog'lanishingiz yoki bot tilini o'zgartirishingiz mumkin:",
   },
   ru: {
     welcome: (name: string) => `*Добро пожаловать, ${name}!* 👋\n\nЧтобы войти в систему авто-бота Instagram, поделитесь своим номером телефона:`,
@@ -32,6 +33,7 @@ export const translations = {
     ask_support: "✍️ *Напишите ваше обращение.*\n\nОтправьте ваш вопрос, предложение или запрос на удаление данных сюда — админ рассмотрит его.\n\nОтмена: /help",
     choose_language: "🇺🇿 Tilni tanlang\n🇷🇺 Выберите язык\n🇬🇧 Choose a language",
     language_updated: "✅ Язык изменен!",
+    main_menu: "👇 Через нижнее меню вы можете связаться с админом или изменить язык:",
   },
   en: {
     welcome: (name: string) => `*Welcome, ${name}!* 👋\n\nTo access the Instagram auto-bot system, please share your phone number:`,
@@ -48,6 +50,7 @@ export const translations = {
     ask_support: "✍️ *Write your message.*\n\nSend your question, suggestion, or data deletion request here — an admin will review it.\n\nCancel: /help",
     choose_language: "🇺🇿 Tilni tanlang\n🇷🇺 Выберите язык\n🇬🇧 Choose a language",
     language_updated: "✅ Language updated!",
+    main_menu: "👇 Use the bottom menu to contact the admin or change the language:",
   }
 };
 

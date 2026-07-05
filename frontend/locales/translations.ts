@@ -205,6 +205,10 @@ const uz: TranslationDictionary = {
   'inbox.chat.delete': 'O\'chirish',
   'automation.form.turnOn': 'Yoqish',
   'automation.form.turnOff': 'O\'chirish',
+  'instagram.connectTitle': 'Instagram\'ni ulang',
+  'instagram.connectDesc': 'JavobGo xizmatlaridan foydalanish uchun davom etishdan oldin Instagram biznes yoki kreator hisobingizni ulashingiz kerak.',
+  'instagram.connectBtn': 'Hisobni ulash',
+  'instagram.secure': 'Ma\'lumotlaringiz xavfsizligi kafolatlangan',
 };
 
 const en: TranslationDictionary = {
@@ -410,6 +414,10 @@ const en: TranslationDictionary = {
   'inbox.chat.delete': 'Delete',
   'automation.form.turnOn': 'Turn On',
   'automation.form.turnOff': 'Turn Off',
+  'instagram.connectTitle': 'Connect Instagram',
+  'instagram.connectDesc': 'To continue using JavobGo services, you need to connect your Instagram Business or Creator account.',
+  'instagram.connectBtn': 'Connect Account',
+  'instagram.secure': 'Your data security is guaranteed',
 };
 
 const ru: TranslationDictionary = {
@@ -615,6 +623,10 @@ const ru: TranslationDictionary = {
   'inbox.chat.delete': 'Удалить',
   'automation.form.turnOn': 'Включить',
   'automation.form.turnOff': 'Выключить',
+  'instagram.connectTitle': 'Подключите Instagram',
+  'instagram.connectDesc': 'Для продолжения использования сервисов JavobGo необходимо подключить бизнес-аккаунт или аккаунт автора Instagram.',
+  'instagram.connectBtn': 'Подключить аккаунт',
+  'instagram.secure': 'Безопасность ваших данных гарантирована',
 };
 
 export const translations: Record<Language, TranslationDictionary> = {
