@@ -107,7 +107,6 @@ export class InstagramAccountsService {
       await manager.delete('automations',  { instagram_account_id });
       await manager.delete('settings',     { instagram_account_id });
       await manager.delete('dm_messages',  { instagram_account_id });
-      await manager.delete('rate_limits',  { instagram_account_id });
       await manager.delete('agents',       { instagram_account_id });
       await manager.delete('instagram_accounts', { telegram_id, instagram_account_id });
     });
