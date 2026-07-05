@@ -8,11 +8,12 @@ import { AuthController } from './auth.controller';
 import { CookieAuthGuard } from './cookie-auth.guard';
 import { TelegramUser } from '../telegram/telegram-user.entity';
 import { AuthToken } from './auth-token.entity';
+import { InstagramAccount } from '../instagram-accounts/instagram-account.entity';
 
 @Module({
   imports: [
     PassportModule,
-    TypeOrmModule.forFeature([TelegramUser, AuthToken]),
+    TypeOrmModule.forFeature([TelegramUser, AuthToken, InstagramAccount]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

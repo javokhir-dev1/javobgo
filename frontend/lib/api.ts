@@ -166,3 +166,19 @@ export const adminExportRequests  = (telegramId?: string, igAccountId?: string) 
 export const adminGetAutomations  = () => api.get('/api/admin/automations').then(r => r.data);
 export const adminGetAgents       = () => api.get('/api/admin/agents').then(r => r.data);
 
+
+// Account deletion (90 kunlik grace period)
+export const requestAccountDeletion = () => api.delete('/api/account/me').then(r => r.data);
+export const restoreAccount         = () => api.post('/api/account/me/restore').then(r => r.data);
+
+// Support / murojaat
+export const submitSupportRequest = (message: string, type: 'general' | 'data_deletion' = 'general') =>
+  api.post('/api/support', { message, type }).then(r => r.data);
+export const adminGetSupportRequests = (status?: 'new' | 'resolved') =>
+  api.get(`/api/support${status ? `?status=${status}` : ''}`).then(r => r.data);
+export const adminResolveSupportRequest = (id: number) =>
+  api.patch(`/api/support/${id}/resolve`).then(r => r.data);
+
+// Logout
+export const logout = () => api.post('/api/auth/logout').then(r => r.data);
+

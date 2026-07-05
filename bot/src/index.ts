@@ -4,8 +4,11 @@ import * as path from 'path';
 import * as https from 'https';
 import * as http from 'http';
 import { randomUUID } from 'crypto';
-import { Telegraf, Context } from 'telegraf';
-import { upsertTelegramUser, isUserRegistered, createAuthToken, getActiveAuthToken, setTokenMessageId } from './db';
+import { Telegraf, Context, Markup } from 'telegraf';
+import {
+  upsertTelegramUser, isUserRegistered, createAuthToken, getActiveAuthToken, setTokenMessageId,
+  createSupportRequest, getAdminTelegramIds, resolveSupportRequest,
+} from './db';
 
 const BOT_TOKEN        = process.env.TELEGRAM_BOT_TOKEN;
 const SITE_URL         = process.env.SITE_URL         || 'http://localhost:3000';
@@ -150,14 +153,96 @@ bot.on('contact', async (ctx: Context) => {
 bot.command('help', async (ctx: Context) => {
   await ctx.replyWithMarkdown(
     `*Avto Komment Bot — yordam*\n\n` +
-    `🔹 /start — Ro'yxatdan o'tish yoki xush kelibsiz xabari\n` +
+    `🔹 /start — Ro'yxatdan o'tish yoki platformaga kirish\n` +
+    `🔹 /murojaat — Admin bilan bog'lanish yoki ma'lumot o'chirish so'rovi\n` +
     `🔹 /help  — Ushbu yordam xabari`,
   );
 });
 
-// ─── Noma'lum xabarlar ────────────────────────────────────────────────────────
+// ─── /murojaat — admin bilan bog'lanish ─────────────────────────────────────────
+
+// Murojaat kutilayotgan foydalanuvchilar (in-memory)
+const pendingSupport = new Map<number, 'general' | 'data_deletion'>();
+
+bot.command('murojaat', async (ctx: Context) => {
+  const from = ctx.from;
+  if (!from) return;
+  pendingSupport.set(from.id, 'general');
+  await ctx.replyWithMarkdown(
+    `✍️ *Murojaatingizni yozing.*\n\n` +
+    `Savolingiz, taklifingiz yoki ma'lumotlaringizni o'chirish so'rovini shu yerga yozib yuboring — admin ko'rib chiqadi.\n\n` +
+    `Bekor qilish: /help`,
+  );
+});
+
+async function forwardToAdmins(requestId: number, fromName: string, telegramId: string, message: string) {
+  const adminIds = await getAdminTelegramIds();
+  const text =
+    `✉️ <b>Yangi murojaat #${requestId}</b>\n\n` +
+    `<b>Kimdan:</b> ${escapeHtml(fromName)}\n` +
+    `<b>Telegram ID:</b> <code>${telegramId}</code>\n\n` +
+    escapeHtml(message);
+  const keyboard = Markup.inlineKeyboard([
+    Markup.button.callback('✅ Hal qilindi', `resolve:${requestId}`),
+  ]);
+  for (const adminId of adminIds) {
+    try {
+      await bot.telegram.sendMessage(adminId, text, { parse_mode: 'HTML', ...keyboard });
+    } catch (e: any) {
+      console.warn(`Adminga yuborilmadi (${adminId}):`, e.message);
+    }
+  }
+  return adminIds.length;
+}
+
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+// Admin "Hal qilindi" tugmasini bosganda
+bot.action(/^resolve:(\d+)$/, async (ctx) => {
+  const fromId = ctx.from?.id ? String(ctx.from.id) : '';
+  const admins = await getAdminTelegramIds();
+  if (!admins.includes(fromId)) {
+    await ctx.answerCbQuery("Ruxsat yo'q");
+    return;
+  }
+  const id = Number((ctx.match as RegExpMatchArray)[1]);
+  try {
+    await resolveSupportRequest(id);
+    await ctx.answerCbQuery('Hal qilindi deb belgilandi ✅');
+    const original = (ctx.callbackQuery.message as any)?.text || '';
+    await ctx.editMessageText(`${original}\n\n✅ <b>Hal qilindi</b>`, { parse_mode: 'HTML' });
+  } catch (e: any) {
+    await ctx.answerCbQuery('Xatolik yuz berdi');
+    console.error('resolve xato:', e.message);
+  }
+});
+
+// ─── Matnli xabarlar (murojaat yoki noma'lum buyruq) ────────────────────────────
 
 bot.on('message', async (ctx: Context) => {
+  const from = ctx.from;
+  const text = (ctx.message as any)?.text as string | undefined;
+
+  if (from && text && pendingSupport.has(from.id)) {
+    pendingSupport.delete(from.id);
+    const fromName = `${from.first_name || 'Foydalanuvchi'}${from.username ? ' (@' + from.username + ')' : ''}`;
+    try {
+      const requestId = await createSupportRequest(String(from.id), fromName, text, 'general');
+      const adminCount = await forwardToAdmins(requestId, fromName, String(from.id), text);
+      if (adminCount > 0) {
+        await ctx.reply('✅ Murojaatingiz adminga yuborildi. Tez orada javob beriladi.');
+      } else {
+        await ctx.reply('✅ Murojaatingiz qabul qilindi.');
+      }
+    } catch (e: any) {
+      console.error('Murojaat saqlashda xato:', e.message);
+      await ctx.reply("Xatolik yuz berdi. Iltimos keyinroq qayta urinib ko'ring.");
+    }
+    return;
+  }
+
   await ctx.reply("Buyruqni tushunmadim. /help yuboring.");
 });
 
