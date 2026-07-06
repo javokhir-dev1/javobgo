@@ -55,7 +55,6 @@ export default function Sidebar() {
   const [connecting, setConnecting] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const popupRef = useRef<Window | null>(null);
 
   useEffect(() => {
     fetch('/auth/me')
@@ -63,14 +62,11 @@ export default function Sidebar() {
       .then(data => data && setUser(data))
       .catch(() => {});
 
-    const handler = (e: MessageEvent) => {
-      if (e.data?.success !== undefined) {
-        setConnecting(false);
-        if (e.data.success) refreshInstagram();
-      }
-    };
-    window.addEventListener('message', handler);
-    return () => window.removeEventListener('message', handler);
+    // OAuth to'liq redirect natijasini URL query-param'dan o'qiymiz
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('ig_connected') === '1') {
+      refreshInstagram();
+    }
   }, []);
 
   useEffect(() => {
@@ -91,10 +87,8 @@ export default function Sidebar() {
       const res = await fetch('/api/instagram/oauth-url');
       if (!res.ok) throw new Error();
       const { url } = await res.json();
-      const w = 600, h = 700;
-      const left = window.screenX + (window.outerWidth - w) / 2;
-      const top  = window.screenY + (window.outerHeight - h) / 2;
-      window.open(url, 'ig_oauth', `width=${w},height=${h},left=${left},top=${top},toolbar=no,menubar=no,scrollbars=yes`);
+      // Popup emas — butun sahifani Instagram'ga yo'naltiramiz (mobil brauzerlarда ishonchli)
+      window.location.href = url;
     } catch {
       setConnecting(false);
     }

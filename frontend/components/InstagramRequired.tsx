@@ -11,20 +11,18 @@ export default function InstagramRequired({ children }: { children: React.ReactN
   const [connecting, setConnecting] = useState(false);
   const [error, setError] = useState('');
 
+  // OAuth to'liq redirect oqimi: Instagram'dan qaytгач natija URL query-param'да keladi
   useEffect(() => {
-    const handler = (event: MessageEvent) => {
-      if (event.data?.success !== undefined) {
-        setConnecting(false);
-        if (event.data.success) {
-          setError('');
-          refresh();
-        } else {
-          setError(event.data.error || 'Ulanishda xato yuz berdi');
-        }
-      }
-    };
-    window.addEventListener('message', handler);
-    return () => window.removeEventListener('message', handler);
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('ig_connected') === '1') {
+      setError('');
+      refresh();
+      // query-paramларni tozalaymiz
+      window.history.replaceState({}, '', window.location.pathname);
+    } else if (params.get('ig_error')) {
+      setError(decodeURIComponent(params.get('ig_error') || 'Ulanishda xato yuz berdi'));
+      window.history.replaceState({}, '', window.location.pathname);
+    }
   }, [refresh]);
 
   async function handleConnect() {
@@ -37,23 +35,8 @@ export default function InstagramRequired({ children }: { children: React.ReactN
         throw new Error(data.message || data.error || 'OAuth URL olishda xato');
       }
       const { url } = await res.json();
-      const w = 600, h = 700;
-      const left = window.screenX + (window.outerWidth - w) / 2;
-      const top = window.screenY + (window.outerHeight - h) / 2;
-      const popup = window.open(url, 'Instagram Login', `width=${w},height=${h},top=${top},left=${left}`);
-      if (popup) {
-        const timer = setInterval(() => {
-          if (popup.closed) {
-            clearInterval(timer);
-            setTimeout(() => {
-              setConnecting(prev => {
-                if (prev) return false;
-                return prev;
-              });
-            }, 500);
-          }
-        }, 500);
-      }
+      // Popup emas — butun sahifani Instagram'ga yo'naltiramiz (mobil brauzerlarда ishonchli)
+      window.location.href = url;
     } catch (err: any) {
       setError(err.message);
       setConnecting(false);
