@@ -8,7 +8,7 @@ const api = axios.create({
 });
 
 // Bu sahifalar login talab qilmaydi — 401 kelsa ham /login ga yo'naltirmaymiz
-const PUBLIC_PATHS = ['/login', '/privacy-policy', '/data-deletion'];
+const PUBLIC_PATHS = ['/login', '/privacy-policy', '/data-deletion', '/terms'];
 
 api.interceptors.response.use(
   (response) => response,
