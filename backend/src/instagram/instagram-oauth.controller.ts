@@ -28,6 +28,12 @@ export class InstagramOAuthController {
     return `${payload}.${sig}`;
   }
 
+  /** FRONTEND_URL ba'zan vergul bilan ajratilgan bir nechta origin bo'ladi — birinchisini olamiz */
+  private frontendUrl(): string {
+    const raw = this.config.get<string>('FRONTEND_URL') || 'http://localhost:3000';
+    return raw.split(',')[0].trim().replace(/\/$/, '');
+  }
+
   private verifyState(state: string): string | null {
     try {
       const [payload, sig] = state.split('.');
@@ -76,10 +82,10 @@ export class InstagramOAuthController {
     const telegramId = this.verifyState(state || '');
     if (!telegramId && !error) {
       this.logger.warn('OAuth callback: state tekshiruvi muvaffaqiyatsiz');
-      return res.send(this.html({ success: false, error: 'invalid_state' }));
+      return res.redirect(this.frontendRedirectUrl({ success: false, error: 'invalid_state' }));
     }
     if (error || !code) {
-      return res.send(this.html({ success: false, error: error || 'cancelled' }));
+      return res.redirect(this.frontendRedirectUrl({ success: false, error: error || 'cancelled' }));
     }
 
     try {
@@ -154,30 +160,21 @@ export class InstagramOAuthController {
         token_expires_at: tokenExpiresAt,
       });
 
-      return res.send(this.html({ success: true, instagram_username: igUsername, instagram_account_id: finalIgId }));
+      return res.redirect(this.frontendRedirectUrl({ success: true, instagram_username: igUsername }));
 
     } catch (err: any) {
       const msg = err.response?.data?.error_message || err.response?.data?.error?.message || err.message;
-      return res.send(this.html({ success: false, error: msg }));
+      return res.redirect(this.frontendRedirectUrl({ success: false, error: msg }));
     }
   }
 
-  private html(data: object): string {
-    const json = JSON.stringify(data);
-    return `<!DOCTYPE html>
-<html lang="uz">
-<head><meta charset="UTF-8"><title>Instagram ulash</title>
-<style>
-  body{font-family:sans-serif;display:flex;align-items:center;justify-content:center;
-       height:100vh;margin:0;background:#0a0a0a;color:#fff;}
-  .box{text-align:center;padding:32px;background:#1a1a1a;border-radius:16px;}
-</style></head>
-<body><div class="box">
-  <p>${(data as any).success ? '✅ Muvaffaqiyatli ulandi! Oyna yopilmoqda...' : '❌ Xato: ' + (data as any).error}</p>
-</div>
-<script>
-  try { if(window.opener) window.opener.postMessage(${json},'*'); } catch(e){}
-  setTimeout(function(){ window.close(); }, 1500);
-</script></body></html>`;
+  /** OAuth natijasini query-param sifatida frontendga qaytaruvchi to'liq redirect URL */
+  private frontendRedirectUrl(data: { success: boolean; instagram_username?: string; error?: string }): string {
+    const base = this.frontendUrl();
+    if (data.success) {
+      const u = data.instagram_username ? `&username=${encodeURIComponent(data.instagram_username)}` : '';
+      return `${base}/?ig_connected=1${u}`;
+    }
+    return `${base}/?ig_error=${encodeURIComponent(data.error || 'unknown')}`;
   }
 }

@@ -63,7 +63,7 @@ export class AuthService {
       username: user.username,
       auth_type: 'telegram',
     };
-    const jwt = this.jwtService.sign(payload, { expiresIn: '7d' });
+    const jwt = this.jwtService.sign(payload, { expiresIn: '15d' });
     return { jwt, user };
   }
 
@@ -147,7 +147,7 @@ export class AuthService {
       username: user.username,
       auth_type: 'telegram',
     };
-    const jwt = this.jwtService.sign(payload, { expiresIn: '7d' });
+    const jwt = this.jwtService.sign(payload, { expiresIn: '15d' });
     return { jwt, user };
   }
 
