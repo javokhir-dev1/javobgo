@@ -78,10 +78,22 @@ export default function DataDeletionPage() {
             <h2 className="text-xl font-semibold mb-3">Bog&apos;lanish</h2>
             <div className="bg-surface-container rounded-lg p-4">
               <p className="text-on-surface font-medium">&laquo;ZO&apos;R PLAY&raquo; MCHJ</p>
-              <p className="text-on-surface-variant text-sm mt-1">
+              <p className="text-on-surface-variant text-sm mt-1">O&apos;zbekiston Respublikasi</p>
+              <p className="text-on-surface-variant text-sm mt-2">
                 Email:{' '}
                 <a href="mailto:javokhir.dev1@gmail.com" className="text-primary hover:underline">
                   javokhir.dev1@gmail.com
+                </a>
+              </p>
+              <p className="text-on-surface-variant text-sm mt-1">
+                Telegram bot orqali:{' '}
+                <a
+                  href={`${process.env.NEXT_PUBLIC_BOT_URL || 'https://t.me/javobgobot'}?start=murojaat`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline font-mono"
+                >
+                  /murojaat
                 </a>
               </p>
             </div>
