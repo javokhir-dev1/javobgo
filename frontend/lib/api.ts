@@ -7,11 +7,17 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
+// Bu sahifalar login talab qilmaydi — 401 kelsa ham /login ga yo'naltirmaymiz
+const PUBLIC_PATHS = ['/login', '/privacy-policy', '/data-deletion'];
+
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response && error.response.status === 401) {
-      if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+      if (
+        typeof window !== 'undefined' &&
+        !PUBLIC_PATHS.some((p) => window.location.pathname.startsWith(p))
+      ) {
         window.location.href = '/login';
       }
     }
