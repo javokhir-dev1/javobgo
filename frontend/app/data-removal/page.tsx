@@ -6,6 +6,6 @@ export const metadata: Metadata = {
   description: "JavobGo hisobingizni va barcha ma'lumotlaringizni qanday o'chirish mumkinligi bo'yicha ko'rsatma.",
 };
 
-export default function DataDeletionPage() {
+export default function DataRemovalPage() {
   return <DataDeletionContent />;
 }
