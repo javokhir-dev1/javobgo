@@ -3,6 +3,29 @@ export type Language = 'uz' | 'en' | 'ru';
 type TranslationDictionary = Record<string, string>;
 
 const uz: TranslationDictionary = {
+  // Login
+  'login.welcome': 'Xush kelibsiz',
+  'login.subtitle': 'Platformaga kirish uchun rasmiy Telegram botimizdan foydalaning.',
+  'login.button': 'Telegram orqali kirish',
+  'login.loading': 'Kirish bajarilmoqda...',
+  'login.loadingWait': 'Iltimos, kutib turing.',
+  'login.verifying': 'Tekshirilmoqda...',
+  'login.heroLine1': 'Instagram biznesingizni',
+  'login.heroLine2': 'yangi bosqichga',
+  'login.heroLine3': 'olib chiqing',
+  'login.heroDesc': 'Izohlar va xabarlarga avtomatik javob bering, mijozlarga kun-u tun tezkor xizmat ko\'rsating.',
+  'login.statFast': 'Tezkor',
+  'login.statFastLabel': 'Ishga tushirish',
+  'login.statAutoLabel': 'Avtomatik javob',
+  'login.statSecure': 'Xavfsizlik',
+  'login.errAuth': 'Avtorizatsiyadan o\'tib bo\'lmadi. Telegram orqali qayta kiring.',
+  'login.errServer': 'Server bilan bog\'lanishda xatolik.',
+  'login.errTokenUsed': 'Ushbu tugma ishlatib bo\'lingan. Iltimos botga qaytib /start bosing.',
+  'login.errTooMany': 'Juda ko\'p urinish. Biroz kuting.',
+  'login.errUnreachable': 'Server bilan bog\'lanib bo\'lmadi. Iltimos qayta urinib ko\'ring.',
+  'login.errBadLink': 'Noto\'g\'ri havola formati.',
+  'login.errGeneric': 'Xatolik yuz berdi. Iltimos qayta urinib ko\'ring.',
+
   // Sidebar
   'nav.dashboard': 'Bosh sahifa',
   'nav.automation': 'Avtomatizatsiya',
@@ -225,6 +248,29 @@ const uz: TranslationDictionary = {
 };
 
 const en: TranslationDictionary = {
+  // Login
+  'login.welcome': 'Welcome',
+  'login.subtitle': 'Use our official Telegram bot to sign in to the platform.',
+  'login.button': 'Sign in with Telegram',
+  'login.loading': 'Signing in...',
+  'login.loadingWait': 'Please wait.',
+  'login.verifying': 'Verifying...',
+  'login.heroLine1': 'Take your Instagram',
+  'login.heroLine2': 'business to the',
+  'login.heroLine3': 'next level',
+  'login.heroDesc': 'Automatically reply to comments and messages, and serve your customers around the clock.',
+  'login.statFast': 'Fast',
+  'login.statFastLabel': 'Setup',
+  'login.statAutoLabel': 'Auto-reply',
+  'login.statSecure': 'Security',
+  'login.errAuth': 'Authorization failed. Please sign in again via Telegram.',
+  'login.errServer': 'Failed to connect to the server.',
+  'login.errTokenUsed': 'This link has already been used. Please go back to the bot and press /start.',
+  'login.errTooMany': 'Too many attempts. Please wait a moment.',
+  'login.errUnreachable': 'Could not reach the server. Please try again.',
+  'login.errBadLink': 'Invalid link format.',
+  'login.errGeneric': 'An error occurred. Please try again.',
+
   // Sidebar
   'nav.dashboard': 'Dashboard',
   'nav.automation': 'Automation',
@@ -447,6 +493,29 @@ const en: TranslationDictionary = {
 };
 
 const ru: TranslationDictionary = {
+  // Login
+  'login.welcome': 'Добро пожаловать',
+  'login.subtitle': 'Используйте наш официальный Telegram-бот для входа на платформу.',
+  'login.button': 'Войти через Telegram',
+  'login.loading': 'Выполняется вход...',
+  'login.loadingWait': 'Пожалуйста, подождите.',
+  'login.verifying': 'Проверка...',
+  'login.heroLine1': 'Выведите ваш',
+  'login.heroLine2': 'Instagram-бизнес',
+  'login.heroLine3': 'на новый уровень',
+  'login.heroDesc': 'Автоматически отвечайте на комментарии и сообщения и обслуживайте клиентов круглосуточно.',
+  'login.statFast': 'Быстро',
+  'login.statFastLabel': 'Запуск',
+  'login.statAutoLabel': 'Автоответ',
+  'login.statSecure': 'Безопасность',
+  'login.errAuth': 'Не удалось авторизоваться. Войдите снова через Telegram.',
+  'login.errServer': 'Ошибка соединения с сервером.',
+  'login.errTokenUsed': 'Эта ссылка уже использована. Вернитесь в бот и нажмите /start.',
+  'login.errTooMany': 'Слишком много попыток. Подождите немного.',
+  'login.errUnreachable': 'Не удалось связаться с сервером. Попробуйте снова.',
+  'login.errBadLink': 'Неверный формат ссылки.',
+  'login.errGeneric': 'Произошла ошибка. Попробуйте снова.',
+
   // Sidebar
   'nav.dashboard': 'Главная',
   'nav.automation': 'Автоматизация',

@@ -6,12 +6,43 @@ import Link from 'next/link';
 import { Bot, Zap, Shield, AlertTriangle, Loader2 } from 'lucide-react';
 import { verifyAuthTokenAction } from '../actions/auth';
 import { getSettings } from '@/lib/api';
+import { useLanguage } from '@/context/LanguageContext';
+import type { Language } from '@/locales/translations';
+
+const LANGS: { code: Language; label: string }[] = [
+  { code: 'uz', label: "O'z" },
+  { code: 'en', label: 'EN' },
+  { code: 'ru', label: 'RU' },
+];
+
+function LanguageSwitcher() {
+  const { language, setLanguage } = useLanguage();
+  return (
+    <div className="flex items-center gap-1 p-1 rounded-full border border-outline-variant/30 bg-surface/50 backdrop-blur-md">
+      {LANGS.map(({ code, label }) => (
+        <button
+          key={code}
+          onClick={() => setLanguage(code)}
+          className={`px-2.5 py-1 rounded-full text-xs font-semibold transition-colors ${
+            language === code
+              ? 'bg-primary text-on-primary'
+              : 'text-on-surface-variant hover:text-on-surface'
+          }`}
+          aria-label={`Switch language to ${label}`}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 function LoginContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { t } = useLanguage();
 
   useEffect(() => {
     const token = searchParams.get('token');
@@ -54,13 +85,13 @@ function LoginContent() {
         body: JSON.stringify({ initData }),
       });
       if (!res.ok) {
-        setError("Avtorizatsiyadan o'tib bo'lmadi. Telegram orqali qayta kiring.");
+        setError(t('login.errAuth'));
         setIsLoading(false);
         return;
       }
       router.push('/');
     } catch {
-      setError("Server bilan bog'lanishda xatolik.");
+      setError(t('login.errServer'));
       setIsLoading(false);
     }
   };
@@ -71,20 +102,20 @@ function LoginContent() {
       const result = await verifyAuthTokenAction(token);
       if (!result.ok) {
         if (result.error === 'invalid_or_expired_token') {
-          setError("Ushbu tugma ishlatib bo'lingan. Iltimos botga qaytib /start bosing.");
+          setError(t('login.errTokenUsed'));
         } else if (result.error === 'too_many_requests') {
-          setError("Juda ko'p urinish. Biroz kuting.");
+          setError(t('login.errTooMany'));
         } else if (result.error === 'backend_unreachable') {
-          setError("Server bilan bog'lanib bo'lmadi. Iltimos qayta urinib ko'ring.");
+          setError(t('login.errUnreachable'));
         } else {
-          setError("Noto'g'ri havola formati.");
+          setError(t('login.errBadLink'));
         }
         setIsLoading(false);
         return;
       }
       router.push('/');
     } catch {
-      setError("Xatolik yuz berdi. Iltimos qayta urinib ko'ring.");
+      setError(t('login.errGeneric'));
       setIsLoading(false);
     }
   };
@@ -113,19 +144,19 @@ function LoginContent() {
         <div className="relative z-10 space-y-8 flex-1 flex flex-col justify-center">
           <div>
             <h2 className="text-5xl font-extrabold text-on-surface tracking-tight leading-[1.1] mb-6">
-              Instagram biznesingizni<br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-[#A78BFA]">yangi bosqichga</span><br />
-              olib chiqing
+              {t('login.heroLine1')}<br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-[#A78BFA]">{t('login.heroLine2')}</span><br />
+              {t('login.heroLine3')}
             </h2>
             <p className="text-lg leading-relaxed text-on-surface-variant max-w-md">
-              Izohlar va xabarlarga avtomatik javob bering, mijozlarga kun-u tun tezkor xizmat ko'rsating.
+              {t('login.heroDesc')}
             </p>
           </div>
           <div className="grid grid-cols-3 gap-5">
             {[
-              { value: 'Tezkor', label: 'Ishga tushirish', icon: Zap },
-              { value: '24/7', label: 'Avtomatik javob', icon: Bot },
-              { value: '100%', label: 'Xavfsizlik', icon: Shield },
+              { value: t('login.statFast'), label: t('login.statFastLabel'), icon: Zap },
+              { value: '24/7', label: t('login.statAutoLabel'), icon: Bot },
+              { value: '100%', label: t('login.statSecure'), icon: Shield },
             ].map((s, idx) => (
               <div key={idx} className="rounded-2xl p-5 border border-outline-variant/30 bg-surface/50 backdrop-blur-md flex flex-col items-center justify-center gap-2 transition-all hover:scale-105 hover:border-primary/30 hover:shadow-lg">
                 <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-1">
@@ -152,15 +183,19 @@ function LoginContent() {
           </span>
         </div>
 
+        {/* Language Switcher */}
+        <div className="absolute top-6 right-6 z-20">
+          <LanguageSwitcher />
+        </div>
+
         {/* Footer */}
         <div className="absolute bottom-4 left-0 right-0 text-center px-4">
           <Link href="/privacy-policy" target="_blank" rel="noopener noreferrer"
             className="text-[11px] text-on-surface-variant/50 hover:text-on-surface-variant transition-colors">
-            Maxfiylik siyosati
+            {t('nav.privacy')}
           </Link>
           <p className="text-[11px] text-on-surface-variant/40 mt-0.5">
-            © {new Date().getFullYear()} Barcha huquqlar himoyalangan.
-            Xizmatlar «ZO'R PLAY» MCHJ tomonidan ko'rsatiladi.
+            {t('nav.copyright')}
           </p>
         </div>
 
@@ -168,20 +203,20 @@ function LoginContent() {
           {isLoading ? (
             <div className="flex flex-col items-center justify-center space-y-4">
               <Loader2 className="w-12 h-12 text-primary animate-spin" />
-              <h1 className="text-[24px] font-extrabold text-on-surface tracking-tight">Kirish bajarilmoqda...</h1>
-              <p className="text-[15px] text-on-surface-variant">Iltimos, kutib turing.</p>
+              <h1 className="text-[24px] font-extrabold text-on-surface tracking-tight">{t('login.loading')}</h1>
+              <p className="text-[15px] text-on-surface-variant">{t('login.loadingWait')}</p>
             </div>
           ) : hasToken && !error ? (
             <div className="flex flex-col items-center justify-center space-y-4">
               <Loader2 className="w-12 h-12 text-primary animate-spin" />
-              <h1 className="text-[24px] font-extrabold text-on-surface tracking-tight">Tekshirilmoqda...</h1>
+              <h1 className="text-[24px] font-extrabold text-on-surface tracking-tight">{t('login.verifying')}</h1>
             </div>
           ) : (
             <>
               <div className="mb-10">
-                <h1 className="text-[32px] font-extrabold text-on-surface tracking-tight mb-3">Xush kelibsiz</h1>
+                <h1 className="text-[32px] font-extrabold text-on-surface tracking-tight mb-3">{t('login.welcome')}</h1>
                 <p className="text-[15px] text-on-surface-variant">
-                  Platformaga kirish uchun rasmiy Telegram botimizdan foydalaning.
+                  {t('login.subtitle')}
                 </p>
               </div>
 
@@ -201,7 +236,7 @@ function LoginContent() {
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.16 13.947l-2.963-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.991.612z"/>
                 </svg>
-                Telegram orqali kirish
+                {t('login.button')}
               </a>
             </>
           )}
