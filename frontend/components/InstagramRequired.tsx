@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useInstagram } from '@/context/InstagramContext';
 import { useLanguage } from '@/context/LanguageContext';
+import { connectInstagram } from '@/lib/connectInstagram';
 import { Loader2, Instagram, AlertTriangle, ShieldCheck } from 'lucide-react';
 
 export default function InstagramRequired({ children }: { children: React.ReactNode }) {
@@ -29,16 +30,17 @@ export default function InstagramRequired({ children }: { children: React.ReactN
     setError('');
     setConnecting(true);
     try {
-      const res = await fetch('/api/instagram/oauth-url');
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.message || data.error || 'OAuth URL olishda xato');
+      const result = await connectInstagram();
+      if (result.status === 'redirecting') return; // mobil: sahifa o'tyapti
+      if (result.status === 'connected') {
+        refresh();
+      } else if (result.status === 'error') {
+        setError(result.error);
       }
-      const { url } = await res.json();
-      // Popup emas — butun sahifani Instagram'ga yo'naltiramiz (mobil brauzerlarда ishonchli)
-      window.location.href = url;
+      // cancelled: hech narsa qilmaymiz
     } catch (err: any) {
       setError(err.message);
+    } finally {
       setConnecting(false);
     }
   }

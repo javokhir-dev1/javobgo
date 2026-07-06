@@ -10,6 +10,7 @@ import {
 import { useInstagram, useInstagramRefresh } from '@/context/InstagramContext';
 import { useTheme } from '@/components/ThemeProvider';
 import { useLanguage } from '@/context/LanguageContext';
+import { connectInstagram } from '@/lib/connectInstagram';
 import { Avatar } from '@/components/ui/Avatar';
 
 const navItemKeys = [
@@ -84,12 +85,15 @@ export default function Sidebar() {
     setConnecting(true);
     setDropdownOpen(false);
     try {
-      const res = await fetch('/api/instagram/oauth-url');
-      if (!res.ok) throw new Error();
-      const { url } = await res.json();
-      // Popup emas — butun sahifani Instagram'ga yo'naltiramiz (mobil brauzerlarда ishonchli)
-      window.location.href = url;
+      const result = await connectInstagram();
+      if (result.status === 'redirecting') return; // mobil: sahifa o'tyapti
+      if (result.status === 'connected') {
+        refreshInstagram();
+      }
+      // error / cancelled: sidebar'da alohida xabar ko'rsatmaymiz
     } catch {
+      /* ignore */
+    } finally {
       setConnecting(false);
     }
   };

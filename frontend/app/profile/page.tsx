@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useInstagram, useInstagramRefresh } from '@/context/InstagramContext';
 import { disconnectInstagramAccount, requestAccountDeletion } from '@/lib/api';
+import { connectInstagram } from '@/lib/connectInstagram';
 import { useTheme } from '@/components/ThemeProvider';
 import { useLanguage } from '@/context/LanguageContext';
 import { Language } from '@/locales/translations';
@@ -158,16 +159,18 @@ export default function SettingsPage() {
     setSuccess('');
     setConnecting(true);
     try {
-      const res = await fetch('/api/instagram/oauth-url');
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.message || data.error || 'OAuth URL olishda xato');
+      const result = await connectInstagram();
+      if (result.status === 'redirecting') return; // mobil: sahifa o'tyapti
+      if (result.status === 'connected') {
+        setSuccess(result.username ? `@${result.username} muvaffaqiyatli ulandi!` : 'Muvaffaqiyatli ulandi!');
+        refreshInstagram();
+      } else if (result.status === 'error') {
+        setError(result.error);
       }
-      const { url } = await res.json();
-      // Popup emas — butun sahifani Instagram'ga yo'naltiramiz (mobil brauzerlarда ishonchli)
-      window.location.href = url;
+      // cancelled: hech narsa qilmaymiz
     } catch (err: any) {
       setError(err.message);
+    } finally {
       setConnecting(false);
     }
   }
