@@ -245,6 +245,11 @@ const uz: TranslationDictionary = {
   'instagram.connectDesc': 'JavobGo xizmatlaridan foydalanish uchun davom etishdan oldin Instagram biznes yoki kreator hisobingizni ulashingiz kerak.',
   'instagram.connectBtn': 'Hisobni ulash',
   'instagram.secure': 'Ma\'lumotlaringiz xavfsizligi kafolatlangan',
+  'instagram.disconnectTitle': 'Hisobni uzish',
+  'instagram.disconnectDesc': 'Ushbu Instagram hisobini platformadan uzmoqchimisiz? Avtomatik javob berish to\'xtaydi. Keyinroq qayta ulashingiz mumkin.',
+  'instagram.disconnectConfirm': 'Uzish',
+  'instagram.disconnected': 'uzildi.',
+  'instagram.disconnectError': 'Uzishda xato yuz berdi.',
 };
 
 const en: TranslationDictionary = {
@@ -490,6 +495,11 @@ const en: TranslationDictionary = {
   'instagram.connectDesc': 'To continue using JavobGo services, you need to connect your Instagram Business or Creator account.',
   'instagram.connectBtn': 'Connect Account',
   'instagram.secure': 'Your data security is guaranteed',
+  'instagram.disconnectTitle': 'Disconnect account',
+  'instagram.disconnectDesc': 'Disconnect this Instagram account from the platform? Auto-replies will stop. You can reconnect it later.',
+  'instagram.disconnectConfirm': 'Disconnect',
+  'instagram.disconnected': 'disconnected.',
+  'instagram.disconnectError': 'Failed to disconnect.',
 };
 
 const ru: TranslationDictionary = {
@@ -574,6 +584,15 @@ const ru: TranslationDictionary = {
   // General
   'general.save': 'Сохранить',
   'general.cancel': 'Отмена',
+  'instagram.connectTitle': 'Подключите Instagram',
+  'instagram.connectDesc': 'Чтобы продолжить пользоваться JavobGo, подключите ваш бизнес- или креатор-аккаунт Instagram.',
+  'instagram.connectBtn': 'Подключить аккаунт',
+  'instagram.secure': 'Безопасность ваших данных гарантирована',
+  'instagram.disconnectTitle': 'Отключить аккаунт',
+  'instagram.disconnectDesc': 'Отключить этот аккаунт Instagram от платформы? Автоответы прекратятся. Вы сможете подключить его снова позже.',
+  'instagram.disconnectConfirm': 'Отключить',
+  'instagram.disconnected': 'отключён.',
+  'instagram.disconnectError': 'Ошибка при отключении.',
   'general.error': 'Произошла ошибка',
   'general.success': 'Успешно',
 
