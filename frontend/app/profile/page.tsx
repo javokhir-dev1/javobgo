@@ -34,6 +34,7 @@ export default function SettingsPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [disconnecting, setDisconnecting] = useState<string | null>(null);
+  const [disconnectTarget, setDisconnectTarget] = useState<{ igId: string; username: string } | null>(null);
 
   const [user, setUser] = useState<UserInfo | null>(null);
   const [loading, setLoading] = useState(true);
@@ -175,18 +176,24 @@ export default function SettingsPage() {
     }
   }
 
-  async function handleDisconnect(igId: string, username: string) {
-    if (!confirm(`@${username} hisobini uzmoqchimisiz?`)) return;
+  function handleDisconnect(igId: string, username: string) {
+    setDisconnectTarget({ igId, username });
+  }
+
+  async function confirmDisconnect() {
+    if (!disconnectTarget) return;
+    const { igId, username } = disconnectTarget;
     setDisconnecting(igId);
     try {
       await disconnectInstagramAccount(igId);
       refreshInstagram();
-      setSuccess(`@${username} uzildi.`);
+      setSuccess(`@${username} ${t('instagram.disconnected')}`);
       setError('');
     } catch {
-      setError('Uzishda xato yuz berdi.');
+      setError(t('instagram.disconnectError'));
     } finally {
       setDisconnecting(null);
+      setDisconnectTarget(null);
     }
   }
 
@@ -487,6 +494,55 @@ export default function SettingsPage() {
 
         </div>
       </div>
+
+      {/* Instagram uzish — tasdiqlash modali */}
+      {disconnectTarget && (
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-6"
+          onClick={() => { if (!disconnecting) setDisconnectTarget(null); }}
+        >
+          <div
+            className="max-w-sm w-full bg-surface border border-outline-variant/30 rounded-3xl p-6 shadow-2xl text-center flex flex-col items-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-16 h-16 bg-error/10 rounded-full flex items-center justify-center mb-4">
+              <AlertCircle className="w-8 h-8 text-error" />
+            </div>
+
+            <h2 className="text-[20px] font-bold text-on-surface mb-1">
+              {t('instagram.disconnectTitle')}
+            </h2>
+            <p className="text-[15px] font-semibold text-primary mb-3">
+              @{disconnectTarget.username}
+            </p>
+            <p className="text-[14px] leading-relaxed text-on-surface-variant mb-6">
+              {t('instagram.disconnectDesc')}
+            </p>
+
+            <div className="flex gap-2 w-full">
+              <button
+                onClick={() => setDisconnectTarget(null)}
+                disabled={!!disconnecting}
+                className="flex-1 px-4 py-3 rounded-xl border border-outline-variant/50 text-[14px] font-medium text-on-surface-variant hover:bg-surface-container transition-colors disabled:opacity-40"
+              >
+                {t('general.cancel')}
+              </button>
+              <button
+                onClick={confirmDisconnect}
+                disabled={!!disconnecting}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-error text-white text-[14px] font-semibold hover:bg-error/90 transition-colors disabled:opacity-50"
+              >
+                {disconnecting ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Trash2 className="w-4 h-4" />
+                )}
+                {t('instagram.disconnectConfirm')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
