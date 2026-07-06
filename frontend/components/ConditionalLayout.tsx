@@ -6,7 +6,7 @@ import BottomNav from '@/components/BottomNav';
 import { InstagramProvider, useInstagram } from '@/context/InstagramContext';
 import InstagramRequired from '@/components/InstagramRequired';
 
-const AUTH_ROUTES = ['/login', '/auth', '/admin', '/privacy-policy', '/data-deletion'];
+const AUTH_ROUTES = ['/login', '/auth', '/admin', '/privacy-policy', '/data-deletion', '/terms'];
 
 function AppShell({ children }: { children: React.ReactNode }) {
   const { selectedAccount } = useInstagram();
