@@ -4,6 +4,7 @@ import ConditionalLayout from '@/components/ConditionalLayout';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import NavigationProgress from '@/components/NavigationProgress';
 import { LanguageProvider } from '@/context/LanguageContext';
+import OAuthPopupBridge from '@/components/OAuthPopupBridge';
 
 export const metadata: Metadata = {
   title: 'JavobGo — Boshqaruv Paneli',
@@ -20,6 +21,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="bg-background text-on-surface antialiased flex h-screen overflow-hidden selection:bg-brand-100 selection:text-brand-900">
         <ThemeProvider>
           <LanguageProvider>
+            <OAuthPopupBridge />
             <NavigationProgress />
             <ConditionalLayout>{children}</ConditionalLayout>
           </LanguageProvider>
