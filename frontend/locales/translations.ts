@@ -584,10 +584,6 @@ const ru: TranslationDictionary = {
   // General
   'general.save': 'Сохранить',
   'general.cancel': 'Отмена',
-  'instagram.connectTitle': 'Подключите Instagram',
-  'instagram.connectDesc': 'Чтобы продолжить пользоваться JavobGo, подключите ваш бизнес- или креатор-аккаунт Instagram.',
-  'instagram.connectBtn': 'Подключить аккаунт',
-  'instagram.secure': 'Безопасность ваших данных гарантирована',
   'instagram.disconnectTitle': 'Отключить аккаунт',
   'instagram.disconnectDesc': 'Отключить этот аккаунт Instagram от платформы? Автоответы прекратятся. Вы сможете подключить его снова позже.',
   'instagram.disconnectConfirm': 'Отключить',
