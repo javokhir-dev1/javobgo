@@ -1,7 +1,4 @@
 import { randomBytes, scrypt, timingSafeEqual } from 'crypto';
-import { promisify } from 'util';
-
-const scryptAsync = promisify(scrypt);
 
 // scrypt parametrlari. N ni oshirsangiz hash sekinlashadi (xavfsizroq).
 // Saqlangan hash ichida ham yozilgani uchun eski parollar buzilmaydi.
@@ -11,6 +8,30 @@ const P = 1;
 const KEYLEN = 64;
 const SALT_BYTES = 16;
 
+// 128 * N * r = 16 MB kerak; default maxmem 32 MB, lekin aniq belgilab qo'yamiz.
+const MAXMEM = 64 * 1024 * 1024;
+
+type ScryptParams = { N: number; r: number; p: number; maxmem: number };
+
+/**
+ * util.promisify(scrypt) ishlatilmadi: @types/node da scrypt ning bir nechta
+ * overload'i bor va promisify options'siz variantini tanlab qoladi (TS2554).
+ * Qo'lda o'ralgan Promise bunday noaniqlikdan xoli.
+ */
+function scryptAsync(
+  password: string,
+  salt: Buffer,
+  keylen: number,
+  params: ScryptParams,
+): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    scrypt(password, salt, keylen, params, (err, derivedKey) => {
+      if (err) reject(err);
+      else resolve(derivedKey);
+    });
+  });
+}
+
 /**
  * Parolni hashlaydi. Natija: scrypt$N$r$p$<salt-base64>$<hash-base64>
  *
@@ -19,9 +40,9 @@ const SALT_BYTES = 16;
  */
 export async function hashPassword(plain: string): Promise<string> {
   const salt = randomBytes(SALT_BYTES);
-  const key = (await scryptAsync(plain.normalize('NFKC'), salt, KEYLEN, {
-    N, r: R, p: P,
-  })) as Buffer;
+  const key = await scryptAsync(plain.normalize('NFKC'), salt, KEYLEN, {
+    N, r: R, p: P, maxmem: MAXMEM,
+  });
   return ['scrypt', N, R, P, salt.toString('base64'), key.toString('base64')].join('$');
 }
 
@@ -35,9 +56,9 @@ export async function verifyPassword(plain: string, stored: string): Promise<boo
     const expected = Buffer.from(keyB64, 'base64');
     if (!salt.length || !expected.length) return false;
 
-    const key = (await scryptAsync(plain.normalize('NFKC'), salt, expected.length, {
-      N: Number(n), r: Number(r), p: Number(p),
-    })) as Buffer;
+    const key = await scryptAsync(plain.normalize('NFKC'), salt, expected.length, {
+      N: Number(n), r: Number(r), p: Number(p), maxmem: MAXMEM,
+    });
 
     return key.length === expected.length && timingSafeEqual(key, expected);
   } catch {
