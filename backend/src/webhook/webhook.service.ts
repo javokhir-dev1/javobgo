@@ -322,14 +322,30 @@ export class WebhookService {
         }
 
         if (dmText) {
+          const dmButtons = (auto as any).dmButtons as { title: string; url: string }[] | undefined;
+          const validButtons = (dmButtons || []).filter(b => b.title?.trim() && b.url?.trim());
+
           try {
-            const dmButtons = (auto as any).dmButtons as { title: string; url: string }[] | undefined;
-            const validButtons = (dmButtons || []).filter(b => b.title?.trim() && b.url?.trim());
-            if (validButtons.length) {
-              // Matn + tugmalar bitta template xabar sifatida
-              await this.instagram.sendDMButtons(creds, commenterId, dmText, validButtons);
-            } else {
-              await this.instagram.sendDM(creds, commenterId, dmText);
+            try {
+              // Kommentdan DM — recipient sifatida comment_id ishlatiladi.
+              // commenterId (IGSID) bilan yuborish faqat 24 soatlik muloqot
+              // oynasi ochiq bo'lganda ishlaydi, aks holda subcode 2534022.
+              if (validButtons.length) {
+                await this.instagram.sendPrivateReplyButtons(creds, commentId, dmText, validButtons);
+              } else {
+                await this.instagram.sendPrivateReply(creds, commentId, dmText);
+              }
+            } catch (privErr: any) {
+              // Private reply har komment uchun bir marta ishlaydi. Ishlamasa,
+              // foydalanuvchi bilan muloqot oynasi ochiq bo'lishi mumkin —
+              // oddiy DM bilan urinib ko'ramiz.
+              const reason = privErr.response?.data?.error?.message || privErr.message;
+              this.logger.warn(`Private reply ishlamadi (@${commenterName}): ${reason} — oddiy DM ga o'tilyapti`);
+              if (validButtons.length) {
+                await this.instagram.sendDMButtons(creds, commenterId, dmText, validButtons);
+              } else {
+                await this.instagram.sendDM(creds, commenterId, dmText);
+              }
             }
             repliedOrDmed = true;
             this.logger.log(`✅ DM yuborildi: @${commenterName} → "${dmText.substring(0, 60)}"`);

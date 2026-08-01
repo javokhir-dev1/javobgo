@@ -86,6 +86,54 @@ export class InstagramService {
     return res.data;
   }
 
+  /**
+   * Kommentga shaxsiy javob (private reply).
+   *
+   * Kommentdan DM yuborishda recipient sifatida foydalanuvchining IGSID'i emas,
+   * comment_id berilishi kerak. recipient.id faqat 24 soatlik muloqot oynasi
+   * ochiq bo'lganda ishlaydi — izoh qoldirgan, lekin hech qachon yozmagan odamga
+   * yuborilsa Instagram error_subcode 2534022 ("допустимого окна") qaytaradi.
+   *
+   * Private reply har bir komment uchun bir marta, izoh qoldirilgandan keyin
+   * 7 kun ichida yuborilishi mumkin.
+   */
+  async sendPrivateReply(creds: IgCredentials, commentId: string, text: string) {
+    const res = await axios.post(`${BASE_URL}/${creds.accountId}/messages`, {
+      recipient: { comment_id: commentId },
+      message: { text },
+      access_token: creds.token,
+    });
+    return res.data;
+  }
+
+  /** Kommentga shaxsiy javob — matn + tugmalar bitta template xabar sifatida */
+  async sendPrivateReplyButtons(
+    creds: IgCredentials,
+    commentId: string,
+    text: string,
+    buttons: { title: string; url: string }[],
+  ) {
+    const res = await axios.post(`${BASE_URL}/${creds.accountId}/messages`, {
+      recipient: { comment_id: commentId },
+      message: {
+        attachment: {
+          type: 'template',
+          payload: {
+            template_type: 'button',
+            text,
+            buttons: buttons.slice(0, 3).map(b => ({
+              type: 'web_url',
+              url: b.url,
+              title: b.title,
+            })),
+          },
+        },
+      },
+      access_token: creds.token,
+    });
+    return res.data;
+  }
+
   async getAccountInfo(creds: IgCredentials) {
     const res = await axios.get(`${BASE_URL}/${creds.accountId}`, {
       params: {
