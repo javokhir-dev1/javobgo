@@ -1,13 +1,24 @@
-import { Injectable, UnauthorizedException, Logger } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException, Logger } from '@nestjs/common';
 import * as crypto from 'crypto';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { MoreThanOrEqual, Repository } from 'typeorm';
 import { TelegramUser } from '../telegram/telegram-user.entity';
 import { AuthToken } from './auth-token.entity';
 import { InstagramAccount } from '../instagram-accounts/instagram-account.entity';
+import { hashPassword, verifyPassword, normalizeEmail } from '../common/password.util';
 
 const INIT_DATA_MAX_AGE_SEC = 300;
+
+/**
+ * Email orqali kirgan foydalanuvchilar uchun sintetik telegram_id diapazoni boshlanishi.
+ *
+ * Butun tizim (instagram_accounts, agents, automations, logs, settings) telegram_id
+ * ustuniga bog'langan. Email foydalanuvchisiga ham shu maydonda qiymat kerak.
+ * 1e17 — Telegram ID lari uchun e'lon qilingan yuqori chegaradan (2^52 ≈ 4.5e15)
+ * ancha baland, ya'ni haqiqiy Telegram ID bilan hech qachon to'qnashmaydi.
+ */
+const SYNTHETIC_ID_BASE = 100_000_000_000_000_000n;
 
 @Injectable()
 export class AuthService {
@@ -149,6 +160,89 @@ export class AuthService {
     };
     const jwt = this.jwtService.sign(payload, { expiresIn: '15d' });
     return { jwt, user };
+  }
+
+  // ─── Email + parol ───────────────────────────────────────────────────────────
+
+  /** Email foydalanuvchisi uchun bo'sh sintetik telegram_id topadi */
+  private async nextSyntheticId(): Promise<string> {
+    const last = await this.telegramUserRepo.findOne({
+      where: { telegram_id: MoreThanOrEqual(SYNTHETIC_ID_BASE.toString()) },
+      order: { telegram_id: 'DESC' },
+    });
+    const next = last ? BigInt(last.telegram_id) + 1n : SYNTHETIC_ID_BASE;
+    return next.toString();
+  }
+
+  private signUser(user: TelegramUser): string {
+    return this.jwtService.sign(
+      {
+        sub: user.telegram_id,
+        telegram_id: user.telegram_id,
+        first_name: user.first_name,
+        username: user.username,
+        auth_type: user.auth_type ?? 'telegram',
+      },
+      { expiresIn: '15d' },
+    );
+  }
+
+  async registerWithEmail(
+    email: string,
+    password: string,
+    first_name: string,
+  ): Promise<{ jwt: string; user: TelegramUser }> {
+    const normalized = normalizeEmail(email);
+
+    const existing = await this.telegramUserRepo.findOne({ where: { email: normalized } });
+    if (existing) throw new ConflictException('email_taken');
+
+    const password_hash = await hashPassword(password);
+
+    // Unique cheklovga bir vaqtda ikkita so'rov urilib qolsa — qayta urinamiz
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      const telegram_id = await this.nextSyntheticId();
+      try {
+        const user = await this.telegramUserRepo.save(
+          this.telegramUserRepo.create({
+            telegram_id,
+            first_name: first_name.trim(),
+            username: null,
+            auth_type: 'email',
+            email: normalized,
+            password_hash,
+          }),
+        );
+        this.logger.log(`Yangi email hisob: ${normalized} (id=${telegram_id})`);
+        return { jwt: this.signUser(user), user };
+      } catch (err: any) {
+        // 23505 = unique_violation. Email bo'yicha bo'lsa — poyga, hisob band.
+        if (err?.code === '23505' && String(err?.detail || '').includes('email')) {
+          throw new ConflictException('email_taken');
+        }
+        if (attempt === 3) throw err;
+        this.logger.warn(`Sintetik ID to'qnashuvi, urinish ${attempt}/3`);
+      }
+    }
+    throw new ConflictException('email_taken');
+  }
+
+  async loginWithEmail(email: string, password: string): Promise<{ jwt: string; user: TelegramUser } | null> {
+    const normalized = normalizeEmail(email);
+    const user = await this.telegramUserRepo.findOne({ where: { email: normalized } });
+
+    // Foydalanuvchi topilmasa ham hash tekshirgandek vaqt sarflaymiz —
+    // javob tezligiga qarab email ro'yxatdan o'tganini aniqlab bo'lmasin
+    if (!user?.password_hash) {
+      await verifyPassword(password, 'scrypt$16384$8$1$AAAAAAAAAAAAAAAAAAAAAA==$AAAA');
+      return null;
+    }
+
+    const ok = await verifyPassword(password, user.password_hash);
+    if (!ok) return null;
+
+    await this.restoreIfPendingDeletion(user);
+    return { jwt: this.signUser(user), user };
   }
 
   async updateAvatar(telegram_id: string, avatarUrl: string): Promise<void> {

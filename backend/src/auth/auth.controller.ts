@@ -12,10 +12,13 @@ import {
   HttpCode,
   HttpStatus,
   ForbiddenException,
+  ConflictException,
   UseInterceptors,
   BadRequestException,
   Logger,
 } from '@nestjs/common';
+import { RegisterDto, LoginDto } from './dto/email-auth.dto';
+import type { TelegramUser } from '../telegram/telegram-user.entity';
 import type { Request, Response } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ConfigService } from '@nestjs/config';
@@ -59,6 +62,20 @@ function parseCookieToken(req: Request): string | null {
   return cookies['tg_access_token'] || null;
 }
 
+/** Foydalanuvchining mijozga qaytariladigan maydonlari (parol hash hech qachon chiqmaydi) */
+function publicUser(user: TelegramUser) {
+  return {
+    telegram_id: user.telegram_id,
+    first_name: user.first_name,
+    username: user.username,
+    created_at: user.created_at,
+    avatar_url: user.avatar_url,
+    language: user.language,
+    auth_type: user.auth_type ?? 'telegram',
+    email: user.email ?? null,
+  };
+}
+
 // Magic number tekshiruvi (mimetype spoofing oldini olish)
 function checkMagicBytes(filePath: string): boolean {
   try {
@@ -87,6 +104,17 @@ export class AuthController {
     private authService: AuthService,
     private configService: ConfigService,
   ) {}
+
+  /** Barcha kirish yo'llari uchun bir xil sessiya cookie'si */
+  private setAuthCookie(res: Response, jwt: string) {
+    res.cookie('tg_access_token', jwt, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      maxAge: 15 * 24 * 60 * 60 * 1000,
+      path: '/',
+    });
+  }
 
   @UseGuards(InternalSecretGuard)
   @HttpCode(HttpStatus.OK)
@@ -189,6 +217,43 @@ export class AuthController {
     });
   }
 
+  @HttpCode(HttpStatus.OK)
+  @Post('register')
+  async register(@Body() body: RegisterDto, @Req() req: Request, @Res() res: Response) {
+    const ip = req.ip || req.socket?.remoteAddress || 'unknown';
+    if (!checkRateLimit(ip, 5, 60_000)) {
+      return res.status(429).json({ error: 'too_many_requests' });
+    }
+    try {
+      const result = await this.authService.registerWithEmail(
+        body.email, body.password, body.first_name,
+      );
+      this.setAuthCookie(res, result.jwt);
+      return res.json({ user: publicUser(result.user) });
+    } catch (err: any) {
+      if (err instanceof ConflictException) {
+        return res.status(409).json({ error: 'email_taken' });
+      }
+      logger.error(`register xatosi: ${err.message}`);
+      return res.status(500).json({ error: 'server_error' });
+    }
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @Post('login')
+  async login(@Body() body: LoginDto, @Req() req: Request, @Res() res: Response) {
+    const ip = req.ip || req.socket?.remoteAddress || 'unknown';
+    if (!checkRateLimit(ip, 10, 60_000)) {
+      return res.status(429).json({ error: 'too_many_requests' });
+    }
+    const result = await this.authService.loginWithEmail(body.email, body.password);
+    if (!result) {
+      return res.status(401).json({ error: 'invalid_credentials' });
+    }
+    this.setAuthCookie(res, result.jwt);
+    return res.json({ user: publicUser(result.user) });
+  }
+
   @Get('me')
   async me(@Req() req: Request) {
     const token = parseCookieToken(req);
@@ -196,13 +261,7 @@ export class AuthController {
     const payload = this.authService.verifyJwt(token);
     const user = await this.authService.findUserByTelegramId(payload.telegram_id);
     if (!user) throw new UnauthorizedException('Foydalanuvchi topilmadi');
-    return {
-      telegram_id: user.telegram_id,
-      first_name: user.first_name,
-      username: user.username,
-      avatar_url: user.avatar_url,
-      language: user.language,
-    };
+    return publicUser(user);
   }
 
   @Post('upload-avatar')
