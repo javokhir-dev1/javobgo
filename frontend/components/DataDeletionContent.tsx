@@ -49,8 +49,8 @@ export default function DataDeletionContent() {
             <h2 className="text-xl font-semibold mb-3">3-usul: Email orqali</h2>
             <p className="text-on-surface-variant text-sm leading-relaxed">
               Ma&apos;lumotlarni o&apos;chirish so&apos;rovini{' '}
-              <a href="mailto:javokhir.dev1@gmail.com" className="text-primary hover:underline">
-                javokhir.dev1@gmail.com
+              <a href="mailto:koryobu@gmail.com" className="text-primary hover:underline">
+                koryobu@gmail.com
               </a>{' '}
               manziliga yuboring. So&apos;rovda Telegram username yoki ID&apos;ingizni ko&apos;rsating.
             </p>
@@ -75,8 +75,8 @@ export default function DataDeletionContent() {
               <p className="text-on-surface-variant text-sm mt-1">O&apos;zbekiston Respublikasi</p>
               <p className="text-on-surface-variant text-sm mt-2">
                 Email:{' '}
-                <a href="mailto:javokhir.dev1@gmail.com" className="text-primary hover:underline">
-                  javokhir.dev1@gmail.com
+                <a href="mailto:koryobu@gmail.com" className="text-primary hover:underline">
+                  koryobu@gmail.com
                 </a>
               </p>
               <p className="text-on-surface-variant text-sm mt-1">
