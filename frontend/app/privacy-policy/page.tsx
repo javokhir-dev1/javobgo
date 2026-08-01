@@ -154,8 +154,8 @@ export default function PrivacyPolicyPage() {
               hisobingiz <strong className="text-on-surface">90 kun</strong> ichida tiklanishi mumkin,
               shundan keyin butunlay o&apos;chiriladi. Qo&apos;shimcha yordam uchun Telegram bot orqali{' '}
               <code className="text-primary">/murojaat</code> yuboring yoki{' '}
-              <a href="mailto:javokhir.dev1@gmail.com" className="text-primary hover:underline">
-                javokhir.dev1@gmail.com
+              <a href="mailto:koryobu@gmail.com" className="text-primary hover:underline">
+                koryobu@gmail.com
               </a>{' '}
               manziliga yozing.
             </p>
@@ -198,8 +198,8 @@ export default function PrivacyPolicyPage() {
               <p className="text-on-surface-variant text-sm mt-1">O&apos;zbekiston Respublikasi</p>
               <p className="text-on-surface-variant text-sm mt-2">
                 Email:{' '}
-                <a href="mailto:javokhir.dev1@gmail.com" className="text-primary hover:underline">
-                  javokhir.dev1@gmail.com
+                <a href="mailto:koryobu@gmail.com" className="text-primary hover:underline">
+                  koryobu@gmail.com
                 </a>
               </p>
               <p className="text-on-surface-variant text-sm mt-1">
