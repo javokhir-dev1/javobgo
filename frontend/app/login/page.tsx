@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, type FormEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Bot, Zap, Shield, AlertTriangle, Loader2 } from 'lucide-react';
@@ -40,6 +40,9 @@ function LanguageSwitcher() {
 function LoginContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [mode, setMode] = useState<'signin' | 'signup'>('signin');
+  const [form, setForm] = useState({ first_name: '', email: '', password: '' });
+  const [submitting, setSubmitting] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const { t } = useLanguage();
@@ -120,7 +123,65 @@ function LoginContent() {
     }
   };
 
+  /** Backend xato kodini foydalanuvchiga ko'rinadigan matnga aylantiradi */
+  const authErrorText = (status: number, payload: any): string => {
+    const codes: string[] = Array.isArray(payload?.message)
+      ? payload.message
+      : [payload?.error ?? payload?.message].filter(Boolean);
+
+    if (codes.includes('email_taken')) return t('auth.errEmailTaken');
+    if (codes.includes('weak_password')) return t('auth.errWeakPassword');
+    if (codes.includes('invalid_email')) return t('auth.errInvalidEmail');
+    if (codes.includes('invalid_name')) return t('auth.errInvalidName');
+    if (status === 401) return t('auth.errInvalidCredentials');
+    if (status === 409) return t('auth.errEmailTaken');
+    if (status === 429) return t('auth.errTooMany');
+    if (status === 400) return t('auth.errInvalidEmail');
+    return t('auth.errServer');
+  };
+
+  const submitEmailAuth = async (e: FormEvent) => {
+    e.preventDefault();
+    if (submitting) return;
+    setSubmitting(true);
+    setError('');
+
+    const endpoint = mode === 'signup' ? '/auth/register' : '/auth/login';
+    const body = mode === 'signup'
+      ? form
+      : { email: form.email, password: form.password };
+
+    try {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({}));
+        setError(authErrorText(res.status, payload));
+        setSubmitting(false);
+        return;
+      }
+
+      router.push('/');
+    } catch {
+      setError(t('auth.errServer'));
+      setSubmitting(false);
+    }
+  };
+
+  const switchMode = (next: 'signin' | 'signup') => {
+    setMode(next);
+    setError('');
+  };
+
   const hasToken = !!searchParams.get('token');
+  const inputClass =
+    'w-full px-4 py-3 rounded-xl bg-surface-container border border-outline-variant/40 text-on-surface ' +
+    'placeholder:text-on-surface-variant/50 text-[15px] outline-none transition-colors ' +
+    'focus:border-primary focus:ring-2 focus:ring-primary/20';
 
   return (
     <main className="flex-grow flex min-h-screen bg-background">
@@ -227,16 +288,108 @@ function LoginContent() {
                 </div>
               )}
 
+              {/* Kirish / Ro'yxatdan o'tish almashtirgichi */}
+              <div className="flex p-1 mb-6 rounded-2xl bg-surface-container border border-outline-variant/30">
+                {(['signin', 'signup'] as const).map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => switchMode(m)}
+                    className={`flex-1 py-2.5 rounded-xl text-[14px] font-semibold transition-colors ${
+                      mode === m
+                        ? 'bg-primary text-on-primary shadow-sm'
+                        : 'text-on-surface-variant hover:text-on-surface'
+                    }`}
+                  >
+                    {t(m === 'signin' ? 'auth.tabSignIn' : 'auth.tabSignUp')}
+                  </button>
+                ))}
+              </div>
+
+              <form onSubmit={submitEmailAuth} className="text-left space-y-4">
+                {mode === 'signup' && (
+                  <div>
+                    <label htmlFor="first_name" className="block text-[13px] font-medium text-on-surface-variant mb-1.5">
+                      {t('auth.name')}
+                    </label>
+                    <input
+                      id="first_name"
+                      type="text"
+                      required
+                      minLength={2}
+                      maxLength={64}
+                      autoComplete="name"
+                      value={form.first_name}
+                      onChange={(e) => setForm({ ...form, first_name: e.target.value })}
+                      placeholder={t('auth.namePh')}
+                      className={inputClass}
+                    />
+                  </div>
+                )}
+
+                <div>
+                  <label htmlFor="email" className="block text-[13px] font-medium text-on-surface-variant mb-1.5">
+                    {t('auth.email')}
+                  </label>
+                  <input
+                    id="email"
+                    type="email"
+                    required
+                    autoComplete="email"
+                    value={form.email}
+                    onChange={(e) => setForm({ ...form, email: e.target.value })}
+                    placeholder={t('auth.emailPh')}
+                    className={inputClass}
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="password" className="block text-[13px] font-medium text-on-surface-variant mb-1.5">
+                    {t('auth.password')}
+                  </label>
+                  <input
+                    id="password"
+                    type="password"
+                    required
+                    minLength={mode === 'signup' ? 8 : undefined}
+                    maxLength={128}
+                    autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
+                    value={form.password}
+                    onChange={(e) => setForm({ ...form, password: e.target.value })}
+                    placeholder={t('auth.passwordPh')}
+                    className={inputClass}
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="w-full flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-primary text-on-primary font-bold text-[16px] hover:opacity-90 transition-opacity shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {submitting && <Loader2 className="w-5 h-5 animate-spin" />}
+                  {t(mode === 'signup' ? 'auth.submitSignUp' : 'auth.submitSignIn')}
+                </button>
+              </form>
+
+              {/* Ajratuvchi */}
+              <div className="flex items-center gap-3 my-6">
+                <div className="flex-1 h-px bg-outline-variant/30" />
+                <span className="text-[12px] text-on-surface-variant/60 uppercase tracking-wide">
+                  {t('auth.or')}
+                </span>
+                <div className="flex-1 h-px bg-outline-variant/30" />
+              </div>
+
               <a
                 href={process.env.NEXT_PUBLIC_BOT_URL || 'https://t.me/javobgobot'}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-2xl bg-primary text-on-primary font-bold text-[16px] hover:opacity-90 transition-opacity shadow-lg"
+                className="w-full flex items-center justify-center gap-3 px-6 py-3.5 rounded-2xl border border-outline-variant/40 bg-surface-container text-on-surface font-semibold text-[15px] hover:border-primary/40 hover:bg-surface-container-high transition-colors"
               >
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="#229ED9">
                   <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.16 13.947l-2.963-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.991.612z"/>
                 </svg>
-                {t('login.button')}
+                {t('auth.telegramBtn')}
               </a>
             </>
           )}

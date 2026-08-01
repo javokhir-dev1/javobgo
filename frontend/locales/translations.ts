@@ -5,7 +5,7 @@ type TranslationDictionary = Record<string, string>;
 const uz: TranslationDictionary = {
   // Login
   'login.welcome': 'Xush kelibsiz',
-  'login.subtitle': 'Platformaga kirish uchun rasmiy Telegram botimizdan foydalaning.',
+  'login.subtitle': 'Hisobingizga kiring yoki bir daqiqada yangi hisob yarating.',
   'login.button': 'Telegram orqali kirish',
   'login.loading': 'Kirish bajarilmoqda...',
   'login.loadingWait': 'Iltimos, kutib turing.',
@@ -250,12 +250,35 @@ const uz: TranslationDictionary = {
   'instagram.disconnectConfirm': 'Uzish',
   'instagram.disconnected': 'uzildi.',
   'instagram.disconnectError': 'Uzishda xato yuz berdi.',
+
+  // Email auth
+  'auth.tabSignIn': 'Kirish',
+  'auth.tabSignUp': "Ro'yxatdan o'tish",
+  'auth.name': 'Ismingiz',
+  'auth.namePh': 'Masalan: Muslimbek',
+  'auth.email': 'Email',
+  'auth.emailPh': 'siz@example.com',
+  'auth.password': 'Parol',
+  'auth.passwordPh': 'Kamida 8 ta belgi',
+  'auth.submitSignIn': 'Kirish',
+  'auth.submitSignUp': 'Hisob yaratish',
+  'auth.or': 'yoki',
+  'auth.telegramBtn': 'Telegram orqali kirish',
+  'auth.noAccount': 'Hisobingiz yo‘qmi?',
+  'auth.haveAccount': 'Hisobingiz bormi?',
+  'auth.errInvalidCredentials': "Email yoki parol noto'g'ri.",
+  'auth.errEmailTaken': "Bu email allaqachon ro'yxatdan o'tgan.",
+  'auth.errWeakPassword': "Parol kamida 8 ta belgidan iborat bo'lishi kerak.",
+  'auth.errInvalidEmail': "Email manzil noto'g'ri kiritilgan.",
+  'auth.errInvalidName': "Ism kamida 2 ta harfdan iborat bo'lishi kerak.",
+  'auth.errTooMany': "Juda ko'p urinish. Bir daqiqadan so'ng qayta urinib ko'ring.",
+  'auth.errServer': 'Server xatosi. Keyinroq urinib ko‘ring.',
 };
 
 const en: TranslationDictionary = {
   // Login
   'login.welcome': 'Welcome',
-  'login.subtitle': 'Use our official Telegram bot to sign in to the platform.',
+  'login.subtitle': 'Sign in to your account or create a new one in under a minute.',
   'login.button': 'Sign in with Telegram',
   'login.loading': 'Signing in...',
   'login.loadingWait': 'Please wait.',
@@ -500,12 +523,35 @@ const en: TranslationDictionary = {
   'instagram.disconnectConfirm': 'Disconnect',
   'instagram.disconnected': 'disconnected.',
   'instagram.disconnectError': 'Failed to disconnect.',
+
+  // Email auth
+  'auth.tabSignIn': 'Sign in',
+  'auth.tabSignUp': 'Sign up',
+  'auth.name': 'Your name',
+  'auth.namePh': 'e.g. Muslimbek',
+  'auth.email': 'Email',
+  'auth.emailPh': 'you@example.com',
+  'auth.password': 'Password',
+  'auth.passwordPh': 'At least 8 characters',
+  'auth.submitSignIn': 'Sign in',
+  'auth.submitSignUp': 'Create account',
+  'auth.or': 'or',
+  'auth.telegramBtn': 'Continue with Telegram',
+  'auth.noAccount': "Don't have an account?",
+  'auth.haveAccount': 'Already have an account?',
+  'auth.errInvalidCredentials': 'Incorrect email or password.',
+  'auth.errEmailTaken': 'This email is already registered.',
+  'auth.errWeakPassword': 'Password must be at least 8 characters.',
+  'auth.errInvalidEmail': 'Please enter a valid email address.',
+  'auth.errInvalidName': 'Name must be at least 2 characters.',
+  'auth.errTooMany': 'Too many attempts. Please try again in a minute.',
+  'auth.errServer': 'Server error. Please try again later.',
 };
 
 const ru: TranslationDictionary = {
   // Login
   'login.welcome': 'Добро пожаловать',
-  'login.subtitle': 'Используйте наш официальный Telegram-бот для входа на платформу.',
+  'login.subtitle': 'Войдите в аккаунт или создайте новый за минуту.',
   'login.button': 'Войти через Telegram',
   'login.loading': 'Выполняется вход...',
   'login.loadingWait': 'Пожалуйста, подождите.',
@@ -750,6 +796,29 @@ const ru: TranslationDictionary = {
   'instagram.connectDesc': 'Для продолжения использования сервисов JavobGo необходимо подключить бизнес-аккаунт или аккаунт автора Instagram.',
   'instagram.connectBtn': 'Подключить аккаунт',
   'instagram.secure': 'Безопасность ваших данных гарантирована',
+
+  // Email auth
+  'auth.tabSignIn': 'Вход',
+  'auth.tabSignUp': 'Регистрация',
+  'auth.name': 'Ваше имя',
+  'auth.namePh': 'Например: Муслимбек',
+  'auth.email': 'Email',
+  'auth.emailPh': 'вы@example.com',
+  'auth.password': 'Пароль',
+  'auth.passwordPh': 'Минимум 8 символов',
+  'auth.submitSignIn': 'Войти',
+  'auth.submitSignUp': 'Создать аккаунт',
+  'auth.or': 'или',
+  'auth.telegramBtn': 'Войти через Telegram',
+  'auth.noAccount': 'Нет аккаунта?',
+  'auth.haveAccount': 'Уже есть аккаунт?',
+  'auth.errInvalidCredentials': 'Неверный email или пароль.',
+  'auth.errEmailTaken': 'Этот email уже зарегистрирован.',
+  'auth.errWeakPassword': 'Пароль должен содержать минимум 8 символов.',
+  'auth.errInvalidEmail': 'Введите корректный email.',
+  'auth.errInvalidName': 'Имя должно содержать минимум 2 символа.',
+  'auth.errTooMany': 'Слишком много попыток. Повторите через минуту.',
+  'auth.errServer': 'Ошибка сервера. Попробуйте позже.',
 };
 
 export const translations: Record<Language, TranslationDictionary> = {

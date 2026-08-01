@@ -23,6 +23,21 @@ export class TelegramUser {
   @Column({ type: 'varchar', default: 'user' })
   role: 'user' | 'admin';
 
+  /**
+   * Hisob qanday ochilgan. 'telegram' — bot orqali, 'email' — email+parol bilan.
+   * Mavjud yozuvlar uchun default 'telegram' bo'lgani sababli migratsiya shart emas.
+   */
+  @Column({ type: 'varchar', default: 'telegram' })
+  auth_type: 'telegram' | 'email';
+
+  /** Faqat auth_type='email' bo'lganda to'ladi. Postgres unique bir nechta NULL ga ruxsat beradi. */
+  @Column({ type: 'varchar', nullable: true, unique: true })
+  email: string | null;
+
+  /** scrypt hash — password.util.ts ga qarang. Telegram foydalanuvchilarida null. */
+  @Column({ type: 'varchar', nullable: true })
+  password_hash: string | null;
+
   @Column({ type: 'varchar', default: 'uz' })
   language: string;
 
